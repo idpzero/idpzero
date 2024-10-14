@@ -1,7 +1,8 @@
-package storage
+package config
 
 import (
 	"os"
+	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 )
@@ -19,13 +20,16 @@ type ClientConfig struct {
 	RedirectUri string `yaml:"redirectUri"`
 }
 
-type ConfigDocument struct {
+type Document struct {
 	Server  ServerConfig   `yaml:"server"`
 	Clients []ClientConfig `yaml:"clients"`
 }
 
-func parse(doc *ConfigDocument, path string) error {
-	data, err := os.ReadFile(path)
+func ParseConfiguration(doc *Document, directory string) error {
+
+	toRead := filepath.Join(directory, configFilename)
+
+	data, err := os.ReadFile(toRead)
 
 	if err != nil {
 		return err

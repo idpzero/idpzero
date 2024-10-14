@@ -10,6 +10,7 @@ import (
 	"time"
 
 	jose "github.com/go-jose/go-jose/v4"
+	"github.com/idpzero/idpzero/pkg/config"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"github.com/zitadel/oidc/v3/pkg/op"
 )
@@ -27,7 +28,7 @@ type Storage struct {
 	logger     *slog.Logger
 	configFile string
 	lock       sync.Mutex
-	config     *ConfigDocument
+	config     *config.Document
 
 	codes        map[string]string
 	authRequests map[string]*authReq
@@ -38,7 +39,7 @@ func NewStorage(logger *slog.Logger, configFilePath string) (StorageWithConfig, 
 	store := &Storage{
 		logger:       logger,
 		lock:         sync.Mutex{},
-		config:       &ConfigDocument{},
+		config:       &config.Document{},
 		configFile:   configFilePath,
 		codes:        make(map[string]string),
 		authRequests: make(map[string]*authReq),
@@ -49,7 +50,7 @@ func NewStorage(logger *slog.Logger, configFilePath string) (StorageWithConfig, 
 	}
 
 	logger.Info(fmt.Sprintf("Loading config from '%s'", store.configFile))
-	err := parse(store.config, store.configFile)
+	err := config.ParseConfiguration(store.config, store.configFile)
 	if err != nil {
 		return nil, err
 	}

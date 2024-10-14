@@ -10,13 +10,14 @@ import (
 	"time"
 
 	"github.com/common-nighthawk/go-figure"
+	"github.com/idpzero/idpzero/pkg/config"
 	"github.com/idpzero/idpzero/pkg/server"
 	"github.com/idpzero/idpzero/pkg/storage"
 	"github.com/jessevdk/go-flags"
 )
 
 type Options struct {
-	Path string `short:"c" long:"config" description:"directory to store data. will search up the folder heirachy for a '.idpzero' folder if not provided." required:"false" env:"DATA_DIR"`
+	Path string `short:"p" long:"path" description:"directory to store data. will search up the folder heirachy for a '.idpzero' folder if not provided." required:"false" env:"DATA_DIR"`
 }
 
 func run(ctx context.Context,
@@ -43,12 +44,12 @@ func run(ctx context.Context,
 	)
 
 	if options.Path == "" {
-		path, err := storage.DiscoverConfigFile()
+		path, err := config.Discover()
 		if err != nil {
 			return err
 		}
 
-		options.Path = path
+		options.Path = path.ConfigurationFile
 	}
 
 	store, err := storage.NewStorage(logger, options.Path)
