@@ -1,0 +1,16 @@
+---
+server: 
+  port: 4379
+  issuer: http://localhost:4379
+  keyphrase: seven dinosaurs swimming # phrase used to generate key for JWTs
+
+clients:
+  - name: client1
+    clientId: foo1
+    secret: secret1
+    redirectUri: http://localhost:8080
+  - name: client2
+    clientId: foo2
+    secret: secret2
+    redirectUri: http://localhost:8080
+  
