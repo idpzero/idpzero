@@ -21,6 +21,13 @@ type ConfigurationInfo struct {
 	StateFile         string
 }
 
+func Load(path string) ConfigurationInfo {
+	return ConfigurationInfo{
+		ConfigurationFile: filepath.Join(path, configFilename),
+		StateFile:         filepath.Join(path, stateFilename),
+	}
+}
+
 func Discover() (ConfigurationInfo, error) {
 
 	// set the path to the current working directory if not provided
@@ -33,10 +40,7 @@ func Discover() (ConfigurationInfo, error) {
 	for {
 		if info, err := os.Stat(filepath.Join(currentPath, folder)); !os.IsNotExist(err) {
 			if info.IsDir() {
-				return ConfigurationInfo{
-					ConfigurationFile: filepath.Join(currentPath, folder, configFilename),
-					StateFile:         filepath.Join(currentPath, folder, stateFilename),
-				}, nil
+				return Load(filepath.Join(currentPath, folder)), nil
 			}
 
 		}

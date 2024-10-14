@@ -2,7 +2,6 @@ package config
 
 import (
 	"os"
-	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 )
@@ -25,11 +24,9 @@ type Document struct {
 	Clients []ClientConfig `yaml:"clients"`
 }
 
-func ParseConfiguration(doc *Document, directory string) error {
+func ParseConfiguration(doc *Document, file string) error {
 
-	toRead := filepath.Join(directory, configFilename)
-
-	data, err := os.ReadFile(toRead)
+	data, err := os.ReadFile(file)
 
 	if err != nil {
 		return err

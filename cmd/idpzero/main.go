@@ -43,16 +43,18 @@ func run(ctx context.Context,
 		}),
 	)
 
+	var c config.ConfigurationInfo
 	if options.Path == "" {
 		path, err := config.Discover()
 		if err != nil {
 			return err
 		}
-
-		options.Path = path.ConfigurationFile
+		c = path
+	} else {
+		c = config.Load(options.Path)
 	}
 
-	store, err := storage.NewStorage(logger, options.Path)
+	store, err := storage.NewStorage(logger, c)
 	if err != nil {
 		return err
 	}

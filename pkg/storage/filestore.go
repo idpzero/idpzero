@@ -34,13 +34,13 @@ type Storage struct {
 	authRequests map[string]*authReq
 }
 
-func NewStorage(logger *slog.Logger, configFilePath string) (StorageWithConfig, error) {
+func NewStorage(logger *slog.Logger, setup config.ConfigurationInfo) (StorageWithConfig, error) {
 
 	store := &Storage{
 		logger:       logger,
 		lock:         sync.Mutex{},
 		config:       &config.Document{},
-		configFile:   configFilePath,
+		configFile:   setup.ConfigurationFile,
 		codes:        make(map[string]string),
 		authRequests: make(map[string]*authReq),
 	}
