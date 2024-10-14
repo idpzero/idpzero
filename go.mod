@@ -23,10 +23,12 @@ require (
 	golang.org/x/crypto v0.25.0 // indirect
 	golang.org/x/oauth2 v0.23.0 // indirect
 	golang.org/x/text v0.18.0 // indirect
+	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 )
 
 require (
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
+	github.com/zitadel/oidc v1.13.5
 	github.com/zitadel/oidc/v3 v3.30.1
 	golang.org/x/sys v0.22.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
