@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/common-nighthawk/go-figure"
+	"github.com/idpzero/idpzero/internal/cli"
 	"github.com/idpzero/idpzero/pkg/config"
 	"github.com/idpzero/idpzero/pkg/server"
 	"github.com/idpzero/idpzero/pkg/storage"
@@ -89,10 +90,12 @@ func main() {
 	myFigure.Print()
 	fmt.Println("")
 
-	ctx := context.Background()
-	if err := run(ctx, os.Args, os.Stdout, os.Stderr); err != nil {
-		os.Stderr.WriteString(err.Error())
-		os.Exit(1)
-	}
+	cli.Execute()
+
+	// ctx := context.Background()
+	// if err := run(ctx, os.Args, os.Stdout, os.Stderr); err != nil {
+	// 	os.Stderr.WriteString(err.Error())
+	// 	os.Exit(1)
+	// }
 
 }
