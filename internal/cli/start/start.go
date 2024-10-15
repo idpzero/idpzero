@@ -21,6 +21,9 @@ func Register(parent *cobra.Command) {
 			_, stop := signal.NotifyContext(cmd.Context(), os.Interrupt)
 			defer stop()
 
+			// https://github.com/charmbracelet/bubbletea
+			// https://github.com/charmbracelet/lipgloss
+
 			return nil
 		},
 	}
