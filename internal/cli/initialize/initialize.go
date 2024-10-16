@@ -1,26 +1,61 @@
 package initialize
 
 import (
+	"fmt"
+	"os"
+	"path"
+	"time"
+
+	"math/rand"
+
 	"github.com/spf13/cobra"
 )
 
 func Register(parent *cobra.Command) {
 
+	var location *string
+	var port *int
+
 	var cmd = &cobra.Command{
 		Use:   "init",
 		Short: "Initalize configuration for idpzero",
 		Long:  `Setup the configuration and data directory for idpzero`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			cwd, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+
+			location = cmd.Flags().StringP("location", "l", path.Join(cwd, ".idpzero"), "Location to store configuration")
+			port = cmd.Flags().IntP("port", "p", 4379, "Port to serve the IDP server on")
+
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			// https://github.com/charmbracelet/bubbletea
-			// https://github.com/charmbracelet/lipgloss
+			fmt.Println(*location)
+			fmt.Println(*port)
 
-			// 1. Confirm location (cwd / .idpzero)
-			// 2. Generate folder and include default config
-
+			fmt.Println(randSeq(64))
+			iss := fmt.Sprintf("http://localhost:%d", *port)
+			fmt.Println(iss)
 			return nil
 		},
 	}
 
 	parent.AddCommand(cmd)
+}
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
+var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func randSeq(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
 }
