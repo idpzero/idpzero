@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"time"
 
 	"math/rand"
 
@@ -44,10 +43,6 @@ func Register(parent *cobra.Command) {
 	}
 
 	parent.AddCommand(cmd)
-}
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
 }
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
