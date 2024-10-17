@@ -1,10 +1,15 @@
 package server
 
-import "net/http"
+import (
+	"net/http"
 
-func register(server *Server) {
+	"github.com/zitadel/oidc/v3/pkg/op"
+)
 
-	server.mux.HandleFunc("/", handleLanding())
+func register(server *Server, provider op.OpenIDProvider) {
+
+	server.mux.Handle("/", provider)
+	server.mux.HandleFunc("/foo", handleLanding())
 	server.mux.HandleFunc(pathLoggedOut, handleLoggedOut())
 }
 

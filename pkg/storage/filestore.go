@@ -2,88 +2,39 @@ package storage
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/sha256"
 	"fmt"
 	"log/slog"
 	"sync"
 	"time"
 
 	jose "github.com/go-jose/go-jose/v4"
-	"github.com/idpzero/idpzero/pkg/config"
+	"github.com/idpzero/idpzero/pkg/configuration"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"github.com/zitadel/oidc/v3/pkg/op"
 )
 
-type StorageWithConfig interface {
-	op.Storage
-	Issuer() string
-	ServerPort() int
-	Secret() [32]byte
-}
-
-var _ StorageWithConfig = &Storage{}
+var _ op.Storage = &Storage{}
 
 type Storage struct {
-	logger     *slog.Logger
-	configFile string
-	lock       sync.Mutex
-	config     *config.Document
+	logger *slog.Logger
+	lock   sync.Mutex
+	config *configuration.Document
 
 	codes        map[string]string
 	authRequests map[string]*authReq
 }
 
-func NewStorage(logger *slog.Logger, setup config.ConfigurationInfo) (StorageWithConfig, error) {
+func NewStorage(logger *slog.Logger, config *configuration.Document) (op.Storage, error) {
 
 	store := &Storage{
 		logger:       logger,
 		lock:         sync.Mutex{},
-		config:       &config.Document{},
-		configFile:   setup.ConfigurationFile,
+		config:       config,
 		codes:        make(map[string]string),
 		authRequests: make(map[string]*authReq),
 	}
 
-	if store.configFile == "" {
-		return nil, ErrConfigNotSupplied
-	}
-
-	logger.Info(fmt.Sprintf("Loading config from '%s'", store.configFile))
-	err := config.ParseConfiguration(store.config, store.configFile)
-	if err != nil {
-		return nil, err
-	}
-
 	return store, nil
-}
-
-func (s *Storage) Issuer() string {
-	if s.config.Server.Issuer == "" {
-		return "idpzero"
-	}
-	return s.config.Server.Issuer
-}
-
-func (s *Storage) Secret() [32]byte {
-	if s.config.Server.KeyPhrase != "" {
-		return sha256.Sum256([]byte(s.config.Server.KeyPhrase))
-	} else {
-		s.logger.Warn("No keyphrase found in config file. Generating random secret.")
-		buf := make([]byte, 32)
-		rand.Read(buf)
-		var array32 [32]byte
-		copy(array32[:], buf)
-		return array32
-	}
-}
-
-func (s *Storage) ServerPort() int {
-	if s.config.Server.Port == 0 {
-		return 4379
-	}
-
-	return s.config.Server.Port
 }
 
 func (s *Storage) AuthRequestByCode(ctx context.Context, code string) (op.AuthRequest, error) {

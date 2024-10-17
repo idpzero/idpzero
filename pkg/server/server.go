@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/idpzero/idpzero/pkg/storage"
+	"github.com/idpzero/idpzero/pkg/configuration"
 	"github.com/zitadel/oidc/v3/pkg/op"
 )
 
@@ -19,15 +19,23 @@ type Server struct {
 	provider op.OpenIDProvider
 }
 
-func NewServer(logger *slog.Logger, store storage.StorageWithConfig) (*Server, error) {
+func NewServer(logger *slog.Logger, conf *configuration.Document, store op.Storage) (*Server, error) {
+
+	if conf == nil {
+		return nil, fmt.Errorf("config is nil")
+	}
+
+	if conf.Server.Port == 0 {
+		return nil, fmt.Errorf("field 'Server.Port' is not set in configuration")
+	}
 
 	mux := http.NewServeMux()
 	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", store.ServerPort()),
+		Addr:    fmt.Sprintf(":%d", conf.Server.Port),
 		Handler: mux,
 	}
 
-	p, err := setupProvider(store, store.Issuer(), store.Secret(), logger)
+	p, err := setupProvider(store, conf.Server.Issuer, conf.Server.Key(), logger)
 
 	if err != nil {
 		return nil, err
@@ -42,7 +50,7 @@ func NewServer(logger *slog.Logger, store storage.StorageWithConfig) (*Server, e
 	}
 
 	// setup the routes
-	register(svr)
+	register(svr, p)
 
 	return svr, nil
 }
