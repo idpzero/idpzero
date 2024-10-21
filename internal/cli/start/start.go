@@ -35,13 +35,19 @@ func Register(parent *cobra.Command) {
 			config := idp.IDPConfiguration{}
 			config.Server = idp.ServerConfig{}
 			config.Server.Port = 4379
-			config.Server.Issuer = "https://idpzero.local"
+			config.Server.Issuer = "http://localhost:4379"
 			config.Server.KeyPhrase = "secret"
-			key1, err := idp.NewRSAKey()
+			key1, err := idp.NewRSAKey("sig")
 			if err != nil {
 				return err
 			}
-			config.Server.SigningKeys = append(config.Server.SigningKeys, *key1)
+
+			key2, err := idp.NewRSAKey("sig")
+			if err != nil {
+				return err
+			}
+
+			config.Server.SigningKeys = append(config.Server.SigningKeys, *key1, *key2)
 			config.Clients = []idp.ClientConfig{}
 
 			idpStore, err := idp.NewStorage(logger)

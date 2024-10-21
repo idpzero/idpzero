@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/idpzero/idpzero/internal/idp"
+	"github.com/zitadel/oidc/v3/pkg/op"
 )
 
 type Server struct {
@@ -35,10 +36,15 @@ func NewServer(logger *slog.Logger, config idp.IDPConfiguration, storage *idp.St
 
 	router.Use(middleware.RequestID)
 	router.Use(middleware.Logger)
+	router.Use(setProviderFromRequest)
 
 	options := idp.ProviderOptions{
 		Storage: storage,
-		Issuer:  config.Server.Issuer,
+		Issuer:  fmt.Sprintf("http://localhost:%d/", config.Server.Port),
+	}
+
+	if config.Server.Issuer != "" {
+		options.Issuer = config.Server.Issuer
 	}
 
 	provider, err := idp.NewProvider(logger, options)
@@ -50,6 +56,15 @@ func NewServer(logger *slog.Logger, config idp.IDPConfiguration, storage *idp.St
 	//router.Handle("/", provider)
 
 	return server, nil
+}
+
+func setProviderFromRequest(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+
+		ctx := op.ContextWithIssuer(r.Context(), "https://foo.bar")
+
+		next.ServeHTTP(rw, r.WithContext(ctx))
+	})
 }
 
 func (s *Server) UpdateConfig(config idp.IDPConfiguration) {
