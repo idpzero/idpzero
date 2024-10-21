@@ -3,7 +3,9 @@ module github.com/idpzero/idpzero
 go 1.22.2
 
 require (
+	github.com/go-chi/chi v1.5.5
 	github.com/go-jose/go-jose/v4 v4.0.4
+	github.com/google/uuid v1.6.0
 	github.com/spf13/cobra v1.8.1
 	golang.org/x/text v0.18.0
 )
@@ -41,6 +43,6 @@ require (
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
 	github.com/zitadel/oidc/v3 v3.30.1
 	golang.org/x/sys v0.24.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 )

@@ -1,85 +1,74 @@
 package server
 
-import (
-	"context"
-	"fmt"
-	"log/slog"
-	"net/http"
-	"sync"
+// type Server struct {
+// 	wg       *sync.WaitGroup
+// 	mux      *http.ServeMux
+// 	server   *http.Server
+// 	logger   *slog.Logger
+// 	provider op.OpenIDProvider
+// }
 
-	"github.com/idpzero/idpzero/pkg/configuration"
-	"github.com/zitadel/oidc/v3/pkg/op"
-)
+// func NewServer(logger *slog.Logger, conf *configuration.Document, store op.Storage) (*Server, error) {
 
-type Server struct {
-	wg       *sync.WaitGroup
-	mux      *http.ServeMux
-	server   *http.Server
-	logger   *slog.Logger
-	provider op.OpenIDProvider
-}
+// 	if conf == nil {
+// 		return nil, fmt.Errorf("config is nil")
+// 	}
 
-func NewServer(logger *slog.Logger, conf *configuration.Document, store op.Storage) (*Server, error) {
+// 	if conf.Server.Port == 0 {
+// 		return nil, fmt.Errorf("field 'Server.Port' is not set in configuration")
+// 	}
 
-	if conf == nil {
-		return nil, fmt.Errorf("config is nil")
-	}
+// 	mux := http.NewServeMux()
+// 	server := &http.Server{
+// 		Addr:    fmt.Sprintf(":%d", conf.Server.Port),
+// 		Handler: mux,
+// 	}
 
-	if conf.Server.Port == 0 {
-		return nil, fmt.Errorf("field 'Server.Port' is not set in configuration")
-	}
+// 	p, err := setupProvider(store, conf.Server.Issuer, conf.Server.Key(), logger)
 
-	mux := http.NewServeMux()
-	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", conf.Server.Port),
-		Handler: mux,
-	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	p, err := setupProvider(store, conf.Server.Issuer, conf.Server.Key(), logger)
+// 	svr := &Server{
+// 		logger:   logger,
+// 		server:   server,
+// 		mux:      mux,
+// 		wg:       &sync.WaitGroup{},
+// 		provider: p,
+// 	}
 
-	if err != nil {
-		return nil, err
-	}
+// 	// setup the routes
+// 	register(svr, p)
 
-	svr := &Server{
-		logger:   logger,
-		server:   server,
-		mux:      mux,
-		wg:       &sync.WaitGroup{},
-		provider: p,
-	}
+// 	return svr, nil
+// }
 
-	// setup the routes
-	register(svr, p)
+// func (s *Server) Start() {
+// 	go runAndWait(s)
+// 	s.logger.Info(fmt.Sprintf("Server listening on '%s'", s.server.Addr))
+// }
 
-	return svr, nil
-}
+// func (s *Server) Shutdown(ctx context.Context) error {
+// 	err := s.server.Shutdown(ctx)
+// 	s.wg.Wait() // wait for the shutdown to complete
+// 	if err != nil {
+// 		return err
+// 	}
 
-func (s *Server) Start() {
-	go runAndWait(s)
-	s.logger.Info(fmt.Sprintf("Server listening on '%s'", s.server.Addr))
-}
+// 	s.logger.Debug("Server Shutdown OK")
 
-func (s *Server) Shutdown(ctx context.Context) error {
-	err := s.server.Shutdown(ctx)
-	s.wg.Wait() // wait for the shutdown to complete
-	if err != nil {
-		return err
-	}
+// 	return nil
+// }
 
-	s.logger.Debug("Server Shutdown OK")
+// func runAndWait(s *Server) error {
+// 	s.wg.Add(1)
+// 	err := s.server.ListenAndServe()
+// 	s.wg.Done()
 
-	return nil
-}
+// 	if err != http.ErrServerClosed {
+// 		return err
+// 	}
 
-func runAndWait(s *Server) error {
-	s.wg.Add(1)
-	err := s.server.ListenAndServe()
-	s.wg.Done()
-
-	if err != http.ErrServerClosed {
-		return err
-	}
-
-	return nil
-}
+// 	return nil
+// }

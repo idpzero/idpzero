@@ -1,8 +1,6 @@
-package configuration
+package server
 
 import (
-	"crypto/rand"
-	"crypto/sha256"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -26,27 +24,26 @@ type Document struct {
 	Clients []ClientConfig `yaml:"clients"`
 }
 
-func (sc *ServerConfig) Key() [32]byte {
-	if sc.KeyPhrase != "" {
-		return sha256.Sum256([]byte(sc.KeyPhrase))
-	} else {
-		buf := make([]byte, 32)
-		rand.Read(buf)
-		var array32 [32]byte
-		copy(array32[:], buf)
-		return array32
-	}
-}
+// func (sc *ServerConfig) Key() [32]byte {
+// 	if sc.KeyPhrase != "" {
+// 		return sha256.Sum256([]byte(sc.KeyPhrase))
+// 	} else {
+// 		buf := make([]byte, 32)
+// 		rand.Read(buf)
+// 		var array32 [32]byte
+// 		copy(array32[:], buf)
+// 		return array32
+// 	}
+// }
 
-func (sc *ServerConfig) IssuerOrDefault() string {
+// func (sc *ServerConfig) IssuerOrDefault() string {
 
-	if sc.Issuer == "" {
-		return "https://idpzero"
-	}
+// 	if sc.Issuer == "" {
+// 		return "https://idpzero"
+// 	}
 
-	return sc.Issuer
-
-}
+// 	return sc.Issuer
+// }
 
 func Parse(doc *Document, file string) error {
 

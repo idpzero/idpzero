@@ -12,7 +12,7 @@ var (
 
 const (
 	folder         string = ".idpzero"
-	configFileName string = "idpzero.yaml"
+	configFileName string = "config.yaml"
 )
 
 type ConfigurationInfo struct {
@@ -23,8 +23,8 @@ func (ci *ConfigurationInfo) ConfigPath() string {
 	return filepath.Join(ci.Directory, configFileName)
 }
 
-// Ensure checks if the directory exists at the path provided and creates it if it doesn't.
-func Ensure(path string) (*ConfigurationInfo, error) {
+// EnsureDirectory checks if the directory exists at the path provided and creates it if it doesn't.
+func EnsureDirectory(path string) (*ConfigurationInfo, error) {
 	target := filepath.Join(path)
 	if _, err := os.Stat(target); os.IsNotExist(err) {
 		// create the directory
@@ -45,7 +45,6 @@ func Ensure(path string) (*ConfigurationInfo, error) {
 
 func Discover() (*ConfigurationInfo, error) {
 
-	// set the path to the current working directory if not provided
 	pwd, err := os.Getwd()
 	if err != nil {
 		return nil, err

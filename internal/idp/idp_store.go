@@ -1,4 +1,4 @@
-package storage
+package idp
 
 import (
 	"context"
@@ -17,57 +17,61 @@ var _ op.Storage = &Storage{}
 type Storage struct {
 	logger *slog.Logger
 	lock   sync.Mutex
-	config *Document
-
-	codes        map[string]string
-	authRequests map[string]*authReq
+	config *IDPConfiguration
 }
 
-func NewStorage(logger *slog.Logger, config *Document) (op.Storage, error) {
+func NewStorage(logger *slog.Logger) (*Storage, error) {
 
 	store := &Storage{
-		logger:       logger,
-		lock:         sync.Mutex{},
-		config:       config,
-		codes:        make(map[string]string),
-		authRequests: make(map[string]*authReq),
+		logger: logger,
+		lock:   sync.Mutex{},
 	}
 
 	return store, nil
 }
 
+// allow updating externally / on demand
+func (s *Storage) SetConfig(config *IDPConfiguration) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	s.config = config
+}
+
 func (s *Storage) AuthRequestByCode(ctx context.Context, code string) (op.AuthRequest, error) {
-	requestID, ok := func() (string, bool) {
-		s.lock.Lock()
-		defer s.lock.Unlock()
-		requestID, ok := s.codes[code]
-		return requestID, ok
-	}()
-	if !ok {
-		return nil, fmt.Errorf("code invalid or expired")
-	}
-	return s.AuthRequestByID(ctx, requestID)
+	panic("unimplemented AuthRequestByCode")
+	// requestID, ok := func() (string, bool) {
+	// 	s.lock.Lock()
+	// 	defer s.lock.Unlock()
+	// 	requestID, ok := s.codes[code]
+	// 	return requestID, ok
+	// }()
+	// if !ok {
+	// 	return nil, fmt.Errorf("code invalid or expired")
+	// }
+	// return s.AuthRequestByID(ctx, requestID)
 }
 
 func (s *Storage) AuthRequestByID(ctx context.Context, id string) (op.AuthRequest, error) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-	request, ok := s.authRequests[id]
-	if !ok {
-		return nil, fmt.Errorf("request not found")
-	}
-	return request, nil
+	panic("unimplemented AuthRequestByID")
+	// s.lock.Lock()
+	// defer s.lock.Unlock()
+	// request, ok := s.authRequests[id]
+	// if !ok {
+	// 	return nil, fmt.Errorf("request not found")
+	// }
+	// return request, nil
 }
 
 func (s *Storage) AuthorizeClientIDSecret(ctx context.Context, clientID string, clientSecret string) error {
+	panic("unimplemented AuthorizeClientIDSecret")
+	// for _, client := range s.config.Clients {
+	// 	if client.ClientId == clientID && client.Secret == clientSecret {
+	// 		return nil
+	// 	}
+	// }
 
-	for _, client := range s.config.Clients {
-		if client.ClientId == clientID && client.Secret == clientSecret {
-			return nil
-		}
-	}
-
-	return fmt.Errorf("client not found")
+	// return fmt.Errorf("client not found")
 }
 
 // CreateAccessAndRefreshTokens implements op.Storage.
@@ -112,12 +116,24 @@ func (s *Storage) GetRefreshTokenInfo(ctx context.Context, clientID string, toke
 
 // Health implements op.Storage.
 func (s *Storage) Health(context.Context) error {
+	if s.config == nil {
+		return fmt.Errorf("no config loaded")
+	}
+
 	return nil
 }
 
 // KeySet implements op.Storage.
 func (s *Storage) KeySet(context.Context) ([]op.Key, error) {
-	panic("unimplemented KeySet")
+	keys := make([]op.Key, 0, len(s.config.Server.SigningKeys))
+
+	for _, key := range s.config.Server.SigningKeys {
+		if key.Use == "sig" {
+			keys = append(keys, &opKey{key: key})
+		}
+	}
+
+	return keys, nil
 }
 
 // RevokeToken implements op.Storage.
@@ -147,7 +163,16 @@ func (s *Storage) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.UserI
 
 // SignatureAlgorithms implements op.Storage.
 func (s *Storage) SignatureAlgorithms(context.Context) ([]jose.SignatureAlgorithm, error) {
-	panic("unimplemented SignatureAlgorithms")
+	algs := make([]jose.SignatureAlgorithm, 0)
+
+	for _, key := range s.config.Server.SigningKeys {
+		if key.Use == "sig" {
+			sa := jose.SignatureAlgorithm(key.Algorithm)
+			algs = append(algs, sa)
+		}
+	}
+
+	return algs, nil
 }
 
 // SigningKey implements op.Storage.

@@ -6,6 +6,8 @@ import (
 	"os/signal"
 
 	"github.com/idpzero/idpzero/internal/discovery"
+	"github.com/idpzero/idpzero/internal/idp"
+	"github.com/idpzero/idpzero/internal/server"
 	"github.com/spf13/cobra"
 )
 
@@ -30,8 +32,32 @@ func Register(parent *cobra.Command) {
 				}),
 			)
 
-			return run(ctx, logger)
+			config := idp.IDPConfiguration{}
+			config.Server = idp.ServerConfig{}
+			config.Server.Port = 4379
+			config.Server.Issuer = "https://idpzero.local"
+			config.Server.KeyPhrase = "secret"
+			key1, err := idp.NewRSAKey()
+			if err != nil {
+				return err
+			}
+			config.Server.SigningKeys = append(config.Server.SigningKeys, *key1)
+			config.Clients = []idp.ClientConfig{}
 
+			idpStore, err := idp.NewStorage(logger)
+			idpStore.SetConfig(&config)
+
+			if err != nil {
+				return err
+			}
+
+			s, err := server.NewServer(logger, config, idpStore)
+
+			if err != nil {
+				return err
+			}
+
+			return s.Run(ctx)
 		},
 	}
 
@@ -44,5 +70,5 @@ func getConfigInfo(path string) (*discovery.ConfigurationInfo, error) {
 	if path == "" {
 		return discovery.Discover()
 	}
-	return discovery.Ensure(path)
+	return discovery.EnsureDirectory(path)
 }
