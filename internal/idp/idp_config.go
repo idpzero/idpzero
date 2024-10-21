@@ -9,7 +9,6 @@ import (
 )
 
 type ServerConfig struct {
-	Issuer      string `yaml:"issuer"`
 	Port        int    `yaml:"port"`
 	KeyPhrase   string `yaml:"keyphrase"`
 	SigningKeys []Key  `yaml:"signingKeys"`

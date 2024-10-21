@@ -2,6 +2,7 @@ package idp
 
 import (
 	"log/slog"
+	"net/http"
 	"time"
 
 	"github.com/zitadel/oidc/v3/pkg/op"
@@ -14,7 +15,6 @@ const (
 
 type ProviderOptions struct {
 	Key          [32]byte
-	Issuer       string
 	Storage      op.Storage
 	ExtraOptions []op.Option
 }
@@ -62,7 +62,15 @@ func NewProvider(logger *slog.Logger, options ProviderOptions) (op.OpenIDProvide
 		op.WithLogger(logger.WithGroup("op")),
 	}, options.ExtraOptions...)
 
-	handler, err := op.NewProvider(config, options.Storage, op.StaticIssuer(options.Issuer), po...)
+	// use the value from the context
+	issuerFunc := func(insecure bool) (op.IssuerFromRequest, error) {
+		var x op.IssuerFromRequest = func(r *http.Request) string {
+			return op.IssuerFromContext(r.Context())
+		}
+		return x, nil
+	}
+
+	handler, err := op.NewProvider(config, options.Storage, issuerFunc, po...)
 
 	if err != nil {
 		return nil, err
