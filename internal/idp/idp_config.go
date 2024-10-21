@@ -3,6 +3,7 @@ package idp
 import (
 	"bytes"
 	"io"
+	"os"
 
 	"gopkg.in/yaml.v2"
 )
@@ -43,4 +44,15 @@ func Parse(doc *IDPConfiguration, reader io.Reader) error {
 	}
 
 	return yaml.Unmarshal(buf.Bytes(), doc)
+}
+
+func Save(doc *IDPConfiguration, path string) error {
+
+	data, err := yaml.Marshal(*doc)
+
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, data, 0644)
 }

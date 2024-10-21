@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"path"
 
 	"github.com/idpzero/idpzero/internal/discovery"
 	"github.com/idpzero/idpzero/internal/idp"
@@ -32,23 +33,31 @@ func Register(parent *cobra.Command) {
 				}),
 			)
 
+			discoveryInfo, err := getConfigInfo(flagPath)
+
+			if err != nil {
+				return err
+			}
+
 			config := idp.IDPConfiguration{}
 			config.Server = idp.ServerConfig{}
 			config.Server.Port = 4379
-			config.Server.Issuer = "http://localhost:4379"
 			config.Server.KeyPhrase = "secret"
 			key1, err := idp.NewRSAKey("sig")
 			if err != nil {
 				return err
 			}
 
-			key2, err := idp.NewRSAKey("sig")
+			config.Server.SigningKeys = append(config.Server.SigningKeys, *key1)
+			config.Clients = []idp.ClientConfig{}
+
+			configPath := path.Join(discoveryInfo.Directory, "config.yaml")
+
+			err = idp.Save(&config, configPath)
+
 			if err != nil {
 				return err
 			}
-
-			config.Server.SigningKeys = append(config.Server.SigningKeys, *key1, *key2)
-			config.Clients = []idp.ClientConfig{}
 
 			idpStore, err := idp.NewStorage(logger)
 			idpStore.SetConfig(&config)

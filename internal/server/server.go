@@ -43,6 +43,7 @@ func NewServer(logger *slog.Logger, config idp.IDPConfiguration, storage *idp.St
 		Issuer:  fmt.Sprintf("http://localhost:%d/", config.Server.Port),
 	}
 
+	// override if provided in the config
 	if config.Server.Issuer != "" {
 		options.Issuer = config.Server.Issuer
 	}

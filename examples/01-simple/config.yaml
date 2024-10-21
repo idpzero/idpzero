@@ -1,16 +1,48 @@
----
-server: 
+server:
+  issuer: ""
   port: 4379
-  issuer: http://localhost:4379
-  keyphrase: seven dinosaurs swimming # phrase used to generate key for JWTs
-
-clients:
-  - name: client1
-    clientId: foo1
-    secret: secret1
-    redirectUri: http://localhost:8080
-  - name: client2
-    clientId: foo2
-    secret: secret2
-    redirectUri: http://localhost:8080
-  
+  keyphrase: secret
+  signingKeys:
+  - id: bbd6a41e-7710-4bb5-8128-e40471f84915
+    algorithm: RS256
+    use: sig
+    data:
+      private: |
+        -----BEGIN RSA PRIVATE KEY-----
+        MIIEpAIBAAKCAQEAvHy80Qp6BuK0Ms9+xz8gKn8j+FBWJUmMElaKKbVlWYu9AJci
+        l0dB2BvCnuBOab+nn6YvFZKpo9zAt/tKUaapLBioAcxma1OSdSXtUjxpBqmziCjs
+        o9rFbfFpZbOb22tSLTwNcrQv46Za/kdLk7VFYNqa/fx5joyTc3T5pWHUX21hSCkm
+        4J+4IzvTtVConeXafQ6R0MtOLdBIsAn7nITaA4vkvO7nGZyAMYmH9wcG2FNR/Nz/
+        VqvzbP3poVRFa/HwwoqMKSe1sVXVSNTLSsVPu7b2INI5mbZexQy0omfvkepXQGWm
+        wDT6KcVKtcuvVccyA+PxTTXCoed0lQeaXI5BDQIDAQABAoIBABIrvFAywFzVkiWr
+        1z8CGOm/5AnWRNfHZVeHPD6VHDYrwIbECzOmTPS2iGaknSqYrWI4tSVRREVlzLZv
+        5VRFyt1Tay7xM5Z5Mg9VHrHk3QMlbQddWqLZPltBALYrQIVArWVq+qjqMguyR+dn
+        nCObQBr8OCDwLA/QAY8J4d9NtRmV2YThElCKy1Lg7RwZTlv3CDZ/8PyCpyILhozV
+        A+7PaiVMAn6OJA79CZENizJ9gAITTfrTD7LwjAW2cm/chZCNZivkdOLhK9JzzyS8
+        v8gAEI+ZWY3h+pku2lnCYGNPxzmPRMLHapdtGM8d5Rgk1Lwb0OysgTVtDe37gdCu
+        EUt8aQkCgYEA1+RPy7on7mApBnABcBs5AryEUyMDrDrW0qDmzgJZsKtAsyjbta1n
+        JTc3K84msOggpOrTlfvWlHWQ2X7J4B6UXDBc6bi0ylK568YCyennblAUCHZ2Rmmg
+        exw70IC1b23q/BNmNsUGwQJfHDzL07tG2IOeYdJ2E6ESoS3Omstd1j8CgYEA34EU
+        dzSGDmoqD2//8lxeY/ejyvAVcZ88Nm34RyLoGqXsECrxS08m/TZ8+dvclnZDXiJI
+        hOhlvgOQEMVOxlezC+Naasr3Y3vMOjP5czTzQH30Z/u9lOSpPF8faUpKbPYcHJy+
+        EKVfpafQ+0E/hLFANNoV1WsZA5CyeUfyVXxfzbMCgYAirLrcP9P2B1/PduHkPZsU
+        g27FY5RNb03dmpY3dE0vgPHtVJylO2qboZis4nl4ZHAJzOWa6031nkRbim+mHYM6
+        o1HpAA+Zh1vxMGZ2Q6k2IIp3KX+po4FxBIHe5S0+7mqVfhAmr9J74YOhJ2qdYTDp
+        yYoAsCri0DYLyS2r0woJRQKBgQC8K2iXk9jpeeg/ZwQNgEbX0z5LNSZYqr9+88b7
+        3R+cj+TXF9Benx0sQhumILzu0FKXhjWX8DD4cPdxpyxTQLK1Z4xQLOFrGGcw+WEi
+        5YmG2oRSp1dNa9YvxcYkVy+h3PJ+BFjgmtqUFV2Uq7JWfQSZeqK3M5uzrLcV9MTJ
+        xBTEkQKBgQC+wtpnWHV9COXIqDR3Udv6wGoZZ2ZtLNspsQA7wB/ap987oh8N9uxj
+        1gkrhcapH/bjO1ILkmh0wS/eZzVVhgqmLJ+I/WXJ2P+4GvoD6WymnwbzO7+GaYPw
+        hVW7naf0zmBMF8Ac2LZvm6ID3+mnY3KxIDl88jri5d+uNkaoLwgpUw==
+        -----END RSA PRIVATE KEY-----
+      public: |
+        -----BEGIN RSA PUBLIC KEY-----
+        MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvHy80Qp6BuK0Ms9+xz8g
+        Kn8j+FBWJUmMElaKKbVlWYu9AJcil0dB2BvCnuBOab+nn6YvFZKpo9zAt/tKUaap
+        LBioAcxma1OSdSXtUjxpBqmziCjso9rFbfFpZbOb22tSLTwNcrQv46Za/kdLk7VF
+        YNqa/fx5joyTc3T5pWHUX21hSCkm4J+4IzvTtVConeXafQ6R0MtOLdBIsAn7nITa
+        A4vkvO7nGZyAMYmH9wcG2FNR/Nz/VqvzbP3poVRFa/HwwoqMKSe1sVXVSNTLSsVP
+        u7b2INI5mbZexQy0omfvkepXQGWmwDT6KcVKtcuvVccyA+PxTTXCoed0lQeaXI5B
+        DQIDAQAB
+        -----END RSA PUBLIC KEY-----
+clients: []
