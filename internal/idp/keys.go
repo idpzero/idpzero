@@ -6,11 +6,9 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
-
-	"github.com/google/uuid"
 )
 
-func NewRSAKey(use string) (*Key, error) {
+func NewRSAKey(id string, use string) (*Key, error) {
 
 	privkey, err := rsa.GenerateKey(rand.Reader, 2048)
 
@@ -41,7 +39,7 @@ func NewRSAKey(use string) (*Key, error) {
 	pubkey := string(pubkey_pem)
 
 	key := &Key{}
-	key.ID = uuid.New().String()
+	key.ID = id
 	key.Algorithm = "RS256"
 	key.Use = use
 	key.Data = map[string]string{

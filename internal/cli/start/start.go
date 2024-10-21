@@ -43,7 +43,7 @@ func Register(parent *cobra.Command) {
 			config.Server = idp.ServerConfig{}
 			config.Server.Port = 4379
 			config.Server.KeyPhrase = "secret"
-			key1, err := idp.NewRSAKey("sig")
+			key1, err := idp.NewRSAKey("sample", "sig")
 			if err != nil {
 				return err
 			}
