@@ -22,8 +22,11 @@ func init() {
 		}),
 	)
 
+	keyCmd.AddCommand(addKeyCmd)
+
 	rootCmd.PersistentFlags().StringVar(location, "config", "", "configuration directory (default is .idpzero/ in current or parent heirachy)")
-	rootCmd.AddCommand(startCmd, initializeCmd)
+	rootCmd.AddCommand(startCmd, initializeCmd, keyCmd)
+
 }
 
 var rootCmd = &cobra.Command{
