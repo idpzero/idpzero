@@ -79,7 +79,8 @@ func main() {
 	myFigure := figure.NewColorFigure("idpzero", "", "yellow", true)
 	myFigure.Print()
 	fmt.Println()
-	fmt.Println()
+	//fmt.Println(lipgloss.NewStyle().Italic(true).Render("The identity provider for local dev/test experiences"))
+	//fmt.Println()
 
 	cli.Execute()
 

@@ -1,12 +1,14 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 
 	"github.com/idpzero/idpzero/internal/config"
 	"github.com/idpzero/idpzero/internal/idp"
 	"github.com/idpzero/idpzero/internal/server"
+	"github.com/idpzero/idpzero/internal/style"
 	"github.com/spf13/cobra"
 )
 
@@ -23,6 +25,14 @@ var startCmd = &cobra.Command{
 
 		if err != nil {
 			return err
+		}
+
+		configDebug(conf)
+
+		if !conf.Initialized() {
+			fmt.Println(style.WarningTextStyle.Render("Configuration not valid. Run 'idpzero init' to initialize configuration"))
+			fmt.Println()
+			os.Exit(1)
 		}
 
 		cfg := config.IDPConfiguration{}
@@ -55,6 +65,9 @@ var startCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+
+		fmt.Println("Starting IDP Server.")
+		fmt.Println()
 
 		return s.Run(ctx)
 	},

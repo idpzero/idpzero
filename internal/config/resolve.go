@@ -41,6 +41,10 @@ func (c *ConfigInformation) Config() ResolutionCheck {
 	return c.config
 }
 
+func (c *ConfigInformation) Initialized() bool {
+	return c.dir.exists && c.config.exists
+}
+
 func Resolve(path string) (*ConfigInformation, error) {
 
 	configDir, err := resolveDirectory(path)
