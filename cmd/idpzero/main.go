@@ -1,9 +1,6 @@
 package main
 
 import (
-	"fmt"
-
-	"github.com/common-nighthawk/go-figure"
 	"github.com/idpzero/idpzero/internal/cli"
 )
 
@@ -76,9 +73,6 @@ import (
 
 func main() {
 
-	myFigure := figure.NewColorFigure("idpzero", "", "yellow", true)
-	myFigure.Print()
-	fmt.Println()
 	//fmt.Println(lipgloss.NewStyle().Italic(true).Render("The identity provider for local dev/test experiences"))
 	//fmt.Println()
 

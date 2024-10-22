@@ -3,29 +3,26 @@ package cli
 import (
 	"fmt"
 
+	"github.com/fatih/color"
 	"github.com/idpzero/idpzero/internal/config"
-	"github.com/idpzero/idpzero/internal/style"
 )
 
 func configDebug(cfg *config.ConfigInformation) {
 
 	fmt.Println("Verifying IDP configuration...")
 
-	if cfg.Directory().Exists() {
-		fmt.Print(style.GreenTextStyle.Render(" ✓ "))
-	} else {
-		fmt.Print(style.ErrorTextStyle.Render(" x "))
-	}
+	printCheck(cfg.Directory().Exists(), "Configuration Directory Exists")
+	printCheck(cfg.Config().Exists(), "Configuration File Exists")
 
-	fmt.Println("Configuration Directory Exists")
-
-	if cfg.Config().Exists() {
-		fmt.Print(style.GreenTextStyle.Render(" ✓ "))
-	} else {
-		fmt.Print(style.ErrorTextStyle.Render(" x "))
-	}
-
-	fmt.Println("Configuration File Exists")
 	fmt.Println()
 
+}
+
+func printCheck(passed bool, msg string) {
+	var mark = color.RedString(" x ")
+	if passed {
+		mark = color.GreenString(" ✓ ")
+	}
+
+	fmt.Println(mark, msg)
 }

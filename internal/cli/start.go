@@ -5,10 +5,10 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/fatih/color"
 	"github.com/idpzero/idpzero/internal/config"
 	"github.com/idpzero/idpzero/internal/idp"
 	"github.com/idpzero/idpzero/internal/server"
-	"github.com/idpzero/idpzero/internal/style"
 	"github.com/spf13/cobra"
 )
 
@@ -30,7 +30,7 @@ var startCmd = &cobra.Command{
 		configDebug(conf)
 
 		if !conf.Initialized() {
-			fmt.Println(style.WarningTextStyle.Render("Configuration not valid. Run 'idpzero init' to initialize configuration"))
+			color.Yellow("Configuration not valid. Run 'idpzero init' to initialize configuration")
 			fmt.Println()
 			os.Exit(1)
 		}

@@ -5,10 +5,14 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/common-nighthawk/go-figure"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
 var (
+	noBanner *bool   = new(bool)
+	noColor  *bool   = new(bool)
 	location *string = new(string)
 	logger   *slog.Logger
 )
@@ -24,6 +28,8 @@ func init() {
 
 	keyCmd.AddCommand(addKeyCmd)
 
+	rootCmd.PersistentFlags().BoolVar(noBanner, "no-banner", false, "hide the banner and version information")
+	rootCmd.PersistentFlags().BoolVar(noColor, "no-color", false, "disable color output")
 	rootCmd.PersistentFlags().StringVar(location, "config", "", "configuration directory (default is .idpzero/ in current or parent heirachy)")
 	rootCmd.AddCommand(startCmd, initializeCmd, keyCmd)
 
@@ -32,6 +38,18 @@ func init() {
 var rootCmd = &cobra.Command{
 	Use:   "idpzero",
 	Short: "Single binary IDP for simplified dev/test experience",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+
+		if *noColor {
+			color.NoColor = true
+		}
+
+		if !*noBanner {
+			color.Yellow(figure.NewFigure("idpzero", "", true).String())
+			fmt.Println()
+		}
+
+	},
 }
 
 func Execute() {

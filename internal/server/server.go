@@ -7,10 +7,12 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/fatih/color"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/idpzero/idpzero/internal/config"
 	"github.com/idpzero/idpzero/internal/idp"
+	"github.com/savioxavier/termlink"
 )
 
 type Server struct {
@@ -70,6 +72,11 @@ func (s *Server) Run(ctx context.Context) error {
 		s.server.Shutdown(context.Background())
 		serverStopCtx()
 	}()
+
+	fmt.Println(
+		"Identity Provider started at",
+		color.CyanString(termlink.Link("http://localhost:4379", "http://localhost:4379")),
+	)
 
 	// Run the server
 	err := s.server.ListenAndServe()
