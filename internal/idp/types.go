@@ -2,6 +2,7 @@ package idp
 
 import (
 	jose "github.com/go-jose/go-jose/v4"
+	"github.com/idpzero/idpzero/internal/config"
 	"github.com/zitadel/oidc/v3/pkg/op"
 )
 
@@ -10,7 +11,7 @@ var (
 )
 
 type opKey struct {
-	key Key
+	key config.Key
 }
 
 func (s *opKey) ID() string {

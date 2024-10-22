@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/idpzero/idpzero/internal/config"
 	"github.com/idpzero/idpzero/internal/idp"
 )
 
@@ -17,10 +18,10 @@ type Server struct {
 	waiter sync.WaitGroup
 	lock   sync.RWMutex
 	logger *slog.Logger
-	config idp.IDPConfiguration
+	config config.IDPConfiguration
 }
 
-func NewServer(logger *slog.Logger, config idp.IDPConfiguration, storage *idp.Storage) (*Server, error) {
+func NewServer(logger *slog.Logger, config config.IDPConfiguration, storage *idp.Storage) (*Server, error) {
 
 	// Use chi as this is what OIDC is using internally, so keep it conistent
 	router := chi.NewRouter()
@@ -52,7 +53,7 @@ func NewServer(logger *slog.Logger, config idp.IDPConfiguration, storage *idp.St
 	return server, nil
 }
 
-func (s *Server) UpdateConfig(config idp.IDPConfiguration) {
+func (s *Server) UpdateConfig(config config.IDPConfiguration) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
