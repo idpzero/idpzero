@@ -22,7 +22,6 @@ require (
 	github.com/muhlemmer/gu v0.3.1 // indirect
 	github.com/muhlemmer/httpforwarded v0.1.0 // indirect
 	github.com/rs/cors v1.11.1 // indirect
-	github.com/samber/slog-chi v1.11.2 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/zitadel/logging v0.6.1 // indirect

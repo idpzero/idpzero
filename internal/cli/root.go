@@ -12,18 +12,19 @@ import (
 )
 
 var (
-	debug    *bool   = new(bool)
-	version  *bool   = new(bool)
-	noColor  *bool   = new(bool)
-	location *string = new(string)
-	logger   *slog.Logger
+	Version     VersionInfo = VersionInfo{Version: "dev", Commit: "none"}
+	debug       *bool       = new(bool)
+	showVersion *bool       = new(bool)
+	noColor     *bool       = new(bool)
+	location    *string     = new(string)
+	logger      *slog.Logger
 )
 
 func init() {
 
 	keyCmd.AddCommand(addKeyCmd)
 	rootCmd.PersistentFlags().BoolVar(debug, "debug", false, "show debug and logging in output")
-	rootCmd.PersistentFlags().BoolVar(version, "version", false, "show the version information in output")
+	rootCmd.PersistentFlags().BoolVar(showVersion, "version", false, "show the version information in output")
 	rootCmd.PersistentFlags().BoolVar(noColor, "no-color", false, "disable color output")
 	rootCmd.PersistentFlags().StringVar(location, "config", "", "configuration directory (default is .idpzero/ in current or parent heirachy)")
 	rootCmd.AddCommand(startCmd, initializeCmd, keyCmd)
@@ -39,8 +40,9 @@ var rootCmd = &cobra.Command{
 			color.NoColor = true
 		}
 
-		if *version {
+		if *showVersion { //revive:disable:unexported-return
 			color.Yellow(figure.NewFigure("idpzero", "", true).String())
+			fmt.Println("v", color.MagentaString(Version.Version), "sha", color.MagentaString(Version.Commit))
 			fmt.Println()
 		}
 
@@ -54,11 +56,9 @@ var rootCmd = &cobra.Command{
 		// setup the logger
 		logger = slog.New(
 			slog.NewTextHandler(output, &slog.HandlerOptions{
-				//AddSource: true,
 				Level: slog.LevelDebug,
 			}),
 		)
-
 	},
 }
 
