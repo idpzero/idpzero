@@ -39,7 +39,7 @@ var startCmd = &cobra.Command{
 		cfg.Server = config.ServerConfig{}
 		cfg.Server.Port = 4379
 		cfg.Server.KeyPhrase = "secret"
-		key1, err := idp.NewRSAKey("sample", "sig")
+		key1, err := config.NewRSAKey("sample", "sig")
 		if err != nil {
 			return err
 		}

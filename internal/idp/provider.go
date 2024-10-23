@@ -19,7 +19,7 @@ type ProviderOptions struct {
 	ExtraOptions []op.Option
 }
 
-func NewProvider(logger *slog.Logger, options ProviderOptions) (op.OpenIDProvider, error) {
+func NewProvider(logger *slog.Logger, options ProviderOptions) (*op.Provider, error) {
 	config := &op.Config{
 		CryptoKey: options.Key,
 

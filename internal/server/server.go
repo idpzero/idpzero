@@ -8,8 +8,8 @@ import (
 	"sync"
 
 	"github.com/fatih/color"
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/idpzero/idpzero/internal/config"
 	"github.com/idpzero/idpzero/internal/idp"
 	"github.com/savioxavier/termlink"
@@ -48,6 +48,13 @@ func NewServer(logger *slog.Logger, config config.IDPConfiguration, storage *idp
 	if err != nil {
 		return nil, err
 	}
+
+	// we need to add a route to the root because we  are mounting
+	// the provider on the root, we cant double map the '/'
+	rtr := provider.Handler.(*chi.Mux)
+	rtr.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hello, World!"))
+	})
 
 	router.Mount("/", provider)
 

@@ -1,7 +1,6 @@
 package idp
 
 import (
-	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
@@ -9,48 +8,6 @@ import (
 
 	"github.com/idpzero/idpzero/internal/config"
 )
-
-func NewRSAKey(id string, use string) (*config.Key, error) {
-
-	privkey, err := rsa.GenerateKey(rand.Reader, 2048)
-
-	if err != nil {
-		return nil, err
-	}
-
-	privkey_bytes := x509.MarshalPKCS1PrivateKey(privkey)
-	privkey_pem := pem.EncodeToMemory(
-		&pem.Block{
-			Type:  "RSA PRIVATE KEY",
-			Bytes: privkey_bytes,
-		},
-	)
-	privKeyPem := string(privkey_pem)
-
-	pubkey_bytes, err := x509.MarshalPKIXPublicKey(&privkey.PublicKey)
-	if err != nil {
-		return nil, err
-	}
-	pubkey_pem := pem.EncodeToMemory(
-		&pem.Block{
-			Type:  "RSA PUBLIC KEY",
-			Bytes: pubkey_bytes,
-		},
-	)
-
-	pubkey := string(pubkey_pem)
-
-	key := &config.Key{}
-	key.ID = id
-	key.Algorithm = "RS256"
-	key.Use = use
-	key.Data = map[string]string{
-		"private": privKeyPem,
-		"public":  pubkey,
-	}
-
-	return key, nil
-}
 
 func parseRSAPublicKey(key config.Key) (*rsa.PublicKey, error) {
 
