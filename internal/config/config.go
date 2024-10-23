@@ -81,7 +81,8 @@ func SetKey(doc *IDPConfiguration, key Key, replaceExisting bool) bool {
 		}
 	}
 
-	doc.Server.Keys = append(doc.Server.Keys, key)
+	// insert at the beginning so it gets picked up as priority
+	doc.Server.Keys = append([]Key{key}, doc.Server.Keys...)
 	return false
 }
 
