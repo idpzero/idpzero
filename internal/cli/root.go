@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 
@@ -11,7 +12,8 @@ import (
 )
 
 var (
-	noBanner *bool   = new(bool)
+	debug    *bool   = new(bool)
+	version  *bool   = new(bool)
 	noColor  *bool   = new(bool)
 	location *string = new(string)
 	logger   *slog.Logger
@@ -19,16 +21,9 @@ var (
 
 func init() {
 
-	logger = slog.New(
-		slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			//AddSource: true,
-			Level: slog.LevelDebug,
-		}),
-	)
-
 	keyCmd.AddCommand(addKeyCmd)
-
-	rootCmd.PersistentFlags().BoolVar(noBanner, "no-banner", false, "hide the banner and version information")
+	rootCmd.PersistentFlags().BoolVar(debug, "debug", false, "show debug and logging in output")
+	rootCmd.PersistentFlags().BoolVar(version, "version", false, "show the version information in output")
 	rootCmd.PersistentFlags().BoolVar(noColor, "no-color", false, "disable color output")
 	rootCmd.PersistentFlags().StringVar(location, "config", "", "configuration directory (default is .idpzero/ in current or parent heirachy)")
 	rootCmd.AddCommand(startCmd, initializeCmd, keyCmd)
@@ -44,10 +39,25 @@ var rootCmd = &cobra.Command{
 			color.NoColor = true
 		}
 
-		if !*noBanner {
+		if *version {
 			color.Yellow(figure.NewFigure("idpzero", "", true).String())
 			fmt.Println()
 		}
+
+		// default to discard logs
+		output := io.Discard
+
+		if *debug {
+			output = os.Stdout
+		}
+
+		// setup the logger
+		logger = slog.New(
+			slog.NewTextHandler(output, &slog.HandlerOptions{
+				//AddSource: true,
+				Level: slog.LevelDebug,
+			}),
+		)
 
 	},
 }

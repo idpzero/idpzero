@@ -27,7 +27,7 @@ var startCmd = &cobra.Command{
 			return err
 		}
 
-		configDebug(conf)
+		config.PrintChecks(conf)
 
 		if !conf.Initialized() {
 			color.Yellow("Configuration not valid. Run 'idpzero init' to initialize configuration")
@@ -65,9 +65,6 @@ var startCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-
-		fmt.Println("Starting IDP Server.")
-		fmt.Println()
 
 		return s.Run(ctx)
 	},

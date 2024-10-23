@@ -1,16 +1,15 @@
-package cli
+package config
 
 import (
 	"fmt"
 
 	"github.com/fatih/color"
-	"github.com/idpzero/idpzero/internal/config"
 )
 
-func configDebug(cfg *config.ConfigInformation) {
+// PrintChecks prints the existance of each part of the configuration
+func PrintChecks(cfg *ConfigInformation) {
 
 	fmt.Println("Verifying IDP configuration...")
-
 	printCheck(cfg.Directory().Exists(), "Configuration Directory Exists")
 	printCheck(cfg.Config().Exists(), "Configuration File Exists")
 

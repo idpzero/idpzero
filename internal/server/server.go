@@ -37,8 +37,8 @@ func NewServer(logger *slog.Logger, config config.IDPConfiguration, storage *idp
 	}
 
 	router.Use(middleware.RequestID)
-	router.Use(middleware.Logger)
 	router.Use(setProviderFromRequest) // set the issuer based on the request URL
+	router.Use(middleware.Recoverer)
 
 	options := idp.ProviderOptions{
 		Storage: storage,
@@ -50,7 +50,6 @@ func NewServer(logger *slog.Logger, config config.IDPConfiguration, storage *idp
 	}
 
 	router.Mount("/", provider)
-	//router.Handle("/", provider)
 
 	return server, nil
 }
@@ -69,13 +68,17 @@ func (s *Server) Run(ctx context.Context) error {
 
 	go func() {
 		<-ctx.Done()
+		fmt.Println()
+		color.Green("Initiating shutting down...")
 		s.server.Shutdown(context.Background())
 		serverStopCtx()
 	}()
 
+	hosted := fmt.Sprintf("http://localhost:%d", s.config.Server.Port)
+
 	fmt.Println(
 		"Identity Provider started at",
-		color.CyanString(termlink.Link("http://localhost:4379", "http://localhost:4379")),
+		color.CyanString(termlink.Link(hosted, hosted)),
 	)
 
 	// Run the server
@@ -83,7 +86,9 @@ func (s *Server) Run(ctx context.Context) error {
 	if err != nil && err != http.ErrServerClosed {
 		return err
 	}
+
 	<-serverCtx.Done() // wait for shutdown to complete
+	color.Green("Shutdown complete. Bye!")
 
 	return nil
 }

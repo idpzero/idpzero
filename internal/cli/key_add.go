@@ -22,7 +22,7 @@ var addKeyCmd = &cobra.Command{
 			return err
 		}
 
-		configDebug(conf)
+		config.PrintChecks(conf)
 
 		if !conf.Initialized() {
 			color.Yellow("Configuration not valid. Run 'idpzero init' to initialize configuration")

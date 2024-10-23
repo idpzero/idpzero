@@ -49,6 +49,8 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/rs/cors v1.11.1 h1:eU3gRzXLRK57F5rKMGMZURNdIG4EoAmX8k94r9wXWHA=
 github.com/rs/cors v1.11.1/go.mod h1:XyqrcTp5zjWr1wsJ8PIRZssZ8b/WMcMf71DJnit4EMU=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
+github.com/samber/slog-chi v1.11.2 h1:Avfi/etF359iuwuEYiqEd4avilHSo8DjtdJ7aFN1dQE=
+github.com/samber/slog-chi v1.11.2/go.mod h1:7qAkvO1Ip/qlIo0x7vysl4xIAtZF6CGFLtVNQDX2Nvc=
 github.com/savioxavier/termlink v1.4.1 h1:pFcd+XH8iQjL+2mB4buCDUo+CMt5kKsr8jGG+VLfYAg=
 github.com/savioxavier/termlink v1.4.1/go.mod h1:5T5ePUlWbxCHIwyF8/Ez1qufOoGM89RCg9NvG+3G3gc=
 github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=
