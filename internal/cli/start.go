@@ -44,7 +44,7 @@ var startCmd = &cobra.Command{
 			return err
 		}
 
-		cfg.Server.SigningKeys = append(cfg.Server.SigningKeys, *key1)
+		cfg.Server.Keys = append(cfg.Server.Keys, *key1)
 		cfg.Clients = []config.ClientConfig{}
 
 		err = config.Save(&cfg, conf.Config().Path())

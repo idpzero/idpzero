@@ -126,11 +126,11 @@ func (s *Storage) Health(context.Context) error {
 
 // KeySet implements op.Storage.
 func (s *Storage) KeySet(context.Context) ([]op.Key, error) {
-	keys := make([]op.Key, 0, len(s.config.Server.SigningKeys))
+	keys := make([]op.Key, 0, len(s.config.Server.Keys))
 
-	for _, key := range s.config.Server.SigningKeys {
+	for _, key := range s.config.Server.Keys {
 		if key.Use == "sig" {
-			keys = append(keys, &opKey{key: key})
+			keys = append(keys, &opPublicKey{key: key})
 		}
 	}
 
@@ -166,7 +166,7 @@ func (s *Storage) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.UserI
 func (s *Storage) SignatureAlgorithms(context.Context) ([]jose.SignatureAlgorithm, error) {
 	algs := make([]jose.SignatureAlgorithm, 0)
 
-	for _, key := range s.config.Server.SigningKeys {
+	for _, key := range s.config.Server.Keys {
 		if key.Use == "sig" {
 			sa := jose.SignatureAlgorithm(key.Algorithm)
 			algs = append(algs, sa)

@@ -9,9 +9,9 @@ import (
 )
 
 type ServerConfig struct {
-	Port        int    `yaml:"port"`
-	KeyPhrase   string `yaml:"keyphrase"`
-	SigningKeys []Key  `yaml:"signingKeys"`
+	Port      int    `yaml:"port"`
+	KeyPhrase string `yaml:"keyphrase"`
+	Keys      []Key  `yaml:"keys"`
 }
 
 type Key struct {
@@ -31,6 +31,17 @@ type ClientConfig struct {
 type IDPConfiguration struct {
 	Server  ServerConfig   `yaml:"server"`
 	Clients []ClientConfig `yaml:"clients"`
+}
+
+func LoadFromFile(doc *IDPConfiguration, path string) error {
+
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	return Parse(doc, file)
 }
 
 func Parse(doc *IDPConfiguration, reader io.Reader) error {
@@ -54,4 +65,45 @@ func Save(doc *IDPConfiguration, path string) error {
 	}
 
 	return os.WriteFile(path, data, 0644)
+}
+
+// SetKey adds a new key to the configuration. If the key already exists, it will be replaced if replaceExisting is true.
+// Returns true if the key was replaced, false if it was added.
+func SetKey(doc *IDPConfiguration, key Key, replaceExisting bool) bool {
+
+	for i, k := range doc.Server.Keys {
+		if k.ID == key.ID {
+			if replaceExisting {
+				doc.Server.Keys[i] = key
+				return true
+			}
+			break
+		}
+	}
+
+	doc.Server.Keys = append(doc.Server.Keys, key)
+	return false
+}
+
+// RemoveKey removes a key from the configuration if it exists. Returns true if removed, false if not found.
+func RemoveKey(cfg *IDPConfiguration, kid string) bool {
+	for i, key := range cfg.Server.Keys {
+		if key.ID == kid {
+			cfg.Server.Keys = append(cfg.Server.Keys[:i], cfg.Server.Keys[i+1:]...)
+			return true
+		}
+	}
+
+	return false
+}
+
+func KeyExists(doc *IDPConfiguration, id string) bool {
+
+	for _, k := range doc.Server.Keys {
+		if k.ID == id {
+			return true
+		}
+	}
+
+	return false
 }
