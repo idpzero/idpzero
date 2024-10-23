@@ -178,7 +178,14 @@ func (s *Storage) SignatureAlgorithms(context.Context) ([]jose.SignatureAlgorith
 
 // SigningKey implements op.Storage.
 func (s *Storage) SigningKey(context.Context) (op.SigningKey, error) {
-	panic("unimplemented SigningKey")
+
+	for _, key := range s.config.Server.Keys {
+		if key.Use == "sig" {
+			return &opPrivateKey{key: key}, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no signing key found")
 }
 
 // TerminateSession implements op.Storage.

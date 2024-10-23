@@ -7,7 +7,8 @@ import (
 )
 
 var (
-	_ op.Key = &opPublicKey{} // make sure my type implements the interface
+	_ op.Key        = &opPublicKey{}  // make sure my type implements the interface
+	_ op.SigningKey = &opPrivateKey{} // make sure my type implements the interface
 )
 
 type opPublicKey struct {
@@ -34,4 +35,27 @@ func (s *opPublicKey) Key() any {
 	}
 	return parsed
 
+}
+
+type opPrivateKey struct {
+	key config.Key
+}
+
+func (s *opPrivateKey) SignatureAlgorithm() jose.SignatureAlgorithm {
+	return jose.SignatureAlgorithm(s.key.Algorithm)
+}
+
+func (s *opPrivateKey) Key() any {
+
+	priv, _, err := parseRSAKey(s.key)
+
+	if err != nil {
+		return err
+	}
+
+	return priv
+}
+
+func (s *opPrivateKey) ID() string {
+	return s.key.ID
 }
