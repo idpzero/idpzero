@@ -12,7 +12,6 @@ require (
 
 require (
 	github.com/bmatcuk/doublestar/v4 v4.6.1 // indirect
-	github.com/go-chi/chi/v5 v5.1.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
