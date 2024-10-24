@@ -34,7 +34,7 @@ var initializeCmd = &cobra.Command{
 		}
 
 		if conf.Initialized() {
-			color.Red("Configuration already initialized in '%s'", conf.Directory().Path())
+			color.Red("Configuration already initialized in '%s'", conf.DirectoryPath())
 			fmt.Println()
 			os.Exit(1)
 		}
@@ -49,7 +49,7 @@ var initializeCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Printf("Initializing new configuration directory '%s'\n", conf.Directory().Path())
+		fmt.Printf("Initializing new configuration directory '%s'\n", conf.DirectoryPath())
 		fmt.Println()
 
 		cfg.Server.Keys = append(cfg.Server.Keys, *signingKey)

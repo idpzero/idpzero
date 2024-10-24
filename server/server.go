@@ -20,10 +20,10 @@ type Server struct {
 	waiter sync.WaitGroup
 	lock   sync.RWMutex
 	logger *slog.Logger
-	config configuration.IDPConfiguration
+	config *configuration.IDPConfiguration
 }
 
-func NewServer(logger *slog.Logger, config configuration.IDPConfiguration, storage *idp.Storage) (*Server, error) {
+func NewServer(logger *slog.Logger, config *configuration.IDPConfiguration, storage *idp.Storage) (*Server, error) {
 
 	// Use chi as this is what OIDC is using internally, so keep it conistent
 	router := chi.NewRouter()
@@ -61,7 +61,7 @@ func NewServer(logger *slog.Logger, config configuration.IDPConfiguration, stora
 	return server, nil
 }
 
-func (s *Server) UpdateConfig(config configuration.IDPConfiguration) {
+func (s *Server) UpdateConfig(config *configuration.IDPConfiguration) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 

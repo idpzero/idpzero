@@ -1,12 +1,5 @@
 package configuration
 
-import (
-	"bytes"
-	"io"
-
-	"gopkg.in/yaml.v2"
-)
-
 type ServerConfig struct {
 	Port      int    `yaml:"port"`
 	KeyPhrase string `yaml:"keyphrase"`
@@ -31,30 +24,3 @@ type IDPConfiguration struct {
 	Server  ServerConfig   `yaml:"server"`
 	Clients []ClientConfig `yaml:"clients"`
 }
-
-func Parse(reader io.Reader) (*IDPConfiguration, error) {
-	doc := &IDPConfiguration{}
-	buf := new(bytes.Buffer)
-	_, err := buf.ReadFrom(reader)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if yaml.Unmarshal(buf.Bytes(), doc); err != nil {
-		return nil, err
-	}
-
-	return doc, nil
-}
-
-// func Save(doc *IDPConfiguration, path string) error {
-
-// 	data, err := yaml.Marshal(*doc)
-
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return os.WriteFile(path, data, 0644)
-// }

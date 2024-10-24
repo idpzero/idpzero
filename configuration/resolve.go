@@ -1,8 +1,10 @@
 package configuration
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -18,55 +20,32 @@ const (
 	configFilename string = "config.yaml"
 )
 
-type ConfigurationCheck struct {
-	exists   bool
-	location string
-}
-
-func (r ConfigurationCheck) Exists() bool {
-	return r.exists
-}
-
-func (r ConfigurationCheck) Path() string {
-	return r.location
-}
-
-type DirectoryCheck struct {
-	exists   bool
-	location string
-}
-
-func (r DirectoryCheck) Exists() bool {
-	return r.exists
-}
-
-func (r DirectoryCheck) Path() string {
-	return r.location
-}
-
 type ConfigInformation struct {
-	dir    *DirectoryCheck
-	config *ConfigurationCheck
+	dirPath   string
+	dirExists bool
+
+	configPath   string
+	configExists bool
 }
 
-func (c *ConfigInformation) Directory() *DirectoryCheck {
-	return c.dir
+func (c *ConfigInformation) DirectoryPath() string {
+	return c.dirPath
 }
 
-func (c *ConfigInformation) Config() *ConfigurationCheck {
-	return c.config
+func (c *ConfigInformation) ConfigFilePath() string {
+	return c.configPath
 }
 
 func (c *ConfigInformation) Initialized() bool {
-	return c.dir.exists && c.config.exists
+	return c.dirExists && c.configExists
 }
 
 // PrintChecks prints the existance of each part of the configuration to the console
 func (cfg *ConfigInformation) PrintStatus() {
 
-	fmt.Println("Verifying IDP configuration...")
-	printCheck(cfg.Directory().Exists(), fmt.Sprintf("Configuration Directory Exists (%s)", cfg.Directory().Path()))
-	printCheck(cfg.Config().Exists(), fmt.Sprintf("Configuration File Exists (%s)", configFilename))
+	fmt.Println("IDP configuration checks:")
+	printCheck(cfg.dirExists, fmt.Sprintf("Configuration Directory Exists (%s)", cfg.dirPath))
+	printCheck(cfg.configExists, fmt.Sprintf("Configuration File Exists (%s)", cfg.configPath))
 
 	fmt.Println()
 
@@ -80,27 +59,29 @@ func (r *ConfigInformation) Save(config *IDPConfiguration) error {
 		return err
 	}
 
-	if !r.dir.exists {
-		if err := os.Mkdir(r.dir.location, 0755); err != nil {
+	if !r.dirExists {
+		if err := os.Mkdir(r.dirPath, 0755); err != nil {
 			return err
 		}
-		r.dir.exists = true
+		r.dirExists = true
 	}
 
-	return os.WriteFile(r.config.location, data, 0644)
+	return os.WriteFile(r.configPath, data, 0644)
 }
 
 func (r *ConfigInformation) Load() (*IDPConfiguration, error) {
-	file, err := os.Open(r.config.location)
+	file, err := os.Open(r.configPath)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	return Parse(file)
+	return parse(file)
 }
 
 func Resolve(path string) (*ConfigInformation, error) {
+
+	ci := &ConfigInformation{}
 
 	configDir, err := resolveDirectory(path)
 
@@ -108,30 +89,33 @@ func Resolve(path string) (*ConfigInformation, error) {
 		return nil, err
 	}
 
-	dirCheck := &DirectoryCheck{true, configDir}
+	ci.dirPath = configDir
 
-	_, err = os.Stat(path)
-
+	_, err = os.Stat(ci.dirPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			dirCheck.exists = false
+			ci.dirExists = false
 		} else {
 			return nil, err
 		}
+	} else {
+		ci.dirExists = true
 	}
 
-	configCheck := &ConfigurationCheck{true, filepath.Join(configDir, configFilename)}
-	_, err = os.Stat(filepath.Join(path, configFilename))
+	ci.configPath = filepath.Join(configDir, configFilename)
+	_, err = os.Stat(ci.configPath)
 
 	if err != nil {
 		if os.IsNotExist(err) {
-			configCheck.exists = false
+			ci.configExists = false
 		} else {
 			return nil, err
 		}
+	} else {
+		ci.configExists = true
 	}
 
-	return &ConfigInformation{dirCheck, configCheck}, nil
+	return ci, nil
 }
 
 func DefaultDirectory() (string, error) {
@@ -193,6 +177,22 @@ func discoverConfigDir(cwd string) (string, error) {
 	}
 
 	return "", ErrDiscoveryFailed
+}
+
+func parse(reader io.Reader) (*IDPConfiguration, error) {
+	doc := &IDPConfiguration{}
+	buf := new(bytes.Buffer)
+	_, err := buf.ReadFrom(reader)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if yaml.Unmarshal(buf.Bytes(), doc); err != nil {
+		return nil, err
+	}
+
+	return doc, nil
 }
 
 // // EnsureDirectory checks if the directory exists at the path provided and creates it if it doesn't.

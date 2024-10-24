@@ -35,24 +35,14 @@ var startCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		cfg := configuration.IDPConfiguration{}
-		cfg.Server = configuration.ServerConfig{}
-		cfg.Server.Port = 4379
-		cfg.Server.KeyPhrase = "secret"
-		key1, err := configuration.NewRSAKey("sample", "sig")
+		cfg, err := conf.Load()
+
 		if err != nil {
 			return err
 		}
 
-		cfg.Server.Keys = append(cfg.Server.Keys, *key1)
-		cfg.Clients = []configuration.ClientConfig{}
-
-		if conf.Save(&cfg); err != nil {
-			return err
-		}
-
 		idpStore, err := idp.NewStorage(logger)
-		idpStore.SetConfig(&cfg)
+		idpStore.SetConfig(cfg)
 
 		if err != nil {
 			return err
