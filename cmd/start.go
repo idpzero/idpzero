@@ -47,9 +47,7 @@ var startCmd = &cobra.Command{
 		cfg.Server.Keys = append(cfg.Server.Keys, *key1)
 		cfg.Clients = []configuration.ClientConfig{}
 
-		err = configuration.Save(&cfg, conf.Config().Path())
-
-		if err != nil {
+		if conf.Save(&cfg); err != nil {
 			return err
 		}
 

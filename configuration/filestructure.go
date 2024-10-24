@@ -3,7 +3,6 @@ package configuration
 import (
 	"bytes"
 	"io"
-	"os"
 
 	"gopkg.in/yaml.v2"
 )
@@ -33,36 +32,29 @@ type IDPConfiguration struct {
 	Clients []ClientConfig `yaml:"clients"`
 }
 
-func LoadFromFile(doc *IDPConfiguration, path string) error {
-
-	file, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	return Parse(doc, file)
-}
-
-func Parse(doc *IDPConfiguration, reader io.Reader) error {
-
+func Parse(reader io.Reader) (*IDPConfiguration, error) {
+	doc := &IDPConfiguration{}
 	buf := new(bytes.Buffer)
 	_, err := buf.ReadFrom(reader)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return yaml.Unmarshal(buf.Bytes(), doc)
-}
-
-func Save(doc *IDPConfiguration, path string) error {
-
-	data, err := yaml.Marshal(*doc)
-
-	if err != nil {
-		return err
+	if yaml.Unmarshal(buf.Bytes(), doc); err != nil {
+		return nil, err
 	}
 
-	return os.WriteFile(path, data, 0644)
+	return doc, nil
 }
+
+// func Save(doc *IDPConfiguration, path string) error {
+
+// 	data, err := yaml.Marshal(*doc)
+
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	return os.WriteFile(path, data, 0644)
+// }

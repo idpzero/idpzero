@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -16,29 +18,42 @@ const (
 	configFilename string = "config.yaml"
 )
 
-type ResolutionCheck struct {
+type ConfigurationCheck struct {
 	exists   bool
 	location string
 }
 
-func (r ResolutionCheck) Exists() bool {
+func (r ConfigurationCheck) Exists() bool {
 	return r.exists
 }
 
-func (r ResolutionCheck) Path() string {
+func (r ConfigurationCheck) Path() string {
+	return r.location
+}
+
+type DirectoryCheck struct {
+	exists   bool
+	location string
+}
+
+func (r DirectoryCheck) Exists() bool {
+	return r.exists
+}
+
+func (r DirectoryCheck) Path() string {
 	return r.location
 }
 
 type ConfigInformation struct {
-	dir    ResolutionCheck
-	config ResolutionCheck
+	dir    *DirectoryCheck
+	config *ConfigurationCheck
 }
 
-func (c *ConfigInformation) Directory() ResolutionCheck {
+func (c *ConfigInformation) Directory() *DirectoryCheck {
 	return c.dir
 }
 
-func (c *ConfigInformation) Config() ResolutionCheck {
+func (c *ConfigInformation) Config() *ConfigurationCheck {
 	return c.config
 }
 
@@ -50,11 +65,39 @@ func (c *ConfigInformation) Initialized() bool {
 func (cfg *ConfigInformation) PrintStatus() {
 
 	fmt.Println("Verifying IDP configuration...")
-	printCheck(cfg.Directory().Exists(), "Configuration Directory Exists")
-	printCheck(cfg.Config().Exists(), "Configuration File Exists")
+	printCheck(cfg.Directory().Exists(), fmt.Sprintf("Configuration Directory Exists (%s)", cfg.Directory().Path()))
+	printCheck(cfg.Config().Exists(), fmt.Sprintf("Configuration File Exists (%s)", configFilename))
 
 	fmt.Println()
 
+}
+
+func (r *ConfigInformation) Save(config *IDPConfiguration) error {
+
+	data, err := yaml.Marshal(*config)
+
+	if err != nil {
+		return err
+	}
+
+	if !r.dir.exists {
+		if err := os.Mkdir(r.dir.location, 0755); err != nil {
+			return err
+		}
+		r.dir.exists = true
+	}
+
+	return os.WriteFile(r.config.location, data, 0644)
+}
+
+func (r *ConfigInformation) Load() (*IDPConfiguration, error) {
+	file, err := os.Open(r.config.location)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	return Parse(file)
 }
 
 func Resolve(path string) (*ConfigInformation, error) {
@@ -65,7 +108,7 @@ func Resolve(path string) (*ConfigInformation, error) {
 		return nil, err
 	}
 
-	dirCheck := ResolutionCheck{true, configDir}
+	dirCheck := &DirectoryCheck{true, configDir}
 
 	_, err = os.Stat(filepath.Join(path, configFilename))
 
@@ -77,7 +120,7 @@ func Resolve(path string) (*ConfigInformation, error) {
 		}
 	}
 
-	configCheck := ResolutionCheck{true, filepath.Join(configDir, configFilename)}
+	configCheck := &ConfigurationCheck{true, filepath.Join(configDir, configFilename)}
 	_, err = os.Stat(filepath.Join(path, configFilename))
 
 	if err != nil {
@@ -89,6 +132,16 @@ func Resolve(path string) (*ConfigInformation, error) {
 	}
 
 	return &ConfigInformation{dirCheck, configCheck}, nil
+}
+
+func DefaultDirectory() (string, error) {
+	cwd, err := os.Getwd()
+
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(cwd, directory), nil
 }
 
 func resolveDirectory(path string) (string, error) {

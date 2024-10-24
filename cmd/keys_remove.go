@@ -23,8 +23,10 @@ var removeKeyCmd = &cobra.Command{
 
 		ensureInitialized(conf)
 
-		cfg := &configuration.IDPConfiguration{}
-		if configuration.LoadFromFile(cfg, conf.Config().Path()); err != nil {
+		cfg, err := conf.Load()
+
+		if err != nil {
+			color.Red("Failed to load configuration from '%s'", conf.Config().Path())
 			return err
 		}
 
@@ -33,7 +35,7 @@ var removeKeyCmd = &cobra.Command{
 		if removed {
 			fmt.Printf("Key '%s' removed from configuration\n", *kid)
 
-			if configuration.Save(cfg, conf.Config().Path()); err != nil {
+			if conf.Save(cfg); err != nil {
 				color.Red("Failed to save configuration")
 				return err
 			}

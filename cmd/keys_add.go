@@ -9,17 +9,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func ensureInitialized(conf *configuration.ConfigInformation) {
-
-	conf.PrintStatus()
-
-	if !conf.Initialized() {
-		color.Yellow("Configuration not valid. Run 'idpzero init' to initialize configuration")
-		fmt.Println()
-		os.Exit(1)
-	}
-}
-
 var addKeyCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Add new key to configuration file",
@@ -35,8 +24,10 @@ var addKeyCmd = &cobra.Command{
 
 		ensureInitialized(conf)
 
-		cfg := &configuration.IDPConfiguration{}
-		if configuration.LoadFromFile(cfg, conf.Config().Path()); err != nil {
+		cfg, err := conf.Load()
+
+		if err != nil {
+			color.Red("Failed to load configuration from '%s'", conf.Config().Path())
 			return err
 		}
 
@@ -61,7 +52,7 @@ var addKeyCmd = &cobra.Command{
 			fmt.Printf("Added new key '%s' to configuration\n", *kid)
 		}
 
-		if configuration.Save(cfg, conf.Config().Path()); err != nil {
+		if conf.Save(cfg); err != nil {
 			color.Red("Failed to save configuration")
 			return err
 		}
