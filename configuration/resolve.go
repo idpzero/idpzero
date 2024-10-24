@@ -110,7 +110,7 @@ func Resolve(path string) (*ConfigInformation, error) {
 
 	dirCheck := &DirectoryCheck{true, configDir}
 
-	_, err = os.Stat(filepath.Join(path, configFilename))
+	_, err = os.Stat(path)
 
 	if err != nil {
 		if os.IsNotExist(err) {
