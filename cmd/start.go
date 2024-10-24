@@ -42,11 +42,24 @@ var startCmd = &cobra.Command{
 		}
 
 		idpStore, err := idp.NewStorage(logger)
-		idpStore.SetConfig(cfg)
 
 		if err != nil {
 			return err
 		}
+
+		idpStore.SetConfig(cfg)
+
+		// watch for changes and set it again.
+		w, err := configuration.NewWatcher(conf, func(x *configuration.IDPConfiguration) {
+			color.Yellow("Configuration changed. Reloading...")
+			idpStore.SetConfig(x)
+		})
+
+		if err != nil {
+			return err
+		}
+
+		defer w.Close() // wait for the tiy up.
 
 		s, err := server.NewServer(logger, cfg, idpStore)
 

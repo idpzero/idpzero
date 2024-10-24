@@ -1,0 +1,47 @@
+server:
+  port: 4379
+  keyphrase: 060df9bc-aea6-41bd-b702-8bcfc5c058e6
+  keys:
+  - id: signing-key
+    algorithm: RS256
+    use: sig
+    data:
+      private: |
+        -----BEGIN RSA PRIVATE KEY-----
+        MIIEpAIBAAKCAQEA4WQy5TzO+NUVq5Uer7ppc37umEp1655wB19pJdQaeYIQaEDA
+        YeOUQIJfQ/yJT4nXim7y7TkHp7fGP97PPu+J2WRJa8QnGRHu/XdIQYUGBF/MIX3S
+        WQzz+gr5BlnYDdXk4mTXnaDhLKwDF/pA4Xlro5Ue0XDEF2i05qJmJBVO4OjM/PGV
+        Z3N9i6Ew1UkI3IRCBIEiwhJ9Zvw85beKNIaFb+NJ7v6xoYy8hT/OnEy+nOrElpoX
+        53KZc9+as4+vclfURFBT+lF+EsGXYGkZ2wGDDAgCFk2EKpyO4FKFdFixAZiZPkew
+        bl17nlkDuCv88yv6ziro0dF1u8gmPr3o7M8OoQIDAQABAoIBADwbIWt6hONcx9Oj
+        B7TrLFXtgqlAKiQ0c0G0EvFQl+LRaZizs9om+5Ecc1VJEkEQzFcRcV0LuVvjqU29
+        GF17ObKsiNvhSl/oJWiYl79JPyqJdYF08VRoHOQQawpjiTdfVBN/uvRBQ+tKz+Rk
+        C0tVuvu7t6U4wkJP3PYoVr7Go+tcCZfBQdLlFB1gy7xYbCDt/t6lUshQX/+dfluO
+        bAMpsYQ2uU+Y3Xjv38BwA4oKgQJiQ/dLK79F83DiJ1cV9anPq6XAqfGG7vACdCRR
+        9JRIfg432ZS0BmjrPWYOO8fu7xp6fqBOBP5CrTvWV6tlHpYySo5I2CgaQ+jwIdsu
+        p9pCVuUCgYEA5bTNY32TIM+eJHe8A9qWW0goKQka02g146yPyFPOLHwL+UN0LlqT
+        t8yHunXDUNbmry10yFUMLjPhkOK/tE3nAqU66Xfnpxdc/ot52xemT/x7L2UF/bw8
+        SRwmVlM55KyQP2qVqPOWpkVgdm7ObcrH7c6ZB1yki9Qv4Abjf7t2MDsCgYEA+zD0
+        wcDC64PD/N2wDNqGW9mvL7C/aW2BUFEQU781z46qQC/Drqb/sBE1weM2/Xhkow/H
+        Ae6Rj5u5ErfRoBDHRzj72GyESXSgk96WBtlP8elV1olp7mM4NMF/V5lPU2xI273N
+        V9GdI3E0YX5SCBmoKrIXdl5GU9Wxzvc0b5hZCtMCgYARxEtCj7rqhcR4k55COgz5
+        IHqiueaORXgtlPJGD11aCXovnG0HDNByHeq9nFAwF38eO4jV2eYoSLEAsNkdDA17
+        IeaNmk2bme4Cbi1NqeWeOCwa/VhaSM3s5bV9ZdCLhGFf1lGfEMAtOh586pMi4NVX
+        6mvhquO7QP02+bFs9sXscwKBgQCEP1odSCdXZ6Af2Xd+zO5AHXOmYB/mmcijSIqY
+        DOt/w1TPRlZ39WRYhjcPRVkGSgRx9TSJR9lLCml9+VlcNHk2fkHZyAg9xDFmqKHE
+        KVV1v6t5sA8dew90dwtcS1MAUNprFpqtyaY5qrgxPBhkO13WXL0NjMTqDm/2zx/E
+        QSlgEQKBgQDe2n3o4NOegiEVwmS8qhqRnE66bM9rGxgIysQPgH+xEXev9xdNCMWP
+        8YS1yfj7RBjRq0lGEJ8+lBEkhs+QFwVlhXOWQwuGk2diTtNz3zpwRuvdBOyw4HzV
+        Npw+GJZxW+HGb9BiumCV2x4jwK4yrolf3SHA0vt8sLpf8URLBwx0aA==
+        -----END RSA PRIVATE KEY-----
+      public: |
+        -----BEGIN RSA PUBLIC KEY-----
+        MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4WQy5TzO+NUVq5Uer7pp
+        c37umEp1655wB19pJdQaeYIQaEDAYeOUQIJfQ/yJT4nXim7y7TkHp7fGP97PPu+J
+        2WRJa8QnGRHu/XdIQYUGBF/MIX3SWQzz+gr5BlnYDdXk4mTXnaDhLKwDF/pA4Xlr
+        o5Ue0XDEF2i05qJmJBVO4OjM/PGVZ3N9i6Ew1UkI3IRCBIEiwhJ9Zvw85beKNIaF
+        b+NJ7v6xoYy8hT/OnEy+nOrElpoX53KZc9+as4+vclfURFBT+lF+EsGXYGkZ2wGD
+        DAgCFk2EKpyO4FKFdFixAZiZPkewbl17nlkDuCv88yv6ziro0dF1u8gmPr3o7M8O
+        oQIDAQAB
+        -----END RSA PUBLIC KEY-----
+clients: []

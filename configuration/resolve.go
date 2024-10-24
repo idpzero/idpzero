@@ -3,7 +3,6 @@ package configuration
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -14,70 +13,6 @@ import (
 var (
 	ErrDiscoveryFailed = errors.New("no configuration directory found")
 )
-
-const (
-	directory      string = ".idpzero"
-	configFilename string = "config.yaml"
-)
-
-type ConfigInformation struct {
-	dirPath   string
-	dirExists bool
-
-	configPath   string
-	configExists bool
-}
-
-func (c *ConfigInformation) DirectoryPath() string {
-	return c.dirPath
-}
-
-func (c *ConfigInformation) ConfigFilePath() string {
-	return c.configPath
-}
-
-func (c *ConfigInformation) Initialized() bool {
-	return c.dirExists && c.configExists
-}
-
-// PrintChecks prints the existance of each part of the configuration to the console
-func (cfg *ConfigInformation) PrintStatus() {
-
-	fmt.Println("IDP configuration checks:")
-	printCheck(cfg.dirExists, fmt.Sprintf("Configuration Directory Exists (%s)", cfg.dirPath))
-	printCheck(cfg.configExists, fmt.Sprintf("Configuration File Exists (%s)", cfg.configPath))
-
-	fmt.Println()
-
-}
-
-func (r *ConfigInformation) Save(config *IDPConfiguration) error {
-
-	data, err := yaml.Marshal(*config)
-
-	if err != nil {
-		return err
-	}
-
-	if !r.dirExists {
-		if err := os.Mkdir(r.dirPath, 0755); err != nil {
-			return err
-		}
-		r.dirExists = true
-	}
-
-	return os.WriteFile(r.configPath, data, 0644)
-}
-
-func (r *ConfigInformation) Load() (*IDPConfiguration, error) {
-	file, err := os.Open(r.configPath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	return parse(file)
-}
 
 func Resolve(path string) (*ConfigInformation, error) {
 
@@ -188,27 +123,27 @@ func parse(reader io.Reader) (*IDPConfiguration, error) {
 		return nil, err
 	}
 
-	if yaml.Unmarshal(buf.Bytes(), doc); err != nil {
+	if err := yaml.Unmarshal(buf.Bytes(), doc); err != nil {
 		return nil, err
 	}
 
 	return doc, nil
 }
 
-// // EnsureDirectory checks if the directory exists at the path provided and creates it if it doesn't.
-// func ensureDirectory(path string) error {
-// 	if !filepath.IsAbs(path) {
-// 		return errors.New("path must be absolute")
-// 	}
+// EnsureDirectory checks if the directory exists at the path provided and creates it if it doesn't.
+func ensureDirectory(path string) error {
+	if !filepath.IsAbs(path) {
+		return errors.New("path must be absolute")
+	}
 
-// 	if _, err := os.Stat(path); os.IsNotExist(err) {
-// 		// create the directory
-// 		if err := os.Mkdir(path, 0755); err != nil {
-// 			return err
-// 		}
-// 	} else if err != nil {
-// 		return err
-// 	}
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		// create the directory
+		if err := os.Mkdir(path, 0755); err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	}
 
-// 	return nil
-// }
+	return nil
+}
