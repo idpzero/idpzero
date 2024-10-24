@@ -1,10 +1,10 @@
-package cli
+package cmd
 
 import (
 	"fmt"
 
 	"github.com/fatih/color"
-	"github.com/idpzero/idpzero/internal/config"
+	"github.com/idpzero/idpzero/configuration"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +15,7 @@ var removeKeyCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		// get the config dir to use from the path or discovery
-		conf, err := config.Resolve(*location)
+		conf, err := configuration.Resolve(*location)
 
 		if err != nil {
 			return err
@@ -23,17 +23,17 @@ var removeKeyCmd = &cobra.Command{
 
 		ensureInitialized(conf)
 
-		cfg := &config.IDPConfiguration{}
-		if config.LoadFromFile(cfg, conf.Config().Path()); err != nil {
+		cfg := &configuration.IDPConfiguration{}
+		if configuration.LoadFromFile(cfg, conf.Config().Path()); err != nil {
 			return err
 		}
 
-		removed := config.RemoveKey(cfg, *kid)
+		removed := configuration.RemoveKey(cfg, *kid)
 
 		if removed {
 			fmt.Printf("Key '%s' removed from configuration\n", *kid)
 
-			if config.Save(cfg, conf.Config().Path()); err != nil {
+			if configuration.Save(cfg, conf.Config().Path()); err != nil {
 				color.Red("Failed to save configuration")
 				return err
 			}

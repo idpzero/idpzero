@@ -8,7 +8,7 @@ import (
 	"time"
 
 	jose "github.com/go-jose/go-jose/v4"
-	"github.com/idpzero/idpzero/internal/config"
+	"github.com/idpzero/idpzero/configuration"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"github.com/zitadel/oidc/v3/pkg/op"
 )
@@ -18,7 +18,7 @@ var _ op.Storage = &Storage{}
 type Storage struct {
 	logger *slog.Logger
 	lock   sync.Mutex
-	config *config.IDPConfiguration
+	config *configuration.IDPConfiguration
 }
 
 func NewStorage(logger *slog.Logger) (*Storage, error) {
@@ -32,7 +32,7 @@ func NewStorage(logger *slog.Logger) (*Storage, error) {
 }
 
 // allow updating externally / on demand
-func (s *Storage) SetConfig(config *config.IDPConfiguration) {
+func (s *Storage) SetConfig(config *configuration.IDPConfiguration) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 

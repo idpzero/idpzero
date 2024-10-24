@@ -1,4 +1,4 @@
-package cli
+package cmd
 
 import (
 	"fmt"
@@ -6,9 +6,9 @@ import (
 	"os/signal"
 
 	"github.com/fatih/color"
-	"github.com/idpzero/idpzero/internal/config"
-	"github.com/idpzero/idpzero/internal/idp"
-	"github.com/idpzero/idpzero/internal/server"
+	"github.com/idpzero/idpzero/configuration"
+	"github.com/idpzero/idpzero/idp"
+	"github.com/idpzero/idpzero/server"
 	"github.com/spf13/cobra"
 )
 
@@ -21,13 +21,13 @@ var startCmd = &cobra.Command{
 		defer stop()
 
 		// get the config dir to use from the path or discovery
-		conf, err := config.Resolve(*location)
+		conf, err := configuration.Resolve(*location)
 
 		if err != nil {
 			return err
 		}
 
-		config.PrintChecks(conf)
+		conf.PrintStatus()
 
 		if !conf.Initialized() {
 			color.Yellow("Configuration not valid. Run 'idpzero init' to initialize configuration")
@@ -35,19 +35,19 @@ var startCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		cfg := config.IDPConfiguration{}
-		cfg.Server = config.ServerConfig{}
+		cfg := configuration.IDPConfiguration{}
+		cfg.Server = configuration.ServerConfig{}
 		cfg.Server.Port = 4379
 		cfg.Server.KeyPhrase = "secret"
-		key1, err := config.NewRSAKey("sample", "sig")
+		key1, err := configuration.NewRSAKey("sample", "sig")
 		if err != nil {
 			return err
 		}
 
 		cfg.Server.Keys = append(cfg.Server.Keys, *key1)
-		cfg.Clients = []config.ClientConfig{}
+		cfg.Clients = []configuration.ClientConfig{}
 
-		err = config.Save(&cfg, conf.Config().Path())
+		err = configuration.Save(&cfg, conf.Config().Path())
 
 		if err != nil {
 			return err

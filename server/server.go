@@ -10,8 +10,8 @@ import (
 	"github.com/fatih/color"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/idpzero/idpzero/internal/config"
-	"github.com/idpzero/idpzero/internal/idp"
+	"github.com/idpzero/idpzero/configuration"
+	"github.com/idpzero/idpzero/idp"
 	"github.com/savioxavier/termlink"
 )
 
@@ -20,10 +20,10 @@ type Server struct {
 	waiter sync.WaitGroup
 	lock   sync.RWMutex
 	logger *slog.Logger
-	config config.IDPConfiguration
+	config configuration.IDPConfiguration
 }
 
-func NewServer(logger *slog.Logger, config config.IDPConfiguration, storage *idp.Storage) (*Server, error) {
+func NewServer(logger *slog.Logger, config configuration.IDPConfiguration, storage *idp.Storage) (*Server, error) {
 
 	// Use chi as this is what OIDC is using internally, so keep it conistent
 	router := chi.NewRouter()
@@ -61,7 +61,7 @@ func NewServer(logger *slog.Logger, config config.IDPConfiguration, storage *idp
 	return server, nil
 }
 
-func (s *Server) UpdateConfig(config config.IDPConfiguration) {
+func (s *Server) UpdateConfig(config configuration.IDPConfiguration) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 

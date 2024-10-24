@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/idpzero/idpzero/internal/cli"
+	"github.com/idpzero/idpzero/cmd"
 )
 
 var (
@@ -11,6 +11,6 @@ var (
 
 func main() {
 	// Set the version and commit from built info
-	cli.Version = cli.VersionInfo{Version: version, Commit: commit}
-	cli.Execute()
+	cmd.Version = cmd.VersionInfo{Version: version, Commit: commit}
+	cmd.Execute()
 }

@@ -2,7 +2,7 @@ package idp
 
 import (
 	jose "github.com/go-jose/go-jose/v4"
-	"github.com/idpzero/idpzero/internal/config"
+	"github.com/idpzero/idpzero/configuration"
 	"github.com/zitadel/oidc/v3/pkg/op"
 )
 
@@ -12,7 +12,7 @@ var (
 )
 
 type opPublicKey struct {
-	key config.Key
+	key configuration.Key
 }
 
 func (s *opPublicKey) ID() string {
@@ -38,7 +38,7 @@ func (s *opPublicKey) Key() any {
 }
 
 type opPrivateKey struct {
-	key config.Key
+	key configuration.Key
 }
 
 func (s *opPrivateKey) SignatureAlgorithm() jose.SignatureAlgorithm {

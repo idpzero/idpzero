@@ -1,4 +1,4 @@
-package cli
+package cmd
 
 type VersionInfo struct {
 	Version string

@@ -1,17 +1,17 @@
-package cli
+package cmd
 
 import (
 	"fmt"
 	"os"
 
 	"github.com/fatih/color"
-	"github.com/idpzero/idpzero/internal/config"
+	"github.com/idpzero/idpzero/configuration"
 	"github.com/spf13/cobra"
 )
 
-func ensureInitialized(conf *config.ConfigInformation) {
+func ensureInitialized(conf *configuration.ConfigInformation) {
 
-	config.PrintChecks(conf)
+	conf.PrintStatus()
 
 	if !conf.Initialized() {
 		color.Yellow("Configuration not valid. Run 'idpzero init' to initialize configuration")
@@ -27,7 +27,7 @@ var addKeyCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		// get the config dir to use from the path or discovery
-		conf, err := config.Resolve(*location)
+		conf, err := configuration.Resolve(*location)
 
 		if err != nil {
 			return err
@@ -35,25 +35,25 @@ var addKeyCmd = &cobra.Command{
 
 		ensureInitialized(conf)
 
-		cfg := &config.IDPConfiguration{}
-		if config.LoadFromFile(cfg, conf.Config().Path()); err != nil {
+		cfg := &configuration.IDPConfiguration{}
+		if configuration.LoadFromFile(cfg, conf.Config().Path()); err != nil {
 			return err
 		}
 
-		if config.KeyExists(cfg, *kid) && !*replace {
+		if configuration.KeyExists(cfg, *kid) && !*replace {
 			color.Red("Key with ID '%s' already exists. Use --replace to force replacement.", *kid)
 			fmt.Println()
 			os.Exit(1)
 		}
 
 		// generate new RSA key aligned to IDP needs
-		key, err := config.NewRSAKey(*kid, *use)
+		key, err := configuration.NewRSAKey(*kid, *use)
 
 		if err != nil {
 			return err
 		}
 
-		replaced := config.SetKey(cfg, *key, *replace)
+		replaced := configuration.SetKey(cfg, *key, *replace)
 
 		if replaced {
 			fmt.Printf("Replaced existing key '%s' in configuration\n", *kid)
@@ -61,7 +61,7 @@ var addKeyCmd = &cobra.Command{
 			fmt.Printf("Added new key '%s' to configuration\n", *kid)
 		}
 
-		if config.Save(cfg, conf.Config().Path()); err != nil {
+		if configuration.Save(cfg, conf.Config().Path()); err != nil {
 			color.Red("Failed to save configuration")
 			return err
 		}

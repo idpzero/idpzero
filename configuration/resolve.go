@@ -1,7 +1,8 @@
-package config
+package configuration
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -43,6 +44,17 @@ func (c *ConfigInformation) Config() ResolutionCheck {
 
 func (c *ConfigInformation) Initialized() bool {
 	return c.dir.exists && c.config.exists
+}
+
+// PrintChecks prints the existance of each part of the configuration to the console
+func (cfg *ConfigInformation) PrintStatus() {
+
+	fmt.Println("Verifying IDP configuration...")
+	printCheck(cfg.Directory().Exists(), "Configuration Directory Exists")
+	printCheck(cfg.Config().Exists(), "Configuration File Exists")
+
+	fmt.Println()
+
 }
 
 func Resolve(path string) (*ConfigInformation, error) {

@@ -6,10 +6,10 @@ import (
 	"encoding/pem"
 	"errors"
 
-	"github.com/idpzero/idpzero/internal/config"
+	"github.com/idpzero/idpzero/configuration"
 )
 
-func parseRSAPublicKey(key config.Key) (*rsa.PublicKey, error) {
+func parseRSAPublicKey(key configuration.Key) (*rsa.PublicKey, error) {
 
 	if key.Algorithm != "RS256" {
 		return nil, errors.New("unsupported algorithm - expecting RS256")
@@ -30,7 +30,7 @@ func parseRSAPublicKey(key config.Key) (*rsa.PublicKey, error) {
 	return pubkey.(*rsa.PublicKey), nil
 }
 
-func parseRSAKey(key config.Key) (*rsa.PrivateKey, *rsa.PublicKey, error) {
+func parseRSAKey(key configuration.Key) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 
 	if key.Algorithm != "RS256" {
 		return nil, nil, errors.New("unsupported algorithm - expecting RS256")
