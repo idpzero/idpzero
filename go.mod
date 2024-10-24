@@ -3,8 +3,9 @@ module github.com/idpzero/idpzero
 go 1.22.2
 
 require (
-	github.com/go-chi/chi v1.5.5
+	github.com/go-chi/chi/v5 v5.1.0
 	github.com/go-jose/go-jose/v4 v4.0.4
+	github.com/google/uuid v1.6.0
 	github.com/savioxavier/termlink v1.4.1
 	github.com/spf13/cobra v1.8.1
 	golang.org/x/text v0.18.0
@@ -12,7 +13,6 @@ require (
 
 require (
 	github.com/bmatcuk/doublestar/v4 v4.6.1 // indirect
-	github.com/go-chi/chi/v5 v5.1.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect

@@ -1,4 +1,4 @@
-package cli
+package cmd
 
 import (
 	"fmt"
@@ -18,11 +18,22 @@ var (
 	noColor     *bool       = new(bool)
 	location    *string     = new(string)
 	logger      *slog.Logger
+	// key
+	kid     *string = new(string)
+	use     *string = new(string)
+	replace *bool   = new(bool)
 )
 
 func init() {
 
-	keyCmd.AddCommand(addKeyCmd)
+	addKeyCmd.Flags().StringVar(kid, "kid", "", "key identifier")
+	addKeyCmd.Flags().StringVar(use, "use", "sig", "usage type for key")
+	addKeyCmd.Flags().BoolVar(replace, "replace", false, "replace the key if it already exists")
+	addKeyCmd.MarkFlagRequired("kid")
+	removeKeyCmd.Flags().StringVar(kid, "kid", "", "key identifier")
+	removeKeyCmd.MarkFlagRequired("kid")
+
+	keyCmd.AddCommand(addKeyCmd, removeKeyCmd)
 	rootCmd.PersistentFlags().BoolVar(debug, "debug", false, "show debug and logging in output")
 	rootCmd.PersistentFlags().BoolVar(showVersion, "version", false, "show the version information in output")
 	rootCmd.PersistentFlags().BoolVar(noColor, "no-color", false, "disable color output")

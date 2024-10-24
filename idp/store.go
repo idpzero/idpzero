@@ -8,7 +8,7 @@ import (
 	"time"
 
 	jose "github.com/go-jose/go-jose/v4"
-	"github.com/idpzero/idpzero/internal/config"
+	"github.com/idpzero/idpzero/configuration"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"github.com/zitadel/oidc/v3/pkg/op"
 )
@@ -18,7 +18,7 @@ var _ op.Storage = &Storage{}
 type Storage struct {
 	logger *slog.Logger
 	lock   sync.Mutex
-	config *config.IDPConfiguration
+	config *configuration.IDPConfiguration
 }
 
 func NewStorage(logger *slog.Logger) (*Storage, error) {
@@ -32,7 +32,7 @@ func NewStorage(logger *slog.Logger) (*Storage, error) {
 }
 
 // allow updating externally / on demand
-func (s *Storage) SetConfig(config *config.IDPConfiguration) {
+func (s *Storage) SetConfig(config *configuration.IDPConfiguration) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -126,11 +126,11 @@ func (s *Storage) Health(context.Context) error {
 
 // KeySet implements op.Storage.
 func (s *Storage) KeySet(context.Context) ([]op.Key, error) {
-	keys := make([]op.Key, 0, len(s.config.Server.SigningKeys))
+	keys := make([]op.Key, 0, len(s.config.Server.Keys))
 
-	for _, key := range s.config.Server.SigningKeys {
+	for _, key := range s.config.Server.Keys {
 		if key.Use == "sig" {
-			keys = append(keys, &opKey{key: key})
+			keys = append(keys, &opPublicKey{key: key})
 		}
 	}
 
@@ -166,7 +166,7 @@ func (s *Storage) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.UserI
 func (s *Storage) SignatureAlgorithms(context.Context) ([]jose.SignatureAlgorithm, error) {
 	algs := make([]jose.SignatureAlgorithm, 0)
 
-	for _, key := range s.config.Server.SigningKeys {
+	for _, key := range s.config.Server.Keys {
 		if key.Use == "sig" {
 			sa := jose.SignatureAlgorithm(key.Algorithm)
 			algs = append(algs, sa)
@@ -178,7 +178,14 @@ func (s *Storage) SignatureAlgorithms(context.Context) ([]jose.SignatureAlgorith
 
 // SigningKey implements op.Storage.
 func (s *Storage) SigningKey(context.Context) (op.SigningKey, error) {
-	panic("unimplemented SigningKey")
+
+	for _, key := range s.config.Server.Keys {
+		if key.Use == "sig" {
+			return &opPrivateKey{key: key}, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no signing key found")
 }
 
 // TerminateSession implements op.Storage.
