@@ -60,7 +60,7 @@ var initializeCmd = &cobra.Command{
 		cfg.Server.Keys = append(cfg.Server.Keys, *signingKey)
 		cfg.Clients = []configuration.ClientConfig{}
 
-		if conf.Save(&cfg); err != nil {
+		if err := conf.Save(&cfg); err != nil {
 			return err
 		}
 

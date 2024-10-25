@@ -1,0 +1,36 @@
+package views
+
+
+templ View(
+    items ...templ.Component,
+    ) {
+	@BaseLayout() {
+		 for _, item := range items {
+			@item
+		}
+	}
+}
+
+templ BaseLayout() {
+	<!DOCTYPE html>
+	<html lang="en" data-theme="light">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<meta name="description" content="National Pen Register" />
+			<link href="/assets/css/output.css" rel="stylesheet"/>
+			<title>IDP Zero: Developer friendly local identity provider</title>
+		</head>
+		<body>
+			<header>
+					@Navbar()
+			</header>
+			<main class="mt-20">
+				<div class="px-12">
+				{ children... }
+				</div>
+			</main>
+		</body>
+	</html>
+}
+

@@ -1,0 +1,24 @@
+package views
+
+
+templ Navbar() {
+	<nav class="navbar bg-primary bg-primary-content fixed top-0 z-10 h-12">
+		<div class="navbar-start">
+			<a class="text-xl" href="/">
+				idpzero
+			</a>
+		</div>
+		<div class="navbar-center">
+		</div>
+		<div class="navbar-end"> 
+			GH
+		</div>
+	</nav>
+}
+
+templ Error(title string, message string) {
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+        <strong class="font-bold">{title}</strong>
+        <span class="block sm:inline">{message}</span>
+    </div>
+}

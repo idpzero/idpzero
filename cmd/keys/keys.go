@@ -17,7 +17,7 @@ func init() {
 
 	// common flags
 	keyCmd.PersistentFlags().StringVar(kid, "kid", "", "key identifier")
-	keyCmd.MarkFlagRequired("kid")
+	_ = keyCmd.MarkFlagRequired("kid")
 
 	// add Key
 	addKeyCmd.Flags().StringVar(use, "use", "sig", "usage type for key")

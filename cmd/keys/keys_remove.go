@@ -25,7 +25,7 @@ var removeKeyCmd = &cobra.Command{
 		if removed {
 			color.Yellow("Key '%s' removed from configuration\n", *kid)
 
-			if conf.Save(cfg); err != nil {
+			if err := conf.Save(cfg); err != nil {
 				color.Red("Failed to save configuration")
 				return err
 			}

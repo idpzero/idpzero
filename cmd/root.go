@@ -54,7 +54,7 @@ var rootCmd = &cobra.Command{
 		}
 
 		if *dbg.Debug {
-			// setup the logger
+			// setup the logger for debugging purposes.
 			dbg.Logger = slog.New(
 				slog.NewTextHandler(cmd.OutOrStdout(), &slog.HandlerOptions{
 					Level: slog.LevelDebug,
