@@ -6,7 +6,7 @@ import (
 	"encoding/pem"
 	"errors"
 
-	"github.com/idpzero/idpzero/configuration"
+	"github.com/idpzero/idpzero/pkg/configuration"
 )
 
 func parseRSAPublicKey(key configuration.Key) (*rsa.PublicKey, error) {

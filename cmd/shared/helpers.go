@@ -1,25 +1,21 @@
-package cmd
+package shared
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/fatih/color"
-	"github.com/idpzero/idpzero/configuration"
+	"github.com/idpzero/idpzero/pkg/configuration"
 )
 
-type VersionInfo struct {
-	Version string
-	Commit  string
-}
-
-func ensureInitialized(conf *configuration.ConfigInformation) {
+func EnsureInitialized(conf *configuration.ConfigInformation) error {
 
 	conf.PrintStatus()
 
 	if !conf.Initialized() {
 		color.Yellow("Configuration not valid. Run 'idpzero init' to initialize configuration")
 		fmt.Println()
-		os.Exit(1)
+		return ErrNotInitialized
 	}
+
+	return nil
 }

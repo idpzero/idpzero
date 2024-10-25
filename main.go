@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/idpzero/idpzero/cmd"
+	"github.com/idpzero/idpzero/pkg/dbg"
 )
 
 var (
@@ -11,6 +12,6 @@ var (
 
 func main() {
 	// Set the version and commit from built info
-	cmd.Version = cmd.VersionInfo{Version: version, Commit: commit}
+	dbg.Version = dbg.VersionInfo{Version: version, Commit: commit}
 	cmd.Execute()
 }

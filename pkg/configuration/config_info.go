@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/idpzero/idpzero/pkg/dbg"
 	"gopkg.in/yaml.v2"
 )
 
@@ -35,9 +36,17 @@ func (c *ConfigInformation) Initialized() bool {
 // PrintChecks prints the existance of each part of the configuration to the console
 func (cfg *ConfigInformation) PrintStatus() {
 
-	fmt.Println("IDP configuration checks:")
-	printCheck(cfg.dirExists, fmt.Sprintf("Configuration Directory Exists (%s)", cfg.dirPath))
-	printCheck(cfg.configExists, fmt.Sprintf("Configuration File Exists (%s)", cfg.configPath))
+	dirMsg := "Configuration Directory Exists"
+	confMsg := "Configuration File Exists"
+
+	if *dbg.Debug {
+		dirMsg = fmt.Sprintf("Configuration Directory Exists (%s)", cfg.dirPath)
+		confMsg = fmt.Sprintf("Configuration File Exists (%s)", cfg.configPath)
+	}
+
+	fmt.Println("Configuration checks:")
+	printCheck(cfg.dirExists, dirMsg)
+	printCheck(cfg.configExists, confMsg)
 
 	fmt.Println()
 

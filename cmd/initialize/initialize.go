@@ -1,4 +1,4 @@
-package cmd
+package initialize
 
 import (
 	"fmt"
@@ -6,9 +6,14 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/google/uuid"
-	"github.com/idpzero/idpzero/configuration"
+	"github.com/idpzero/idpzero/cmd/shared"
+	"github.com/idpzero/idpzero/pkg/configuration"
 	"github.com/spf13/cobra"
 )
+
+func New() *cobra.Command {
+	return initializeCmd
+}
 
 var initializeCmd = &cobra.Command{
 	Use:   "init",
@@ -16,18 +21,18 @@ var initializeCmd = &cobra.Command{
 	Long:  `Setup the configuration and data directory for idpzero`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		if *location == "" {
+		if *shared.Location == "" {
 			defaultDir, err := configuration.DefaultDirectory()
 
 			if err != nil {
 				return err
 			}
 
-			*location = defaultDir
+			shared.Location = &defaultDir
 		}
 
 		// get the config dir to use from the path or discovery
-		conf, err := configuration.Resolve(*location)
+		conf, err := configuration.Resolve(*shared.Location)
 
 		if err != nil {
 			return err
@@ -59,7 +64,7 @@ var initializeCmd = &cobra.Command{
 			return err
 		}
 
-		conf, err = configuration.Resolve(*location)
+		conf, err = configuration.Resolve(*shared.Location)
 
 		if err != nil {
 			return err

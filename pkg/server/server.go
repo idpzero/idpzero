@@ -10,8 +10,8 @@ import (
 	"github.com/fatih/color"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/idpzero/idpzero/configuration"
-	"github.com/idpzero/idpzero/idp"
+	"github.com/idpzero/idpzero/pkg/configuration"
+	"github.com/idpzero/idpzero/pkg/idp"
 	"github.com/savioxavier/termlink"
 )
 
@@ -76,7 +76,7 @@ func (s *Server) Run(ctx context.Context) error {
 	go func() {
 		<-ctx.Done()
 		fmt.Println()
-		color.Green("Initiating shutting down...")
+		fmt.Println("Initiating shutting down...")
 		s.server.Shutdown(context.Background())
 		serverStopCtx()
 	}()

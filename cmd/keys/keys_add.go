@@ -1,11 +1,11 @@
-package cmd
+package keys
 
 import (
 	"fmt"
 	"os"
 
 	"github.com/fatih/color"
-	"github.com/idpzero/idpzero/configuration"
+	"github.com/idpzero/idpzero/pkg/configuration"
 	"github.com/spf13/cobra"
 )
 
@@ -15,19 +15,9 @@ var addKeyCmd = &cobra.Command{
 	Long:  `Generate and append a new key to the configuration`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		// get the config dir to use from the path or discovery
-		conf, err := configuration.Resolve(*location)
-
-		if err != nil {
-			return err
-		}
-
-		ensureInitialized(conf)
-
 		cfg, err := conf.Load()
 
 		if err != nil {
-			color.Red("Failed to load configuration from '%s'", conf.ConfigFilePath())
 			return err
 		}
 
@@ -47,9 +37,9 @@ var addKeyCmd = &cobra.Command{
 		replaced := configuration.SetKey(cfg, *key, *replace)
 
 		if replaced {
-			fmt.Printf("Replaced existing key '%s' in configuration\n", *kid)
+			color.Yellow("Replaced existing key '%s' in configuration\n", *kid)
 		} else {
-			fmt.Printf("Added new key '%s' to configuration\n", *kid)
+			color.Yellow("Added new key '%s' to configuration\n", *kid)
 		}
 
 		if conf.Save(cfg); err != nil {

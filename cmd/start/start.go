@@ -1,4 +1,4 @@
-package cmd
+package start
 
 import (
 	"fmt"
@@ -6,11 +6,17 @@ import (
 	"os/signal"
 
 	"github.com/fatih/color"
-	"github.com/idpzero/idpzero/configuration"
-	"github.com/idpzero/idpzero/idp"
-	"github.com/idpzero/idpzero/server"
+	"github.com/idpzero/idpzero/cmd/shared"
+	"github.com/idpzero/idpzero/pkg/configuration"
+	"github.com/idpzero/idpzero/pkg/dbg"
+	"github.com/idpzero/idpzero/pkg/idp"
+	"github.com/idpzero/idpzero/pkg/server"
 	"github.com/spf13/cobra"
 )
+
+func New() *cobra.Command {
+	return startCmd
+}
 
 var startCmd = &cobra.Command{
 	Use:   "start",
@@ -21,7 +27,7 @@ var startCmd = &cobra.Command{
 		defer stop()
 
 		// get the config dir to use from the path or discovery
-		conf, err := configuration.Resolve(*location)
+		conf, err := configuration.Resolve(*shared.Location)
 
 		if err != nil {
 			return err
@@ -41,7 +47,7 @@ var startCmd = &cobra.Command{
 			return err
 		}
 
-		idpStore, err := idp.NewStorage(logger)
+		idpStore, err := idp.NewStorage(dbg.Logger)
 
 		if err != nil {
 			return err
@@ -61,7 +67,7 @@ var startCmd = &cobra.Command{
 
 		defer w.Close() // wait for the tiy up.
 
-		s, err := server.NewServer(logger, cfg, idpStore)
+		s, err := server.NewServer(dbg.Logger, cfg, idpStore)
 
 		if err != nil {
 			return err
