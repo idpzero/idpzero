@@ -554,6 +554,10 @@ video {
   display: none;
 }
 
+/* body {
+      @apply bg-background text-foreground;
+    } */
+
 .fixed {
   position: fixed;
 }
@@ -570,16 +574,20 @@ video {
   z-index: 10;
 }
 
-.mt-20 {
-  margin-top: 5rem;
+.mt-24 {
+  margin-top: 6rem;
 }
 
 .block {
   display: block;
 }
 
-.h-12 {
-  height: 3rem;
+.h-24 {
+  height: 6rem;
+}
+
+.w-24 {
+  width: 6rem;
 }
 
 .rounded {
@@ -615,11 +623,6 @@ video {
   padding-bottom: 0.75rem;
 }
 
-.text-xl {
-  font-size: 1.25rem;
-  line-height: 1.75rem;
-}
-
 .font-bold {
   font-weight: 700;
 }
@@ -634,3 +637,4 @@ video {
     display: inline;
   }
 }
+  
