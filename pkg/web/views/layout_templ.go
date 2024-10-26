@@ -80,15 +80,7 @@ func BaseLayout() templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<!doctype html><html lang=\"en\" data-theme=\"light\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><meta name=\"description\" content=\"National Pen Register\"><link href=\"/assets/css/output.css\" rel=\"stylesheet\"><title>IDP Zero: Developer friendly local identity provider</title></head><body><header>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = Navbar().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</header><main class=\"mt-24\"><div class=\"px-12\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<!doctype html><html lang=\"en\" data-theme=\"light\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><meta name=\"description\" content=\"National Pen Register\"><link href=\"/assets/css/output.css\" rel=\"stylesheet\"><title>IDP Zero: Developer friendly local identity provider</title></head><body><header><nav class=\"navbar fixed top-0 z-10 px-8 h-12\"><div class=\"navbar-start\"><a href=\"/\" class=\"\"><span class=\"gradient text-2xl font-bold\">idp<span class=\"font-normal\">zero</span></span></a></div><div class=\"navbar-center\"></div><div class=\"navbar-end\"><a href=\"https://github.com/idpzero/idpzero\" title=\"IDP Zero on GitHub\" target=\"_blank\"><img src=\"/assets/img/github-mark.svg\" alt=\"Github Logo\" class=\"h-6 w-6\"></a></div></nav></header><main class=\"mt-12\"><div class=\"px-8\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

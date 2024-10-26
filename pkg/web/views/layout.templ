@@ -23,10 +23,23 @@ templ BaseLayout() {
 		</head>
 		<body>
 			<header>
-					@Navbar()
+				<nav class="navbar fixed top-0 z-10 px-8 h-12">
+					<div class="navbar-start"> 
+						<a href="/" class="">
+							<span class="gradient text-2xl font-bold">idp<span class="font-normal">zero</span></span>
+						</a>
+					</div>
+					<div class="navbar-center">
+					</div>
+					<div class="navbar-end"> 
+						<a href="https://github.com/idpzero/idpzero" title="IDP Zero on GitHub" target="_blank">
+							<img src="/assets/img/github-mark.svg" alt="Github Logo" class="h-6 w-6"/>
+						</a>
+					</div>
+				</nav>
 			</header>
-			<main class="mt-24">
-				<div class="px-12">
+			<main class="mt-12">
+				<div class="px-8">
 				{ children... }
 				</div>
 			</main>
