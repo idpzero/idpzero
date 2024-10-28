@@ -45,8 +45,8 @@ func (cfg *ConfigInformation) PrintStatus() {
 	}
 
 	fmt.Println("Configuration checks:")
-	printCheck(cfg.dirExists, dirMsg)
-	printCheck(cfg.configExists, confMsg)
+	PrintCheck(cfg.dirExists, dirMsg)
+	PrintCheck(cfg.configExists, confMsg)
 
 	fmt.Println()
 

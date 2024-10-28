@@ -6,7 +6,7 @@ import (
 	"github.com/fatih/color"
 )
 
-func printCheck(passed bool, msg string) {
+func PrintCheck(passed bool, msg string) {
 	var mark = color.RedString(" x ")
 	if passed {
 		mark = color.GreenString(" ✓ ")

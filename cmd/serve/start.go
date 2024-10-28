@@ -1,4 +1,4 @@
-package start
+package serve
 
 import (
 	"fmt"
@@ -19,8 +19,8 @@ func New() *cobra.Command {
 }
 
 var startCmd = &cobra.Command{
-	Use:   "start",
-	Short: "Start the IDP server",
+	Use:   "serve",
+	Short: "Start the IDP server and login experience",
 	// Long:  `Start the IDP server based on the configuration path`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt)
@@ -53,12 +53,23 @@ var startCmd = &cobra.Command{
 			return err
 		}
 
+		valid := idp.PrintValidation(cfg)
+		if !valid {
+			color.Red("Configuration not valid. Fix the configuration and try again.")
+			fmt.Println()
+			os.Exit(1)
+		}
+
 		idpStore.SetConfig(cfg)
 
 		// watch for changes and set it again.
 		w, err := configuration.NewWatcher(conf, func(x *configuration.IDPConfiguration) {
 			color.Yellow("Configuration changed. Reloading...")
-			idpStore.SetConfig(x)
+
+			valid := idp.PrintValidation(x)
+			if valid {
+				idpStore.SetConfig(x)
+			}
 		})
 
 		if err != nil {

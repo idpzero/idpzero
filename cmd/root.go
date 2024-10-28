@@ -9,8 +9,8 @@ import (
 	"github.com/fatih/color"
 	"github.com/idpzero/idpzero/cmd/initialize"
 	"github.com/idpzero/idpzero/cmd/keys"
+	"github.com/idpzero/idpzero/cmd/serve"
 	"github.com/idpzero/idpzero/cmd/shared"
-	"github.com/idpzero/idpzero/cmd/start"
 	"github.com/idpzero/idpzero/pkg/dbg"
 	"github.com/spf13/cobra"
 )
@@ -25,7 +25,7 @@ func init() {
 	// add top level commands which add their own sub commands
 	keysCmd := keys.New()
 	initCmd := initialize.New()
-	startCmd := start.New()
+	startCmd := serve.New()
 
 	// root managed flags
 	rootCmd.Flags().BoolVar(showVersion, "version", false, "show the version information in output")
