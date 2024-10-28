@@ -1,0 +1,54 @@
+package views
+
+import "github.com/idpzero/idpzero/pkg/web/models"
+
+templ Index(model models.IndexModel) {
+   
+    <div class="py-5">
+        <h1 class="text-3xl gradient font-bold">Wahoo! Your ready to go!</h1>
+        <p class="text-md py-3">
+        See configuration below to configure your app ready to use <b>idpzero</b>. Changes to configuration are managed via the CLI (the same cli used to serve the IDP).
+        </p>
+    </div>
+
+    <h2 class="text-lg font-bold">Metadata and Discovery Endpoints</h2>
+    <p class="py-2 text-sm">These are the commonly required metadata URLs required when configuring an identity provider for an application, check your framework / product documnetation for configuration details.</p>
+    <div class="bg-gray-100 p-2 rounded-lg ">
+        <table class="table table-auto">
+         <thead>
+            <tr>
+            <th>Description</th>
+            <th>Link</th>
+            </tr>
+        </thead>
+        <tbody>
+        for _, url := range model.Urls {
+            <tr>
+                <td>{url.Description}</td>
+                <td><a href={templ.SafeURL(url.Url)} target="_blank">{url.Url}</a></td>
+            </tr>
+        }
+        </tbody>
+        
+        </table>
+        
+    </div>
+
+    <h2 class="text-lg font-bold mt-10">OpenID Connect / OAuth2 Clients</h2>
+    <p class="py-2 text-sm">The following are the configured OpenID Connect and OAuth2 clients. For details on adding and managing client see CLI reference 'Managing Clients'.</p>
+    <div class="bg-gray-100 p-2 rounded-lg ">
+        <table class="table table-auto">
+         <thead>
+            <tr>
+            <th>Client ID</th>
+            <th>Value</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        </tbody>
+        </table>
+    </div>
+    
+
+}

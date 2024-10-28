@@ -11,7 +11,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/idpzero/idpzero/pkg/configuration"
+	"github.com/idpzero/idpzero/pkg/dbg"
 	"github.com/idpzero/idpzero/pkg/idp"
+	"github.com/idpzero/idpzero/pkg/web/handlers"
 	"github.com/savioxavier/termlink"
 )
 
@@ -52,9 +54,9 @@ func NewServer(logger *slog.Logger, config *configuration.IDPConfiguration, stor
 	// we need to add a route to the root because we  are mounting
 	// the provider on the root, we cant double map the '/'
 	rtr := provider.Handler.(*chi.Mux)
-	rtr.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello, World!"))
-	})
+	handlers.Routes(rtr, func() *configuration.IDPConfiguration { return server.config })
+
+	//rtr.Get("/", )
 
 	router.Mount("/", provider)
 
@@ -77,7 +79,9 @@ func (s *Server) Run(ctx context.Context) error {
 		<-ctx.Done()
 		fmt.Println()
 		fmt.Println("Initiating shutting down...")
-		s.server.Shutdown(context.Background())
+		if err := s.server.Shutdown(context.Background()); err != nil {
+			dbg.Logger.Error("Error shutting down server", "error", err.Error())
+		}
 		serverStopCtx()
 	}()
 
