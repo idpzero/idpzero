@@ -54,7 +54,8 @@ func NewServer(logger *slog.Logger, config *configuration.IDPConfiguration, stor
 	// we need to add a route to the root because we  are mounting
 	// the provider on the root, we cant double map the '/'
 	rtr := provider.Handler.(*chi.Mux)
-	handlers.Routes(rtr)
+	handlers.Routes(rtr, func() *configuration.IDPConfiguration { return server.config })
+
 	//rtr.Get("/", )
 
 	router.Mount("/", provider)

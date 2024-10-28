@@ -11,7 +11,7 @@ lint:
 
 # generate web resources
 web:
-	npx tailwindcss -i ./pkg/web/assets/css/input.css -o ./pkg/web/assets/css/output.css
+	npx tailwindcss -i ./web/css/input.css -o ./pkg/web/assets/css/styles.css
 	templ generate
 
-.PHONY: test fmt lint
+.PHONY: test fmt lint web
