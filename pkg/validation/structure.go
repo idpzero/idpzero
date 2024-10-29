@@ -7,23 +7,24 @@ import (
 )
 
 var (
-	_ Validation = &checkedItem{}
-	_ Validation = &validationGroup{}
+	_ Validation = &Check{}
+	_ Validation = &ValidationGroup{}
 )
 
 type Validation interface {
-	Render()
+	render(indent int)
 	AddChild(item Validation)
 }
 
-type checkedItem struct {
+type Check struct {
 	passed   bool
 	children []Validation
 	title    string
 	err      string
+	options  []string
 }
 
-func (v *checkedItem) Render() {
+func (v *Check) render(indent int) {
 	var mark = color.RedString(" x ")
 	if v.passed {
 		mark = color.GreenString(" ✓ ")
@@ -35,43 +36,52 @@ func (v *checkedItem) Render() {
 	}
 
 	for _, child := range v.children {
-		child.Render()
+		child.render(indent + 1)
 	}
 
 }
 
-func (v *checkedItem) AddChild(item Validation) {
+func (v *Check) AddChild(item Validation) {
 	v.children = append(v.children, item)
 }
 
-type validationGroup struct {
+func (v *Check) WithOptions(items []string) {
+	v.options = items
+}
+
+func NewCheck(passed bool, title string) *Check {
+	return &Check{
+		title:   title,
+		passed:  passed,
+		options: []string{},
+	}
+}
+
+type ValidationGroup struct {
 	children []Validation
 	title    string
 }
 
-func (v *validationGroup) Render() {
+func (v *ValidationGroup) Render() {
+	v.render(0)
+}
+
+func (v *ValidationGroup) render(indent int) {
 	fmt.Println(v.title)
 
 	for _, child := range v.children {
-		child.Render()
+		child.render(indent + 1)
 	}
 
 	fmt.Println()
 }
 
-func (v *validationGroup) AddChild(item Validation) {
+func (v *ValidationGroup) AddChild(item Validation) {
 	v.children = append(v.children, item)
 }
 
-func NewValidation(title string) Validation {
-	return &validationGroup{
+func NewValidation(title string) *ValidationGroup {
+	return &ValidationGroup{
 		title: title,
-	}
-}
-
-func NewCheckedValidation(passed bool, title string) Validation {
-	return &checkedItem{
-		title:  title,
-		passed: passed,
 	}
 }

@@ -45,7 +45,7 @@ server:
         oQIDAQAB
         -----END RSA PUBLIC KEY-----
 clients: 
-  - id: local-remix-auth
+  - id: local-remix-auth1
     access_token_type: bearer
     application_type: web
     auth_method: none
