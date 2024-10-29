@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/idpzero/idpzero/pkg/dbg"
+	"github.com/idpzero/idpzero/pkg/validation"
 	"gopkg.in/yaml.v2"
 )
 
@@ -44,11 +45,16 @@ func (cfg *ConfigInformation) PrintStatus() {
 		confMsg = fmt.Sprintf("Configuration File Exists (%s)", cfg.configPath)
 	}
 
-	fmt.Println("Configuration checks:")
-	PrintCheck(cfg.dirExists, dirMsg)
-	PrintCheck(cfg.configExists, confMsg)
+	// fmt.Println("Configuration checks:")
+	// PrintCheck(cfg.dirExists, dirMsg)
+	// PrintCheck(cfg.configExists, confMsg)
 
-	fmt.Println()
+	// fmt.Println()
+
+	val := validation.NewValidation("Configuration checks:")
+	val.AddChild(validation.NewCheckedValidation(cfg.dirExists, dirMsg))
+	val.AddChild(validation.NewCheckedValidation(cfg.configExists, confMsg))
+	val.Render()
 
 }
 
