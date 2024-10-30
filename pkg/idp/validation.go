@@ -3,28 +3,27 @@ package idp
 import (
 	"fmt"
 
-	"github.com/fatih/color"
 	"github.com/idpzero/idpzero/pkg/configuration"
+	"github.com/idpzero/idpzero/pkg/validation"
 )
 
 func PrintValidation(config *configuration.IDPConfiguration) bool {
 
 	var valid = true
 
-	fmt.Printf("Validaing %d clients:\n", len(config.Clients))
-
+	val := validation.NewValidationSet()
 	for _, client := range config.Clients {
-		c, validationErrors := NewClient(client)
+		set := validation.NewChecklist(fmt.Sprintf("Client '%s'", client.ID))
+		_, validationErrors := NewClient(client)
+		set.AddMany(validationErrors)
 
-		configuration.PrintCheck(c.IsValid(), fmt.Sprintf("Client '%s'", client.ID))
-
-		if !c.IsValid() {
-			valid = false // make sure we wont apply the config
-			for _, err := range validationErrors {
-				color.Red("     " + err.Error())
-			}
+		if len(validationErrors) > 0 {
+			valid = false
+			val.AddChild(set)
 		}
 	}
+
+	val.Render()
 	fmt.Println()
 	return valid
 }

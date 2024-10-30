@@ -2,11 +2,11 @@ package idp
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	jose "github.com/go-jose/go-jose/v4"
 	"github.com/idpzero/idpzero/pkg/configuration"
+	"github.com/idpzero/idpzero/pkg/validation"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"github.com/zitadel/oidc/v3/pkg/op"
 )
@@ -66,49 +66,54 @@ func (s *opPrivateKey) ID() string {
 }
 
 type Client struct {
-	config           configuration.ClientConfig
-	validationErrors []error
+	config      configuration.ClientConfig
+	validations []*validation.ChecklistItem
 
 	// parsed fields
 	appType         op.ApplicationType
 	accessTokenType op.AccessTokenType
 	authMehtod      *oidc.AuthMethod
 	grantTypes      []oidc.GrantType
-	clockSkew       time.Duration
 	responseTypes   []oidc.ResponseType
-	idTokenLifetime time.Duration
 }
 
 var _ op.Client = &Client{}
 
-func NewClient(config configuration.ClientConfig) (*Client, []error) {
+func NewClient(config configuration.ClientConfig) (*Client, []*validation.ChecklistItem) {
 	c := &Client{
-		config:           config,
-		validationErrors: []error{},
-		grantTypes:       []oidc.GrantType{},
-		responseTypes:    []oidc.ResponseType{},
+		config:        config,
+		validations:   []*validation.ChecklistItem{},
+		grantTypes:    []oidc.GrantType{},
+		responseTypes: []oidc.ResponseType{},
 	}
 
 	// parse and validate the config, so we know if its valid and can
 	// prevent starting the server if its not.
 	c.parseAndValidate()
 
-	return c, c.validationErrors
+	return c, c.validations
 }
 
 func (c *Client) parseAndValidate() {
-	c.validationErrors = []error{}
+	c.validations = []*validation.ChecklistItem{}
 
 	ot, err := op.ApplicationTypeString(c.config.ApplicationType)
 	if err != nil {
-		c.validationErrors = append(c.validationErrors, err)
+		ci := validation.NewChecklistItem(false, "application_type").
+			WithValue(c.config.ApplicationType).
+			WithError(err)
+
+		c.validations = append(c.validations, ci)
 	} else {
 		c.appType = ot
 	}
 
 	at, err := op.AccessTokenTypeString(c.config.AccessTokenType)
 	if err != nil {
-		c.validationErrors = append(c.validationErrors, err)
+		ci := validation.NewChecklistItem(false, "access_token_type").
+			WithValue(c.config.AccessTokenType).
+			WithError(err)
+		c.validations = append(c.validations, ci)
 	} else {
 		c.accessTokenType = at
 	}
@@ -125,7 +130,12 @@ func (c *Client) parseAndValidate() {
 	}
 
 	if c.authMehtod == nil {
-		c.validationErrors = append(c.validationErrors, fmt.Errorf("'auth_method' not valid, expecting one of %s", strings.Join(allAuthMethods, ",")))
+		ci := validation.NewChecklistItem(false, "auth_method").
+			WithValue(c.config.AuthMethod).
+			WithError(fmt.Errorf("'auth_method' not valid")).
+			WithOptions(allAuthMethods)
+
+		c.validations = append(c.validations, ci)
 	}
 
 	for _, gt := range c.config.GrantTypes {
@@ -142,7 +152,12 @@ func (c *Client) parseAndValidate() {
 		}
 
 		if !valid {
-			c.validationErrors = append(c.validationErrors, fmt.Errorf("'grant_types' not valid, expecting one of more of %s", strings.Join(allGrantTypes, ",")))
+			ci := validation.NewChecklistItem(false, "grant_types").
+				WithValue(gt).
+				WithError(fmt.Errorf("'grant_types' not valid")).
+				WithOptions(allGrantTypes)
+
+			c.validations = append(c.validations, ci)
 		}
 	}
 
@@ -153,30 +168,23 @@ func (c *Client) parseAndValidate() {
 			parsedResponseType == oidc.ResponseTypeIDTokenOnly {
 			c.responseTypes = append(c.responseTypes, parsedResponseType)
 		} else {
-			c.validationErrors = append(c.validationErrors, fmt.Errorf("'response_types' not valid, expecting one of more of %s, %s, %s", oidc.ResponseTypeCode, oidc.ResponseTypeIDToken, oidc.ResponseTypeIDTokenOnly))
+			ci := validation.NewChecklistItem(false, "response_types").
+				WithValue(gt).
+				WithError(fmt.Errorf("'response_types' not valid")).
+				WithOptions([]string{
+					string(oidc.ResponseTypeCode),
+					string(oidc.ResponseTypeIDToken),
+					string(oidc.ResponseTypeIDTokenOnly),
+				})
+
+			c.validations = append(c.validations, ci)
 		}
 	}
-
-	// parse clock skew or use the default
-	defaultSkew, _ := time.ParseDuration("60s")
-	clockSkew, err := parseDurationOrDefault(c.config.ClockSkew, defaultSkew)
-	if err != nil {
-		c.validationErrors = append(c.validationErrors, fmt.Errorf("'clock_skew' not valid, expecting a duration or ommit to use default (%s)", defaultSkew))
-	}
-	c.clockSkew = clockSkew
-
-	// parse id token lifetime or use the default
-	defaultIDTokenLifetime, _ := time.ParseDuration("1h")
-	idTokenLifetime, err := parseDurationOrDefault(c.config.IDTokenLifetime, defaultIDTokenLifetime)
-	if err != nil {
-		c.validationErrors = append(c.validationErrors, fmt.Errorf("'id_token_lifetime' not valid, expecting a duration or ommit to use default (%s)", defaultIDTokenLifetime))
-	}
-	c.idTokenLifetime = idTokenLifetime
 
 }
 
 func (c *Client) IsValid() bool {
-	return len(c.validationErrors) == 0
+	return len(c.validations) == 0
 }
 
 // AccessTokenType implements op.Client.
@@ -197,7 +205,7 @@ func (c *Client) AuthMethod() oidc.AuthMethod {
 
 // ClockSkew implements op.Client.
 func (c *Client) ClockSkew() time.Duration {
-	return c.clockSkew
+	return c.config.ClockSkew
 }
 
 // DevMode implements op.Client.
@@ -217,7 +225,7 @@ func (c *Client) GrantTypes() []oidc.GrantType {
 
 // IDTokenLifetime implements op.Client.
 func (c *Client) IDTokenLifetime() time.Duration {
-	return c.idTokenLifetime
+	return c.config.IDTokenLifetime
 }
 
 // IDTokenUserinfoClaimsAssertion implements op.Client.

@@ -45,10 +45,12 @@ func (cfg *ConfigInformation) PrintStatus() {
 		confMsg = fmt.Sprintf("Configuration File Exists (%s)", cfg.configPath)
 	}
 
-	val := validation.NewValidation("Configuration checks:")
-	val.AddChild(validation.NewCheck(cfg.dirExists, dirMsg))
-	val.AddChild(validation.NewCheck(cfg.configExists, confMsg))
-	val.Render()
+	consoleVal := validation.NewValidationSet()
+	checklist := validation.NewChecklist("Configuration checks:")
+	checklist.Add(validation.NewChecklistItem(cfg.dirExists, dirMsg))
+	checklist.Add(validation.NewChecklistItem(cfg.configExists, confMsg))
+	consoleVal.AddChild(checklist)
+	consoleVal.Render()
 
 }
 
