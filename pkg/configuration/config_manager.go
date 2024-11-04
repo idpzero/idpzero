@@ -22,14 +22,17 @@ const (
 )
 
 type ConfigurationManager struct {
-	keysPath   string
+	keysDirectory string
+	keysPath      string
+
 	dirPath    string
 	configPath string
 
 	w    *fsnotify.Watcher
 	done chan struct{}
 
-	changed []func(x *ServerConfig)
+	serverChanged []func(x *ServerConfig)
+	keysChanged   []func(x *KeysConfiguration)
 }
 
 func NewConfigurationManager(serverDirectory string, keysDirectory string) (*ConfigurationManager, error) {
@@ -40,12 +43,14 @@ func NewConfigurationManager(serverDirectory string, keysDirectory string) (*Con
 	}
 
 	cm := ConfigurationManager{
-		dirPath:    serverDirectory,
-		configPath: path.Join(serverDirectory, serverFilename),
-		keysPath:   path.Join(keysDirectory, keysFilename),
-		w:          wtch,
-		done:       make(chan struct{}),
-		changed:    make([]func(x *ServerConfig), 0),
+		keysDirectory: keysDirectory,
+		dirPath:       serverDirectory,
+		configPath:    path.Join(serverDirectory, serverFilename),
+		keysPath:      path.Join(keysDirectory, keysFilename),
+		w:             wtch,
+		done:          make(chan struct{}),
+		serverChanged: make([]func(x *ServerConfig), 0),
+		keysChanged:   make([]func(x *KeysConfiguration), 0),
 	}
 
 	// add the watcher.
@@ -110,16 +115,23 @@ func (c *ConfigurationManager) Initialized() error {
 // PrintChecks prints the existance of each part of the configuration to the console
 func (cfg *ConfigurationManager) PrintStatus() {
 
+	kdirMsg := "Keys Directory Exists"
+	kconfMsg := "Keys Configuration File Exists"
+
 	dirMsg := "Configuration Directory Exists"
 	confMsg := "Configuration File Exists"
 
 	if *dbg.Debug {
-		dirMsg = fmt.Sprintf("Configuration Directory Exists (%s)", cfg.dirPath)
-		confMsg = fmt.Sprintf("Configuration File Exists (%s)", cfg.configPath)
+		kdirMsg = fmt.Sprintf("%s (%s)", kdirMsg, cfg.keysDirectory)
+		kconfMsg = fmt.Sprintf("%s (%s)", kconfMsg, cfg.keysPath)
+		dirMsg = fmt.Sprintf("%s (%s)", dirMsg, cfg.dirPath)
+		confMsg = fmt.Sprintf("%s (%s)", confMsg, cfg.configPath)
 	}
 
 	consoleVal := validation.NewValidationSet()
 	checklist := validation.NewChecklist("Configuration checks:")
+	checklist.Add(validation.NewChecklistItem(dbg.MustOrFalse(dirExists(cfg.keysDirectory)), kdirMsg))
+	checklist.Add(validation.NewChecklistItem(dbg.MustOrFalse(fileExists(cfg.keysPath)), kconfMsg))
 	checklist.Add(validation.NewChecklistItem(dbg.MustOrFalse(dirExists(cfg.dirPath)), dirMsg))
 	checklist.Add(validation.NewChecklistItem(dbg.MustOrFalse(fileExists(cfg.configPath)), confMsg))
 	consoleVal.AddChild(checklist)
@@ -131,7 +143,11 @@ func (r *ConfigurationManager) SaveServer(config ServerConfig) error {
 }
 
 func (r *ConfigurationManager) OnServerChanged(changed func(x *ServerConfig)) {
-	r.changed = append(r.changed, changed)
+	r.serverChanged = append(r.serverChanged, changed)
+}
+
+func (r *ConfigurationManager) OnKeysChanged(changed func(x *KeysConfiguration)) {
+	r.keysChanged = append(r.keysChanged, changed)
 }
 
 func (r *ConfigurationManager) SaveKeys(config KeysConfiguration) error {
@@ -243,7 +259,7 @@ func watcher(cm *ConfigurationManager) {
 						color.Red("Error loading config file from watch")
 					}
 					if t != nil {
-						for _, changed := range cm.changed {
+						for _, changed := range cm.serverChanged {
 							go changed(t)
 						}
 					}
