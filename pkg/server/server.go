@@ -22,10 +22,10 @@ type Server struct {
 	waiter sync.WaitGroup
 	lock   sync.RWMutex
 	logger *slog.Logger
-	config *configuration.IDPConfiguration
+	config *configuration.ServerConfig
 }
 
-func NewServer(logger *slog.Logger, config *configuration.IDPConfiguration, storage *idp.Storage) (*Server, error) {
+func NewServer(logger *slog.Logger, config *configuration.ServerConfig, storage *idp.Storage) (*Server, error) {
 
 	// Use chi as this is what OIDC is using internally, so keep it conistent
 	router := chi.NewRouter()
@@ -54,7 +54,7 @@ func NewServer(logger *slog.Logger, config *configuration.IDPConfiguration, stor
 	// we need to add a route to the root because we  are mounting
 	// the provider on the root, we cant double map the '/'
 	rtr := provider.Handler.(*chi.Mux)
-	handlers.Routes(rtr, func() *configuration.IDPConfiguration { return server.config })
+	handlers.Routes(rtr, func() *configuration.ServerConfig { return server.config })
 
 	//rtr.Get("/", )
 
@@ -63,7 +63,7 @@ func NewServer(logger *slog.Logger, config *configuration.IDPConfiguration, stor
 	return server, nil
 }
 
-func (s *Server) UpdateConfig(config *configuration.IDPConfiguration) {
+func (s *Server) UpdateConfig(config *configuration.ServerConfig) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 

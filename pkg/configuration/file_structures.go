@@ -2,17 +2,15 @@ package configuration
 
 import "time"
 
+// ServerConfig is a struct that holds the server configuration and is generally stored in source control for shared use.
 type ServerConfig struct {
-	Port      int    `yaml:"port"`
-	KeyPhrase string `yaml:"keyphrase"`
-	Keys      []Key  `yaml:"keys"`
+	Server  HostConfig     `yaml:"server"`
+	Clients []ClientConfig `yaml:"clients"`
 }
 
-type Key struct {
-	ID        string            `yaml:"id"`
-	Algorithm string            `yaml:"algorithm"`
-	Use       string            `yaml:"use"`
-	Data      map[string]string `yaml:"data"`
+type HostConfig struct {
+	Port      int    `yaml:"port"`
+	KeyPhrase string `yaml:"keyphrase"`
 }
 
 type ClientConfig struct {
@@ -29,7 +27,15 @@ type ClientConfig struct {
 	ResponseTypes                  []string      `yaml:"response_types"`
 }
 
-type IDPConfiguration struct {
-	Server  ServerConfig   `yaml:"server"`
-	Clients []ClientConfig `yaml:"clients"`
+// KeysConfiguration is a struct that holds the keys configuration and is stored against the local user account so that it
+// can be used to sign and verify tokens, and survive restarts (and not be committed to source control).
+type KeysConfiguration struct {
+	Keys []Key `yaml:"keys"`
+}
+
+type Key struct {
+	ID        string            `yaml:"id"`
+	Algorithm string            `yaml:"algorithm"`
+	Use       string            `yaml:"use"`
+	Data      map[string]string `yaml:"data"`
 }

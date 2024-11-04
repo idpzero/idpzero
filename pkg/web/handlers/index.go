@@ -11,7 +11,7 @@ import (
 	"github.com/idpzero/idpzero/pkg/web/views"
 )
 
-func index(config func() *configuration.IDPConfiguration) http.HandlerFunc {
+func index(config func() *configuration.ServerConfig) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		idpConfig := config()

@@ -38,29 +38,23 @@ var initializeCmd = &cobra.Command{
 			return err
 		}
 
-		if conf.Initialized() {
-			color.Red("Configuration already initialized in '%s'", conf.DirectoryPath())
+		if err := conf.Initialized(); err != nil {
+			color.Red("Configuration already initialized")
 			fmt.Println()
 			os.Exit(1)
 		}
 
-		cfg := configuration.IDPConfiguration{}
-		cfg.Server = configuration.ServerConfig{}
+		cfg := configuration.ServerConfig{}
+		cfg.Server = configuration.HostConfig{}
 		cfg.Server.Port = 4379
 		cfg.Server.KeyPhrase = uuid.New().String()
 
-		signingKey, err := configuration.NewRSAKey("signing-key", "sig")
-		if err != nil {
-			return err
-		}
-
-		fmt.Printf("Initializing new configuration directory '%s'\n", conf.DirectoryPath())
+		fmt.Printf("Initializing new configuration directory.")
 		fmt.Println()
 
-		cfg.Server.Keys = append(cfg.Server.Keys, *signingKey)
 		cfg.Clients = []configuration.ClientConfig{}
 
-		if err := conf.Save(&cfg); err != nil {
+		if err := conf.SaveServer(cfg); err != nil {
 			return err
 		}
 

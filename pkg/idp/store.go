@@ -18,7 +18,8 @@ var _ op.Storage = &Storage{}
 type Storage struct {
 	logger *slog.Logger
 	lock   sync.Mutex
-	config *configuration.IDPConfiguration
+	server *configuration.ServerConfig
+	keys   *configuration.KeysConfiguration
 }
 
 func NewStorage(logger *slog.Logger) (*Storage, error) {
@@ -32,11 +33,11 @@ func NewStorage(logger *slog.Logger) (*Storage, error) {
 }
 
 // allow updating externally / on demand
-func (s *Storage) SetConfig(config *configuration.IDPConfiguration) {
+func (s *Storage) SetConfig(config *configuration.ServerConfig) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	s.config = config
+	s.server = config
 }
 
 func (s *Storage) AuthRequestByCode(ctx context.Context, code string) (op.AuthRequest, error) {
@@ -117,7 +118,7 @@ func (s *Storage) GetRefreshTokenInfo(ctx context.Context, clientID string, toke
 
 // Health implements op.Storage.
 func (s *Storage) Health(context.Context) error {
-	if s.config == nil {
+	if s.server == nil {
 		return fmt.Errorf("no config loaded")
 	}
 
@@ -126,9 +127,9 @@ func (s *Storage) Health(context.Context) error {
 
 // KeySet implements op.Storage.
 func (s *Storage) KeySet(context.Context) ([]op.Key, error) {
-	keys := make([]op.Key, 0, len(s.config.Server.Keys))
+	keys := make([]op.Key, 0, len(s.keys.Keys))
 
-	for _, key := range s.config.Server.Keys {
+	for _, key := range s.keys.Keys {
 		if key.Use == "sig" {
 			keys = append(keys, &opPublicKey{key: key})
 		}
@@ -166,7 +167,7 @@ func (s *Storage) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.UserI
 func (s *Storage) SignatureAlgorithms(context.Context) ([]jose.SignatureAlgorithm, error) {
 	algs := make([]jose.SignatureAlgorithm, 0)
 
-	for _, key := range s.config.Server.Keys {
+	for _, key := range s.keys.Keys {
 		if key.Use == "sig" {
 			sa := jose.SignatureAlgorithm(key.Algorithm)
 			algs = append(algs, sa)
@@ -179,7 +180,7 @@ func (s *Storage) SignatureAlgorithms(context.Context) ([]jose.SignatureAlgorith
 // SigningKey implements op.Storage.
 func (s *Storage) SigningKey(context.Context) (op.SigningKey, error) {
 
-	for _, key := range s.config.Server.Keys {
+	for _, key := range s.keys.Keys {
 		if key.Use == "sig" {
 			return &opPrivateKey{key: key}, nil
 		}

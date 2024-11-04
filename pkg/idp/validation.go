@@ -7,7 +7,7 @@ import (
 	"github.com/idpzero/idpzero/pkg/validation"
 )
 
-func PrintValidation(config *configuration.IDPConfiguration) bool {
+func PrintValidation(config *configuration.ServerConfig) bool {
 
 	var valid = true
 
@@ -24,6 +24,5 @@ func PrintValidation(config *configuration.IDPConfiguration) bool {
 	}
 
 	val.Render()
-	fmt.Println()
 	return valid
 }

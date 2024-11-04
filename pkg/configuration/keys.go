@@ -72,12 +72,12 @@ func NewRSAKey(id string, use string) (*Key, error) {
 
 // SetKey adds a new key to the configuration. If the key already exists, it will be replaced if replaceExisting is true.
 // Returns true if the key was replaced, false if it was added.
-func SetKey(doc *IDPConfiguration, key Key, replaceExisting bool) bool {
+func SetKey(doc *KeysConfiguration, key Key, replaceExisting bool) bool {
 
-	for i, k := range doc.Server.Keys {
+	for i, k := range doc.Keys {
 		if k.ID == key.ID {
 			if replaceExisting {
-				doc.Server.Keys[i] = key
+				doc.Keys[i] = key
 				return true
 			}
 			break
@@ -85,15 +85,15 @@ func SetKey(doc *IDPConfiguration, key Key, replaceExisting bool) bool {
 	}
 
 	// insert at the beginning so it gets picked up as priority
-	doc.Server.Keys = append([]Key{key}, doc.Server.Keys...)
+	doc.Keys = append([]Key{key}, doc.Keys...)
 	return false
 }
 
 // RemoveKey removes a key from the configuration if it exists. Returns true if removed, false if not found.
-func RemoveKey(cfg *IDPConfiguration, kid string) bool {
-	for i, key := range cfg.Server.Keys {
+func RemoveKey(cfg *KeysConfiguration, kid string) bool {
+	for i, key := range cfg.Keys {
 		if key.ID == kid {
-			cfg.Server.Keys = append(cfg.Server.Keys[:i], cfg.Server.Keys[i+1:]...)
+			cfg.Keys = append(cfg.Keys[:i], cfg.Keys[i+1:]...)
 			return true
 		}
 	}
@@ -101,9 +101,9 @@ func RemoveKey(cfg *IDPConfiguration, kid string) bool {
 	return false
 }
 
-func KeyExists(doc *IDPConfiguration, id string) bool {
+func KeyExists(doc *KeysConfiguration, id string) bool {
 
-	for _, k := range doc.Server.Keys {
+	for _, k := range doc.Keys {
 		if k.ID == id {
 			return true
 		}

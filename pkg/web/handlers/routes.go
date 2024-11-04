@@ -16,7 +16,7 @@ func mustFs(fs fs.FS, err error) fs.FS {
 	return fs
 }
 
-func Routes(router *chi.Mux, config func() *configuration.IDPConfiguration) {
+func Routes(router *chi.Mux, config func() *configuration.ServerConfig) {
 
 	router.Handle("/assets/*", http.FileServer(http.FS(web.Assets)))
 
