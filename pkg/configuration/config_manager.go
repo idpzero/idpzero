@@ -88,28 +88,32 @@ func fileExists(file string) (bool, error) {
 	}
 }
 
-func (c *ConfigurationManager) Initialized() error {
-	ok, err := dirExists(c.dirPath)
+func (c *ConfigurationManager) Initialized() (bool, error) {
+	si, err := c.ServerInitialized()
 
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	if !ok {
-		return errors.New("configuration directory does not exist")
+	if si {
+		ki, err := c.KeysInitialized()
+
+		if err != nil {
+			return false, err
+		}
+
+		return ki, nil
 	}
 
-	ok, err = fileExists(c.configPath)
+	return false, nil
+}
 
-	if err != nil {
-		return err
-	}
+func (c *ConfigurationManager) ServerInitialized() (bool, error) {
+	return fileExists(c.configPath)
+}
 
-	if !ok {
-		return errors.New("server configuration does not exist")
-	}
-
-	return nil
+func (c *ConfigurationManager) KeysInitialized() (bool, error) {
+	return fileExists(c.keysPath)
 }
 
 // PrintChecks prints the existance of each part of the configuration to the console
@@ -224,7 +228,7 @@ func ensureDirectory(path string) error {
 
 	if fi, err := os.Stat(path); os.IsNotExist(err) {
 
-		if !fi.IsDir() {
+		if fi != nil && !fi.IsDir() {
 			return errors.New("path exists but is not a directory")
 		}
 

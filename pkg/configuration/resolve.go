@@ -57,18 +57,6 @@ func resolveDirectory(path string) (string, error) {
 	}
 }
 
-// func isInitialized(path string) (bool, error) {
-
-// 	// check if config file exists
-// 	if _, err := os.Stat(filepath.Join(path, configFilename)); os.IsNotExist(err) {
-// 		return false, nil
-// 	} else if err != nil {
-// 		return false, err
-// 	}
-
-// 	return true, nil
-// }
-
 func discoverConfigDir(cwd string) (string, error) {
 
 	currentPath := cwd

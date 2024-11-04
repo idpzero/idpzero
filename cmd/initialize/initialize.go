@@ -2,7 +2,6 @@ package initialize
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/fatih/color"
 	"github.com/google/uuid"
@@ -38,24 +37,48 @@ var initializeCmd = &cobra.Command{
 			return err
 		}
 
-		if err := conf.Initialized(); err != nil {
-			color.Red("Configuration already initialized")
+		if ok, err := conf.ServerInitialized(); err != nil {
+			return err
+		} else if ok == true {
+			color.Yellow("Server configuration already initialized. Skipping.")
+		} else {
+			cfg := configuration.ServerConfig{}
+			cfg.Server = configuration.HostConfig{}
+			cfg.Server.Port = 4379
+			cfg.Server.KeyPhrase = uuid.New().String()
+
+			fmt.Printf("Initializing new configuration directory.")
 			fmt.Println()
-			os.Exit(1)
+
+			cfg.Clients = []configuration.ClientConfig{}
+
+			if err := conf.SaveServer(cfg); err != nil {
+				return err
+			}
 		}
 
-		cfg := configuration.ServerConfig{}
-		cfg.Server = configuration.HostConfig{}
-		cfg.Server.Port = 4379
-		cfg.Server.KeyPhrase = uuid.New().String()
-
-		fmt.Printf("Initializing new configuration directory.")
-		fmt.Println()
-
-		cfg.Clients = []configuration.ClientConfig{}
-
-		if err := conf.SaveServer(cfg); err != nil {
+		if ok, err := conf.KeysInitialized(); err != nil {
 			return err
+		} else if ok == true {
+			color.Yellow("Keys configuration already initialized. Skipping.")
+		} else {
+			fmt.Printf("Initializing new keys directory.")
+			fmt.Println()
+
+			keys := configuration.KeysConfiguration{}
+			keys.Keys = []configuration.Key{}
+
+			nk, err := configuration.NewRSAKey("default", "sig")
+
+			if err != nil {
+				return err
+			}
+
+			keys.Keys = append(keys.Keys, *nk)
+
+			if err := conf.SaveKeys(keys); err != nil {
+				return err
+			}
 		}
 
 		conf, err = configuration.Resolve(*shared.Location)
