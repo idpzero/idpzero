@@ -59,19 +59,6 @@ func NewConfigurationManager(serverDirectory string, keysDirectory string) (*Con
 	return &cm, nil
 }
 
-// func dirExists(directory string) (bool, error) {
-// 	_, err := os.Stat(directory)
-// 	if err != nil {
-// 		if os.IsNotExist(err) {
-// 			return false, nil
-// 		} else {
-// 			return false, err
-// 		}
-// 	} else {
-// 		return true, nil
-// 	}
-// }
-
 func fileExists(file string) (bool, error) {
 	_, err := os.Stat(file)
 	if err != nil {
@@ -161,7 +148,7 @@ func (r *ConfigurationManager) LoadServer() (*ServerConfig, error) {
 }
 
 func (r *ConfigurationManager) LoadKeys() (*KeysConfiguration, error) {
-	file, err := os.Open(r.configPath)
+	file, err := os.Open(r.keysPath)
 	if err != nil {
 		return nil, err
 	}
@@ -237,12 +224,28 @@ func watcher(cm *ConfigurationManager) {
 			}
 			if event.Has(fsnotify.Write) {
 				if event.Name == cm.configPath {
+
+					color.Yellow("Server configuration changed.")
+
 					t, err := cm.LoadServer()
 					if err != nil {
 						color.Red("Error loading config file from watch")
 					}
 					if t != nil {
 						for _, changed := range cm.serverChanged {
+							go changed(t)
+						}
+					}
+				} else if event.Name == cm.keysPath {
+
+					color.Yellow("Server configuration changed.")
+
+					t, err := cm.LoadKeys()
+					if err != nil {
+						color.Red("Error loading keys file from watch")
+					}
+					if t != nil {
+						for _, changed := range cm.keysChanged {
 							go changed(t)
 						}
 					}

@@ -45,32 +45,17 @@ var startCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		cfg, err := conf.LoadServer()
+		idpStore, err := idp.NewStorage(dbg.Logger, conf)
 
 		if err != nil {
 			return err
 		}
 
-		idpStore, err := idp.NewStorage(dbg.Logger)
+		s, err := server.NewServer(dbg.Logger, conf, idpStore)
 
 		if err != nil {
 			return err
 		}
-
-		idpStore.SetConfig(cfg)
-
-		s, err := server.NewServer(dbg.Logger, cfg, idpStore)
-
-		if err != nil {
-			return err
-		}
-
-		// watch for changes and set it again.
-		conf.OnServerChanged(func(x *configuration.ServerConfig) {
-			color.Yellow("Configuration changed. Reloading...")
-			idpStore.SetConfig(x)
-			s.SetConfig(x)
-		})
 
 		return s.Run(ctx)
 	},

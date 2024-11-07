@@ -16,28 +16,57 @@ import (
 var _ op.Storage = &Storage{}
 
 type Storage struct {
-	logger *slog.Logger
-	lock   sync.Mutex
-	server *configuration.ServerConfig
-	keys   *configuration.KeysConfiguration
+	logger    *slog.Logger
+	lock      sync.Mutex
+	configMgr *configuration.ConfigurationManager
+	server    *configuration.ServerConfig
+	keys      *configuration.KeysConfiguration
 }
 
-func NewStorage(logger *slog.Logger) (*Storage, error) {
+func NewStorage(logger *slog.Logger, configMgr *configuration.ConfigurationManager) (*Storage, error) {
 
 	store := &Storage{
-		logger: logger,
-		lock:   sync.Mutex{},
+		logger:    logger,
+		configMgr: configMgr,
+		lock:      sync.Mutex{},
 	}
+
+	keys, err := configMgr.LoadKeys()
+
+	if err != nil {
+		return nil, err
+	}
+
+	store.keys = keys
+
+	svrconf, err := configMgr.LoadServer()
+
+	if err != nil {
+		return nil, err
+	}
+
+	store.server = svrconf
+
+	// setup watching for changes
+	configMgr.OnKeysChanged(store.setKeys)
+	configMgr.OnServerChanged(store.setConfig)
 
 	return store, nil
 }
 
 // allow updating externally / on demand
-func (s *Storage) SetConfig(config *configuration.ServerConfig) {
+func (s *Storage) setConfig(config *configuration.ServerConfig) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
 	s.server = config
+}
+
+func (s *Storage) setKeys(keys *configuration.KeysConfiguration) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	s.keys = keys
 }
 
 func (s *Storage) AuthRequestByCode(ctx context.Context, code string) (op.AuthRequest, error) {
@@ -127,7 +156,7 @@ func (s *Storage) Health(context.Context) error {
 
 // KeySet implements op.Storage.
 func (s *Storage) KeySet(context.Context) ([]op.Key, error) {
-	keys := make([]op.Key, 0, len(s.keys.Keys))
+	keys := make([]op.Key, 0)
 
 	for _, key := range s.keys.Keys {
 		if key.Use == "sig" {

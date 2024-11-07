@@ -25,18 +25,27 @@ type Server struct {
 	config *configuration.ServerConfig
 }
 
-func NewServer(logger *slog.Logger, config *configuration.ServerConfig, storage *idp.Storage) (*Server, error) {
+func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, storage *idp.Storage) (*Server, error) {
 
 	// Use chi as this is what OIDC is using internally, so keep it conistent
 	router := chi.NewRouter()
+
+	c, err := config.LoadServer()
+
+	if err != nil {
+		return nil, err
+	}
 
 	server := &Server{
 		waiter: sync.WaitGroup{},
 		lock:   sync.RWMutex{},
 		logger: logger,
-		config: config,
-		server: &http.Server{Addr: fmt.Sprintf("0.0.0.0:%d", config.Server.Port), Handler: router},
+		config: c,
+		server: &http.Server{Addr: fmt.Sprintf("0.0.0.0:%d", c.Server.Port), Handler: router},
 	}
+
+	// update for changes to be loaded
+	config.OnServerChanged(server.setConfig)
 
 	router.Use(middleware.RequestID)
 	router.Use(setProviderFromRequest) // set the issuer based on the request URL
@@ -65,7 +74,7 @@ func NewServer(logger *slog.Logger, config *configuration.ServerConfig, storage 
 	return server, nil
 }
 
-func (s *Server) SetConfig(config *configuration.ServerConfig) {
+func (s *Server) setConfig(config *configuration.ServerConfig) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
