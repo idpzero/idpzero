@@ -1,6 +1,15 @@
 package configuration
 
-import "time"
+import (
+	"time"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+)
+
+func init() {
+	// set the tag name so the right field is shown in the error message
+	validation.ErrorTag = "yaml"
+}
 
 // ServerConfig is a struct that holds the server configuration and is generally stored in source control for shared use.
 type ServerConfig struct {
@@ -8,9 +17,23 @@ type ServerConfig struct {
 	Clients []ClientConfig `yaml:"clients"`
 }
 
+func (h ServerConfig) Validate() error {
+	return validation.ValidateStruct(&h,
+		validation.Field(&h.Server),
+		validation.Field(&h.Clients),
+	)
+}
+
 type HostConfig struct {
 	Port      int    `yaml:"port"`
 	KeyPhrase string `yaml:"keyphrase"`
+}
+
+func (h HostConfig) Validate() error {
+	return validation.ValidateStruct(&h,
+		validation.Field(&h.Port, validation.Required, validation.Min(1), validation.Max(65535)),
+		validation.Field(&h.KeyPhrase, validation.Required),
+	)
 }
 
 type ClientConfig struct {
@@ -26,6 +49,18 @@ type ClientConfig struct {
 	PostLogoutRedirectURIs         []string      `yaml:"post_logout_redirect_uris"`
 	ResponseTypes                  []string      `yaml:"response_types"`
 }
+
+// func (h ClientConfig) Validate() error {
+
+// 	return validation.ValidateStruct(&h,
+// 		validation.Field(&h.ID, validation.Required),
+// 		validation.Field(&h.AccessTokenType, validation.Required, validation.In(all(op.AccessTokenTypeStrings())...)),
+// 		validation.Field(&h.ApplicationType, validation.Required, validation.In(all(op.ApplicationTypeStrings())...)),
+// 		validation.Field(&h.AuthMethod, validation.Required, validation.In(all(oidc.AllAuthMethods)...)),
+// 		validation.Field(&h.GrantTypes, validation.Required, validation.Each(validation.In(all(oidc.AllGrantTypes)...))),
+// 		validation.Field(&h.ResponseTypes, validation.Required, validation.Each(validation.In(string(oidc.ResponseTypeCode), string(oidc.ResponseTypeIDToken), string(oidc.ResponseTypeIDTokenOnly)))),
+// 	)
+// }
 
 // KeysConfiguration is a struct that holds the keys configuration and is stored against the local user account so that it
 // can be used to sign and verify tokens, and survive restarts (and not be committed to source control).

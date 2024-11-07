@@ -35,9 +35,9 @@ var startCmd = &cobra.Command{
 
 		defer conf.Close()
 
-		conf.PrintStatus()
+		configuration.PrintStatus(conf)
 
-		if initialized, err := conf.Initialized(); err != nil {
+		if initialized, err := conf.IsInitialized(); err != nil {
 			return err
 		} else if !initialized {
 			color.Yellow("Configuration not valid. Run 'idpzero init' to initialize")
@@ -57,30 +57,20 @@ var startCmd = &cobra.Command{
 			return err
 		}
 
-		valid := idp.PrintValidation(cfg)
-		if !valid {
-			color.Red("Configuration not valid. Fix the configuration and try again.")
-			fmt.Println()
-			os.Exit(1)
-		}
-
 		idpStore.SetConfig(cfg)
-
-		// watch for changes and set it again.
-		conf.OnServerChanged(func(x *configuration.ServerConfig) {
-			color.Yellow("Configuration changed. Reloading...")
-
-			valid := idp.PrintValidation(x)
-			if valid {
-				idpStore.SetConfig(x)
-			}
-		})
 
 		s, err := server.NewServer(dbg.Logger, cfg, idpStore)
 
 		if err != nil {
 			return err
 		}
+
+		// watch for changes and set it again.
+		conf.OnServerChanged(func(x *configuration.ServerConfig) {
+			color.Yellow("Configuration changed. Reloading...")
+			idpStore.SetConfig(x)
+			s.SetConfig(x)
+		})
 
 		return s.Run(ctx)
 	},

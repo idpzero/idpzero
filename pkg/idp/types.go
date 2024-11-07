@@ -1,12 +1,10 @@
 package idp
 
 import (
-	"fmt"
 	"time"
 
 	jose "github.com/go-jose/go-jose/v4"
 	"github.com/idpzero/idpzero/pkg/configuration"
-	"github.com/idpzero/idpzero/pkg/validation"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"github.com/zitadel/oidc/v3/pkg/op"
 )
@@ -66,8 +64,7 @@ func (s *opPrivateKey) ID() string {
 }
 
 type Client struct {
-	config      configuration.ClientConfig
-	validations []*validation.ChecklistItem
+	config configuration.ClientConfig
 
 	// parsed fields
 	appType         op.ApplicationType
@@ -79,113 +76,104 @@ type Client struct {
 
 var _ op.Client = &Client{}
 
-func NewClient(config configuration.ClientConfig) (*Client, []*validation.ChecklistItem) {
+func NewClient(config configuration.ClientConfig) *Client {
 	c := &Client{
 		config:        config,
-		validations:   []*validation.ChecklistItem{},
 		grantTypes:    []oidc.GrantType{},
 		responseTypes: []oidc.ResponseType{},
 	}
 
-	// parse and validate the config, so we know if its valid and can
-	// prevent starting the server if its not.
-	c.parseAndValidate()
-
-	return c, c.validations
+	return c
 }
 
-func (c *Client) parseAndValidate() {
-	c.validations = []*validation.ChecklistItem{}
+// func (c *Client) parseAndValidate() {
+// 	c.validations = []*validation.ChecklistItem{}
 
-	ot, err := op.ApplicationTypeString(c.config.ApplicationType)
-	if err != nil {
-		ci := validation.NewChecklistItem(false, "application_type").
-			WithValue(c.config.ApplicationType).
-			WithError(err)
+// 	ot, err := op.ApplicationTypeString(c.config.ApplicationType)
+// 	if err != nil {
+// 		ci := validation.NewChecklistItem(false, "application_type").
+// 			WithValue(c.config.ApplicationType).
+// 			WithError(err)
 
-		c.validations = append(c.validations, ci)
-	} else {
-		c.appType = ot
-	}
+// 		c.validations = append(c.validations, ci)
+// 	} else {
+// 		c.appType = ot
+// 	}
 
-	at, err := op.AccessTokenTypeString(c.config.AccessTokenType)
-	if err != nil {
-		ci := validation.NewChecklistItem(false, "access_token_type").
-			WithValue(c.config.AccessTokenType).
-			WithError(err)
-		c.validations = append(c.validations, ci)
-	} else {
-		c.accessTokenType = at
-	}
+// 	at, err := op.AccessTokenTypeString(c.config.AccessTokenType)
+// 	if err != nil {
+// 		ci := validation.NewChecklistItem(false, "access_token_type").
+// 			WithValue(c.config.AccessTokenType).
+// 			WithError(err)
+// 		c.validations = append(c.validations, ci)
+// 	} else {
+// 		c.accessTokenType = at
+// 	}
 
-	parsedAuthMethod := oidc.AuthMethod(c.config.AuthMethod)
+// 	parsedAuthMethod := oidc.AuthMethod(c.config.AuthMethod)
 
-	allAuthMethods := []string{}
-	for _, am := range oidc.AllAuthMethods {
-		allAuthMethods = append(allAuthMethods, string(am))
-		if parsedAuthMethod == am {
-			c.authMehtod = &am
-			break
-		}
-	}
+// 	allAuthMethods := []string{}
+// 	for _, am := range oidc.AllAuthMethods {
+// 		allAuthMethods = append(allAuthMethods, string(am))
+// 		if parsedAuthMethod == am {
+// 			c.authMehtod = &am
+// 			break
+// 		}
+// 	}
 
-	if c.authMehtod == nil {
-		ci := validation.NewChecklistItem(false, "auth_method").
-			WithValue(c.config.AuthMethod).
-			WithError(fmt.Errorf("'auth_method' not valid")).
-			WithOptions(allAuthMethods)
+// 	if c.authMehtod == nil {
+// 		ci := validation.NewChecklistItem(false, "auth_method").
+// 			WithValue(c.config.AuthMethod).
+// 			WithError(fmt.Errorf("'auth_method' not valid")).
+// 			WithOptions(allAuthMethods)
 
-		c.validations = append(c.validations, ci)
-	}
+// 		c.validations = append(c.validations, ci)
+// 	}
 
-	for _, gt := range c.config.GrantTypes {
-		parsedGrantType := oidc.GrantType(gt)
-		allGrantTypes := []string{}
-		valid := false
-		for _, gt := range oidc.AllGrantTypes {
-			allGrantTypes = append(allGrantTypes, string(gt))
-			if parsedGrantType == gt {
-				valid = true
-				c.grantTypes = append(c.grantTypes, gt)
-				break
-			}
-		}
+// 	for _, gt := range c.config.GrantTypes {
+// 		parsedGrantType := oidc.GrantType(gt)
+// 		allGrantTypes := []string{}
+// 		valid := false
+// 		for _, gt := range oidc.AllGrantTypes {
+// 			allGrantTypes = append(allGrantTypes, string(gt))
+// 			if parsedGrantType == gt {
+// 				valid = true
+// 				c.grantTypes = append(c.grantTypes, gt)
+// 				break
+// 			}
+// 		}
 
-		if !valid {
-			ci := validation.NewChecklistItem(false, "grant_types").
-				WithValue(gt).
-				WithError(fmt.Errorf("'grant_types' not valid")).
-				WithOptions(allGrantTypes)
+// 		if !valid {
+// 			ci := validation.NewChecklistItem(false, "grant_types").
+// 				WithValue(gt).
+// 				WithError(fmt.Errorf("'grant_types' not valid")).
+// 				WithOptions(allGrantTypes)
 
-			c.validations = append(c.validations, ci)
-		}
-	}
+// 			c.validations = append(c.validations, ci)
+// 		}
+// 	}
 
-	for _, gt := range c.config.ResponseTypes {
-		parsedResponseType := oidc.ResponseType(gt)
-		if parsedResponseType == oidc.ResponseTypeCode ||
-			parsedResponseType == oidc.ResponseTypeIDToken ||
-			parsedResponseType == oidc.ResponseTypeIDTokenOnly {
-			c.responseTypes = append(c.responseTypes, parsedResponseType)
-		} else {
-			ci := validation.NewChecklistItem(false, "response_types").
-				WithValue(gt).
-				WithError(fmt.Errorf("'response_types' not valid")).
-				WithOptions([]string{
-					string(oidc.ResponseTypeCode),
-					string(oidc.ResponseTypeIDToken),
-					string(oidc.ResponseTypeIDTokenOnly),
-				})
+// 	for _, gt := range c.config.ResponseTypes {
+// 		parsedResponseType := oidc.ResponseType(gt)
+// 		if parsedResponseType == oidc.ResponseTypeCode ||
+// 			parsedResponseType == oidc.ResponseTypeIDToken ||
+// 			parsedResponseType == oidc.ResponseTypeIDTokenOnly {
+// 			c.responseTypes = append(c.responseTypes, parsedResponseType)
+// 		} else {
+// 			ci := validation.NewChecklistItem(false, "response_types").
+// 				WithValue(gt).
+// 				WithError(fmt.Errorf("'response_types' not valid")).
+// 				WithOptions([]string{
+// 					string(oidc.ResponseTypeCode),
+// 					string(oidc.ResponseTypeIDToken),
+// 					string(oidc.ResponseTypeIDTokenOnly),
+// 				})
 
-			c.validations = append(c.validations, ci)
-		}
-	}
+// 			c.validations = append(c.validations, ci)
+// 		}
+// 	}
 
-}
-
-func (c *Client) IsValid() bool {
-	return len(c.validations) == 0
-}
+// }
 
 // AccessTokenType implements op.Client.
 func (c *Client) AccessTokenType() op.AccessTokenType {

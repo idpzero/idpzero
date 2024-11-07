@@ -9,11 +9,12 @@ import (
 
 func EnsureInitialized(conf *configuration.ConfigurationManager) error {
 
-	conf.PrintStatus()
-
-	if initialized, err := conf.Initialized(); err != nil {
+	if initialized, err := conf.IsInitialized(); err != nil {
 		return err
 	} else if !initialized {
+		fmt.Println("Initialization status:")
+		configuration.PrintStatus(conf)
+
 		color.Yellow("Configuration not valid. Run 'idpzero init' to initialize")
 		fmt.Println()
 		return ErrNotInitialized

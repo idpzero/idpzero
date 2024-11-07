@@ -16,6 +16,7 @@ require (
 	github.com/bmatcuk/doublestar/v4 v4.6.1 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -38,6 +39,7 @@ require (
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
 	github.com/fatih/color v1.18.0
 	github.com/fsnotify/fsnotify v1.7.0
+	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/zitadel/oidc/v3 v3.30.1
 	golang.org/x/sys v0.25.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0

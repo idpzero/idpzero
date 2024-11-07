@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/idpzero/idpzero/cmd/shared"
 	"github.com/idpzero/idpzero/pkg/configuration"
+	"github.com/idpzero/idpzero/pkg/console"
 	"github.com/spf13/cobra"
 )
 
@@ -37,10 +38,10 @@ var initializeCmd = &cobra.Command{
 			return err
 		}
 
-		if ok, err := conf.ServerInitialized(); err != nil {
+		if ok, err := conf.IsServerInitialized(); err != nil {
 			return err
-		} else if ok == true {
-			color.Yellow("Server configuration already initialized. Skipping.")
+		} else if ok {
+			console.PrintCheck(console.IconCheck, "Server configuration already initialized. Skipping.")
 		} else {
 			cfg := configuration.ServerConfig{}
 			cfg.Server = configuration.HostConfig{}
@@ -55,12 +56,14 @@ var initializeCmd = &cobra.Command{
 			if err := conf.SaveServer(cfg); err != nil {
 				return err
 			}
+
+			console.PrintCheck(console.IconCheck, "Server configuration initialized successfully.")
 		}
 
-		if ok, err := conf.KeysInitialized(); err != nil {
+		if ok, err := conf.IsKeysInitialized(); err != nil {
 			return err
-		} else if ok == true {
-			color.Yellow("Keys configuration already initialized. Skipping.")
+		} else if ok {
+			console.PrintCheck(console.IconCheck, "Keys configuration already initialized. Skipping.")
 		} else {
 			fmt.Printf("Initializing new keys directory.")
 			fmt.Println()
@@ -79,6 +82,8 @@ var initializeCmd = &cobra.Command{
 			if err := conf.SaveKeys(keys); err != nil {
 				return err
 			}
+
+			console.PrintCheck(console.IconCheck, "Keys configuration initialized successfully.")
 		}
 
 		conf, err = configuration.Resolve(*shared.Location)
@@ -87,9 +92,10 @@ var initializeCmd = &cobra.Command{
 			return err
 		}
 
-		conf.PrintStatus()
+		configuration.PrintStatus(conf)
 
-		color.Green("Configuration initialized OK.")
+		fmt.Println()
+		color.Green("Initialized OK!")
 		fmt.Println()
 
 		return nil

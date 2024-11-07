@@ -3,15 +3,12 @@ package configuration
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"os"
 	"path"
 	"path/filepath"
 
 	"github.com/fatih/color"
 	"github.com/fsnotify/fsnotify"
-	"github.com/idpzero/idpzero/pkg/dbg"
-	"github.com/idpzero/idpzero/pkg/validation"
 	"gopkg.in/yaml.v2"
 )
 
@@ -62,18 +59,18 @@ func NewConfigurationManager(serverDirectory string, keysDirectory string) (*Con
 	return &cm, nil
 }
 
-func dirExists(directory string) (bool, error) {
-	_, err := os.Stat(directory)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		} else {
-			return false, err
-		}
-	} else {
-		return true, nil
-	}
-}
+// func dirExists(directory string) (bool, error) {
+// 	_, err := os.Stat(directory)
+// 	if err != nil {
+// 		if os.IsNotExist(err) {
+// 			return false, nil
+// 		} else {
+// 			return false, err
+// 		}
+// 	} else {
+// 		return true, nil
+// 	}
+// }
 
 func fileExists(file string) (bool, error) {
 	_, err := os.Stat(file)
@@ -88,15 +85,15 @@ func fileExists(file string) (bool, error) {
 	}
 }
 
-func (c *ConfigurationManager) Initialized() (bool, error) {
-	si, err := c.ServerInitialized()
+func (c *ConfigurationManager) IsInitialized() (bool, error) {
+	si, err := c.IsServerInitialized()
 
 	if err != nil {
 		return false, err
 	}
 
 	if si {
-		ki, err := c.KeysInitialized()
+		ki, err := c.IsKeysInitialized()
 
 		if err != nil {
 			return false, err
@@ -108,38 +105,12 @@ func (c *ConfigurationManager) Initialized() (bool, error) {
 	return false, nil
 }
 
-func (c *ConfigurationManager) ServerInitialized() (bool, error) {
+func (c *ConfigurationManager) IsServerInitialized() (bool, error) {
 	return fileExists(c.configPath)
 }
 
-func (c *ConfigurationManager) KeysInitialized() (bool, error) {
+func (c *ConfigurationManager) IsKeysInitialized() (bool, error) {
 	return fileExists(c.keysPath)
-}
-
-// PrintChecks prints the existance of each part of the configuration to the console
-func (cfg *ConfigurationManager) PrintStatus() {
-
-	kdirMsg := "Keys Directory Exists"
-	kconfMsg := "Keys Configuration File Exists"
-
-	dirMsg := "Configuration Directory Exists"
-	confMsg := "Configuration File Exists"
-
-	if *dbg.Debug {
-		kdirMsg = fmt.Sprintf("%s (%s)", kdirMsg, cfg.keysDirectory)
-		kconfMsg = fmt.Sprintf("%s (%s)", kconfMsg, cfg.keysPath)
-		dirMsg = fmt.Sprintf("%s (%s)", dirMsg, cfg.dirPath)
-		confMsg = fmt.Sprintf("%s (%s)", confMsg, cfg.configPath)
-	}
-
-	consoleVal := validation.NewValidationSet()
-	checklist := validation.NewChecklist("Configuration checks:")
-	checklist.Add(validation.NewChecklistItem(dbg.MustOrFalse(dirExists(cfg.keysDirectory)), kdirMsg))
-	checklist.Add(validation.NewChecklistItem(dbg.MustOrFalse(fileExists(cfg.keysPath)), kconfMsg))
-	checklist.Add(validation.NewChecklistItem(dbg.MustOrFalse(dirExists(cfg.dirPath)), dirMsg))
-	checklist.Add(validation.NewChecklistItem(dbg.MustOrFalse(fileExists(cfg.configPath)), confMsg))
-	consoleVal.AddChild(checklist)
-	consoleVal.Render()
 }
 
 func (r *ConfigurationManager) SaveServer(config ServerConfig) error {
@@ -156,6 +127,14 @@ func (r *ConfigurationManager) OnKeysChanged(changed func(x *KeysConfiguration))
 
 func (r *ConfigurationManager) SaveKeys(config KeysConfiguration) error {
 	return marshal(r.keysPath, config)
+}
+
+func (r *ConfigurationManager) GetServerPath() string {
+	return r.configPath
+}
+
+func (r *ConfigurationManager) GetKeysPath() string {
+	return r.keysPath
 }
 
 func (r *ConfigurationManager) LoadServer() (*ServerConfig, error) {
