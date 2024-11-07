@@ -122,6 +122,7 @@ func (s *Storage) CreateAccessToken(context.Context, op.TokenRequest) (accessTok
 
 // CreateAuthRequest implements op.Storage.
 func (s *Storage) CreateAuthRequest(context.Context, *oidc.AuthRequest, string) (op.AuthRequest, error) {
+	panic("****************************")
 	panic("unimplemented CreateAuthRequest")
 }
 

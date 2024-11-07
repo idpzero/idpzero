@@ -49,7 +49,7 @@ templ Index(model models.IndexModel) {
          <tbody>
         for _, client := range model.Clients {
             <tr>
-                <td>{client.ID}</td>
+                <td>{client.ClientID}</td>
                 <td>{client.ApplicationType}</td>
                  <td>
                     for _,gt := range client.GrantTypes {

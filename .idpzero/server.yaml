@@ -2,7 +2,7 @@ server:
   port: 4379
   keyphrase: 060df9bc-aea6-41bd-b702-8bcfc5c058e6
 clients:
-  - id: local-remix-auth
+  - client_id: web
     access_token_type: bearer
     application_type: web
     auth_method: none
@@ -13,9 +13,10 @@ clients:
       - refresh_token
     redirect_uris:
       - http://localhost:3000/callback
+      - http://localhost:9999/auth/callback
     response_types:
       - code
-    client_secret: foobar
+    client_secret: secret
     
  
     

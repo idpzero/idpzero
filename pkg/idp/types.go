@@ -83,6 +83,14 @@ func NewClient(config configuration.ClientConfig) *Client {
 		responseTypes: []oidc.ResponseType{},
 	}
 
+	for _, gt := range config.GrantTypes {
+		c.grantTypes = append(c.grantTypes, oidc.GrantType(gt))
+	}
+
+	for _, gt := range config.ResponseTypes {
+		c.responseTypes = append(c.responseTypes, oidc.ResponseType(gt))
+	}
+
 	return c
 }
 

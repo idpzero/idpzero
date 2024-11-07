@@ -76,7 +76,7 @@ func Index(model models.IndexModel) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</tbody></table></div><h2 class=\"text-lg font-bold mt-10\">OpenID Connect / OAuth2 Clients</h2><p class=\"py-2 text-sm\">The following are the configured clients. For details on adding and managing client see CLI reference 'Managing Clients'.</p><div class=\"bg-gray-100 p-2 rounded-lg \"><table class=\"table\"><thead><tr><th>Client ID</th><th>Application Type</th><th>Grant Types</th><th>Redirection URIs</th></tr></thead> <tbody>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</tbody></table></div><h2 class=\"text-lg font-bold mt-10\">OpenID Connect / OAuth2 Clients</h2><p class=\"py-2 text-sm\">The following are the configured clients. For details on adding and managing client see CLI reference 'Managing Clients'.</p><div class=\"bg-gray-100 p-2 rounded-lg \"><table class=\"table table-auto\"><thead><tr><th>Client ID</th><th>Application Type</th><th>Grant Types</th><th>Redirection URIs</th></tr></thead> <tbody>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -88,7 +88,7 @@ func Index(model models.IndexModel) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(client.ClientID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `pkg/web/views/index.templ`, Line: 52, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `pkg/web/views/index.templ`, Line: 52, Col: 36}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
