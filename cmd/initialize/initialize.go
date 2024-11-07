@@ -2,12 +2,12 @@ package initialize
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/fatih/color"
 	"github.com/google/uuid"
 	"github.com/idpzero/idpzero/cmd/shared"
 	"github.com/idpzero/idpzero/pkg/configuration"
+	"github.com/idpzero/idpzero/pkg/console"
 	"github.com/spf13/cobra"
 )
 
@@ -38,30 +38,52 @@ var initializeCmd = &cobra.Command{
 			return err
 		}
 
-		if conf.Initialized() {
-			color.Red("Configuration already initialized in '%s'", conf.DirectoryPath())
+		if ok, err := conf.IsServerInitialized(); err != nil {
+			return err
+		} else if ok {
+			console.PrintCheck(console.IconCheck, "Server configuration already initialized. Skipping.")
+		} else {
+			cfg := configuration.ServerConfig{}
+			cfg.Server = configuration.HostConfig{}
+			cfg.Server.Port = 4379
+			cfg.Server.KeyPhrase = uuid.New().String()
+
+			fmt.Printf("Initializing new configuration directory.")
 			fmt.Println()
-			os.Exit(1)
+
+			cfg.Clients = []configuration.ClientConfig{}
+
+			if err := conf.SaveServer(cfg); err != nil {
+				return err
+			}
+
+			console.PrintCheck(console.IconCheck, "Server configuration initialized successfully.")
 		}
 
-		cfg := configuration.IDPConfiguration{}
-		cfg.Server = configuration.ServerConfig{}
-		cfg.Server.Port = 4379
-		cfg.Server.KeyPhrase = uuid.New().String()
-
-		signingKey, err := configuration.NewRSAKey("signing-key", "sig")
-		if err != nil {
+		if ok, err := conf.IsKeysInitialized(); err != nil {
 			return err
-		}
+		} else if ok {
+			console.PrintCheck(console.IconCheck, "Keys configuration already initialized. Skipping.")
+		} else {
+			fmt.Printf("Initializing new keys directory.")
+			fmt.Println()
 
-		fmt.Printf("Initializing new configuration directory '%s'\n", conf.DirectoryPath())
-		fmt.Println()
+			keys := configuration.KeysConfiguration{}
+			keys.Keys = []configuration.Key{}
 
-		cfg.Server.Keys = append(cfg.Server.Keys, *signingKey)
-		cfg.Clients = []configuration.ClientConfig{}
+			nk, err := configuration.NewRSAKey("default", "sig")
 
-		if err := conf.Save(&cfg); err != nil {
-			return err
+			if err != nil {
+				return err
+			}
+
+			keys.Keys = append(keys.Keys, *nk)
+
+			if err := conf.SaveKeys(keys); err != nil {
+				return err
+			}
+
+			console.PrintCheck(console.IconCheck, "Keys configuration initialized successfully.")
 		}
 
 		conf, err = configuration.Resolve(*shared.Location)
@@ -70,9 +92,10 @@ var initializeCmd = &cobra.Command{
 			return err
 		}
 
-		conf.PrintStatus()
+		configuration.PrintStatus(conf)
 
-		color.Green("Configuration initialized OK.")
+		fmt.Println()
+		color.Green("Initialized OK!")
 		fmt.Println()
 
 		return nil

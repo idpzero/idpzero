@@ -14,7 +14,7 @@ var removeKeyCmd = &cobra.Command{
 	Long:  `Generate and append a new key to the configuration`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		cfg, err := conf.Load()
+		cfg, err := conf.LoadKeys()
 
 		if err != nil {
 			return err
@@ -25,7 +25,7 @@ var removeKeyCmd = &cobra.Command{
 		if removed {
 			color.Yellow("Key '%s' removed from configuration\n", *kid)
 
-			if err := conf.Save(cfg); err != nil {
+			if err := conf.SaveKeys(*cfg); err != nil {
 				color.Red("Failed to save configuration")
 				return err
 			}

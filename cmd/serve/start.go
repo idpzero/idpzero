@@ -1,4 +1,4 @@
-package start
+package serve
 
 import (
 	"fmt"
@@ -19,8 +19,8 @@ func New() *cobra.Command {
 }
 
 var startCmd = &cobra.Command{
-	Use:   "start",
-	Short: "Start the IDP server",
+	Use:   "serve",
+	Short: "Start the IDP server and login experience",
 	// Long:  `Start the IDP server based on the configuration path`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt)
@@ -33,41 +33,25 @@ var startCmd = &cobra.Command{
 			return err
 		}
 
-		conf.PrintStatus()
+		defer conf.Close()
 
-		if !conf.Initialized() {
-			color.Yellow("Configuration not valid. Run 'idpzero init' to initialize configuration")
+		configuration.PrintStatus(conf)
+
+		if initialized, err := conf.IsInitialized(); err != nil {
+			return err
+		} else if !initialized {
+			color.Yellow("Configuration not valid. Run 'idpzero init' to initialize")
 			fmt.Println()
 			os.Exit(1)
 		}
 
-		cfg, err := conf.Load()
+		idpStore, err := idp.NewStorage(dbg.Logger, conf)
 
 		if err != nil {
 			return err
 		}
 
-		idpStore, err := idp.NewStorage(dbg.Logger)
-
-		if err != nil {
-			return err
-		}
-
-		idpStore.SetConfig(cfg)
-
-		// watch for changes and set it again.
-		w, err := configuration.NewWatcher(conf, func(x *configuration.IDPConfiguration) {
-			color.Yellow("Configuration changed. Reloading...")
-			idpStore.SetConfig(x)
-		})
-
-		if err != nil {
-			return err
-		}
-
-		defer w.Close() // wait for the tiy up.
-
-		s, err := server.NewServer(dbg.Logger, cfg, idpStore)
+		s, err := server.NewServer(dbg.Logger, conf, idpStore)
 
 		if err != nil {
 			return err

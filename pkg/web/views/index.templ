@@ -35,17 +35,34 @@ templ Index(model models.IndexModel) {
     </div>
 
     <h2 class="text-lg font-bold mt-10">OpenID Connect / OAuth2 Clients</h2>
-    <p class="py-2 text-sm">The following are the configured OpenID Connect and OAuth2 clients. For details on adding and managing client see CLI reference 'Managing Clients'.</p>
+    <p class="py-2 text-sm">The following are the configured clients. For details on adding and managing client see CLI reference 'Managing Clients'.</p>
     <div class="bg-gray-100 p-2 rounded-lg ">
         <table class="table table-auto">
          <thead>
             <tr>
             <th>Client ID</th>
-            <th>Value</th>
+            <th>Application Type</th>
+            <th>Grant Types</th>
+            <th>Redirection URIs</th>
             </tr>
         </thead>
-
-        <tbody>
+         <tbody>
+        for _, client := range model.Clients {
+            <tr>
+                <td>{client.ID}</td>
+                <td>{client.ApplicationType}</td>
+                 <td>
+                    for _,gt := range client.GrantTypes {
+                        <span>{gt}</span><br/>
+                    }
+                </td>
+                <td>
+                    for _,ruri := range client.RedirectURIs {
+                        <span>{ruri}</span><br/>
+                    }
+                </td>
+            </tr>
+        }
         </tbody>
         </table>
     </div>

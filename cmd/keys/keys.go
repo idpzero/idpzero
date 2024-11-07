@@ -10,7 +10,7 @@ var (
 	kid     *string = new(string)
 	use     *string = new(string)
 	replace *bool   = new(bool)
-	conf    *configuration.ConfigInformation
+	conf    *configuration.ConfigurationManager
 )
 
 func init() {

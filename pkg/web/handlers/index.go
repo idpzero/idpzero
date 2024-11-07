@@ -11,11 +11,10 @@ import (
 	"github.com/idpzero/idpzero/pkg/web/views"
 )
 
-func index(config func() *configuration.IDPConfiguration) http.HandlerFunc {
+func index(config func() *configuration.ServerConfig) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		idpConfig := config()
-
 		hosted := fmt.Sprintf("http://localhost:%d", idpConfig.Server.Port)
 
 		discovery, _ := url.JoinPath(hosted, "/.well-known/openid-configuration")
@@ -23,15 +22,17 @@ func index(config func() *configuration.IDPConfiguration) http.HandlerFunc {
 
 		im := models.IndexModel{}
 		im.Urls = []models.UrlInfo{
-			models.UrlInfo{
+			{
 				Description: "OpenID Connect Discovery Endpoint",
 				Url:         discovery,
 			},
-			models.UrlInfo{
+			{
 				Description: "JSON Web Key Set (JWKS) Endpoint",
 				Url:         keys,
 			},
 		}
+
+		im.Clients = idpConfig.Clients
 
 		idx := views.Index(im)
 

@@ -7,12 +7,15 @@ import (
 	"github.com/idpzero/idpzero/pkg/configuration"
 )
 
-func EnsureInitialized(conf *configuration.ConfigInformation) error {
+func EnsureInitialized(conf *configuration.ConfigurationManager) error {
 
-	conf.PrintStatus()
+	if initialized, err := conf.IsInitialized(); err != nil {
+		return err
+	} else if !initialized {
+		fmt.Println("Initialization status:")
+		configuration.PrintStatus(conf)
 
-	if !conf.Initialized() {
-		color.Yellow("Configuration not valid. Run 'idpzero init' to initialize configuration")
+		color.Yellow("Configuration not valid. Run 'idpzero init' to initialize")
 		fmt.Println()
 		return ErrNotInitialized
 	}
