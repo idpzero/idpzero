@@ -95,14 +95,19 @@ func (s *Storage) AuthRequestByID(ctx context.Context, id string) (op.AuthReques
 }
 
 func (s *Storage) AuthorizeClientIDSecret(ctx context.Context, clientID string, clientSecret string) error {
-	panic("unimplemented AuthorizeClientIDSecret")
-	// for _, client := range s.config.Clients {
-	// 	if client.ClientId == clientID && client.Secret == clientSecret {
-	// 		return nil
-	// 	}
-	// }
 
-	// return fmt.Errorf("client not found")
+	// validate the client with client secret. plain text is used
+	for _, client := range s.server.Clients {
+		if client.ClientID == clientID {
+			if client.ClientSecret == clientSecret {
+				return nil
+			} else {
+				return fmt.Errorf("incorrect client secret provided")
+			}
+		}
+	}
+
+	return fmt.Errorf("client not found")
 }
 
 // CreateAccessAndRefreshTokens implements op.Storage.
@@ -127,7 +132,14 @@ func (s *Storage) DeleteAuthRequest(context.Context, string) error {
 
 // GetClientByClientID implements op.Storage.
 func (s *Storage) GetClientByClientID(ctx context.Context, clientID string) (op.Client, error) {
-	panic("unimplemented GetClientByClientID")
+
+	for _, c := range s.server.Clients {
+		if c.ClientID == clientID {
+			return NewClient(c), nil
+		}
+	}
+
+	return nil, fmt.Errorf("no client registered with ID '%s'", clientID)
 }
 
 // GetKeyByIDAndClientID implements op.Storage.

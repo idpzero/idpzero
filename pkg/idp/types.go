@@ -203,7 +203,7 @@ func (c *Client) DevMode() bool {
 
 // GetID implements op.Client.
 func (c *Client) GetID() string {
-	return c.config.ID
+	return c.config.ClientID
 }
 
 // GrantTypes implements op.Client.

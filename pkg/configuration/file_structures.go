@@ -37,7 +37,7 @@ func (h HostConfig) Validate() error {
 }
 
 type ClientConfig struct {
-	ID                             string        `yaml:"id"`
+	ClientID                       string        `yaml:"client_id"`
 	AccessTokenType                string        `yaml:"access_token_type"` // bearer or jwt.
 	ApplicationType                string        `yaml:"application_type"`  // web, native, or service.
 	AuthMethod                     string        `yaml:"auth_method"`       // client_secret_basic,client_secret_post,none,private_key_jwt
@@ -48,6 +48,7 @@ type ClientConfig struct {
 	RedirectURIs                   []string      `yaml:"redirect_uris"`
 	PostLogoutRedirectURIs         []string      `yaml:"post_logout_redirect_uris"`
 	ResponseTypes                  []string      `yaml:"response_types"`
+	ClientSecret                   string        `yaml:"client_secret,omitempty"`
 }
 
 // func (h ClientConfig) Validate() error {

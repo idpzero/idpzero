@@ -15,6 +15,7 @@ clients:
       - http://localhost:3000/callback
     response_types:
       - code
+    client_secret: foobar
     
  
     
