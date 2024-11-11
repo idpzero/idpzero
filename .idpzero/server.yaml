@@ -17,6 +17,50 @@ clients:
     response_types:
       - code
     client_secret: secret
+scenario_groups:
+  default:
+    order: 1
+    display: Valid Users (Verified Email)
+    scenarios:
+    - id: john_verified_email
+      display: John Jones
+      comment: |
+        This scenario is used to test the case where the email is verified.
+      claims:
+        sub: john
+        name: John Jones 
+        given_name: John
+        family_name: Jones
+        email: john@example.com
+        email_verified: true
+    - id: mary_verified_email
+      display: Mary Smith
+      comment: |
+        This scenario is used to test the case where the email is verified.
+      claims:
+        sub: mary
+        name: Mary Smith 
+        given_name: Mary
+        family_name: Smith
+        email: mary@example.com
+        email_verified: true
+  unverified:
+    order: 2
+    display: Un-verified Email
+    scenarios:
+    - id: john_unverified_email
+      display: John Jones
+      comment: |
+        This scenario is used to test the case where the email is not verified.
+      claims:
+        sub: john
+        name: John Jones 
+        given_name: John
+        family_name: Jones
+        email: john@example.com
+        email_verified: false
+   
+
     
  
     

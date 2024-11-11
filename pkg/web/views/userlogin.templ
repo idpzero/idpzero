@@ -35,7 +35,7 @@ templ UserLogin(model models.UserLoginModel) {
             <div class="grid gap-4 w-full">
                 <div class="grid gap-2">
                     <p class="text-sm">
-                    Choose a pre-configured user to sign in as. Details of users and claims can be found in <a href="/" target="_blank" class="link">configuration</a>.
+                    Choose a user scenaio to sign in with. Details of user scenarios and claims can be found <a href="/" target="_blank" class="link">here</a>.
                     </p>    
                 </div>
                 
@@ -43,12 +43,20 @@ templ UserLogin(model models.UserLoginModel) {
 
                     <label class="form-control w-full">
                     <div class="label">
-                        <span class="label-text">Select user to login as</span>
+                        <span class="label-text">Select user scenario to login with:</span>
                     </div>
                         <select name="username" required class="select select-bordered w-full">
-                            <option disabled selected>Select User</option>
-                            <option>Han Solo</option>
-                            <option>Greedo</option>
+                            <option disabled selected>Select User Scenario</option>
+                            for _, user := range model.Users {
+                                <optgroup label={user.DisplayName}>
+                                for _, option := range user.Options {
+                                    <option id={option.ID}>
+                                        <span>{option.DisplayName}</span>
+                                        <span>({option.ID})</span>
+                                    </option>
+                                }
+                                </optgroup>
+                            }
                         </select>
                     </label>
                 </div>
