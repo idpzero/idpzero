@@ -5,7 +5,7 @@ clients:
   - client_id: web
     access_token_type: bearer
     application_type: web
-    auth_method: none
+    auth_method: client_secret_basic
     clock_skew: 60s
     id_token_lifetime: 1h
     grant_types:

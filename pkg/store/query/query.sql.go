@@ -7,6 +7,7 @@ package query
 
 import (
 	"context"
+	"database/sql"
 )
 
 const createAuthRequest = `-- name: CreateAuthRequest :one
@@ -30,7 +31,7 @@ INSERT INTO auth_requests (
     authenticated_at
   )
 VALUES
-  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?, ?) RETURNING id, application_id, redirect_uri, state, prompt, login_hint, max_auth_age_seconds, user_id, scopes, response_type, response_mode, nonce, code_challenge, code_challenge_method, complete, created_at, authenticated_at
+  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?, ?) RETURNING id, application_id, redirect_uri, state, prompt, login_hint, max_auth_age_seconds, user_id, scopes, response_type, response_mode, nonce, code_challenge, code_challenge_method, complete, created_at, authenticated_at, auth_code
 `
 
 type CreateAuthRequestParams struct {
@@ -53,7 +54,7 @@ type CreateAuthRequestParams struct {
 	AuthenticatedAt     int64
 }
 
-func (q *Queries) CreateAuthRequest(ctx context.Context, arg CreateAuthRequestParams) (AuthRequest, error) {
+func (q *Queries) CreateAuthRequest(ctx context.Context, arg CreateAuthRequestParams) (*AuthRequest, error) {
 	row := q.db.QueryRowContext(ctx, createAuthRequest,
 		arg.ID,
 		arg.ApplicationID,
@@ -92,18 +93,52 @@ func (q *Queries) CreateAuthRequest(ctx context.Context, arg CreateAuthRequestPa
 		&i.Complete,
 		&i.CreatedAt,
 		&i.AuthenticatedAt,
+		&i.AuthCode,
 	)
-	return i, err
+	return &i, err
+}
+
+const getAuthRequestByAuthCode = `-- name: GetAuthRequestByAuthCode :one
+SELECT id, application_id, redirect_uri, state, prompt, login_hint, max_auth_age_seconds, user_id, scopes, response_type, response_mode, nonce, code_challenge, code_challenge_method, complete, created_at, authenticated_at, auth_code FROM
+  auth_requests
+WHERE
+  auth_code = ? LIMIT 1
+`
+
+func (q *Queries) GetAuthRequestByAuthCode(ctx context.Context, authCode sql.NullString) (*AuthRequest, error) {
+	row := q.db.QueryRowContext(ctx, getAuthRequestByAuthCode, authCode)
+	var i AuthRequest
+	err := row.Scan(
+		&i.ID,
+		&i.ApplicationID,
+		&i.RedirectUri,
+		&i.State,
+		&i.Prompt,
+		&i.LoginHint,
+		&i.MaxAuthAgeSeconds,
+		&i.UserID,
+		&i.Scopes,
+		&i.ResponseType,
+		&i.ResponseMode,
+		&i.Nonce,
+		&i.CodeChallenge,
+		&i.CodeChallengeMethod,
+		&i.Complete,
+		&i.CreatedAt,
+		&i.AuthenticatedAt,
+		&i.AuthCode,
+	)
+	return &i, err
 }
 
 const getAuthRequestByID = `-- name: GetAuthRequestByID :one
-SELECT id, application_id, redirect_uri, state, prompt, login_hint, max_auth_age_seconds, user_id, scopes, response_type, response_mode, nonce, code_challenge, code_challenge_method, complete, created_at, authenticated_at FROM
+SELECT id, application_id, redirect_uri, state, prompt, login_hint, max_auth_age_seconds, user_id, scopes, response_type, response_mode, nonce, code_challenge, code_challenge_method, complete, created_at, authenticated_at, auth_code FROM
   auth_requests
 WHERE
   id = ? LIMIT 1
 `
 
-func (q *Queries) GetAuthRequestByID(ctx context.Context, id string) (AuthRequest, error) {
+func (q *Queries) GetAuthRequestByID(ctx context.Context, id string) (*AuthRequest, error) {
 	row := q.db.QueryRowContext(ctx, getAuthRequestByID, id)
 	var i AuthRequest
 	err := row.Scan(
@@ -124,6 +159,46 @@ func (q *Queries) GetAuthRequestByID(ctx context.Context, id string) (AuthReques
 		&i.Complete,
 		&i.CreatedAt,
 		&i.AuthenticatedAt,
+		&i.AuthCode,
 	)
-	return i, err
+	return &i, err
+}
+
+const updateAuthCode = `-- name: UpdateAuthCode :execrows
+UPDATE auth_requests 
+SET auth_code = ?
+WHERE id = ?
+`
+
+type UpdateAuthCodeParams struct {
+	AuthCode sql.NullString
+	ID       string
+}
+
+func (q *Queries) UpdateAuthCode(ctx context.Context, arg UpdateAuthCodeParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, updateAuthCode, arg.AuthCode, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const updateAuthRequestUser = `-- name: UpdateAuthRequestUser :execrows
+UPDATE auth_requests 
+SET user_id = ?, complete = 1, authenticated_at = ? 
+WHERE id = ?
+`
+
+type UpdateAuthRequestUserParams struct {
+	UserID          string
+	AuthenticatedAt int64
+	ID              string
+}
+
+func (q *Queries) UpdateAuthRequestUser(ctx context.Context, arg UpdateAuthRequestUserParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, updateAuthRequestUser, arg.UserID, arg.AuthenticatedAt, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }

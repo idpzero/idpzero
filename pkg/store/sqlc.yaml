@@ -7,3 +7,4 @@ sql:
       go:
         package: "query"
         out: "query"
+        emit_result_struct_pointers: true

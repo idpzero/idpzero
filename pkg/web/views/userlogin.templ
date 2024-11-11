@@ -27,37 +27,33 @@ templ UserLogin(model models.UserLoginModel) {
             </h1>
         </div>
 
-       
-
         <div class="grid gap-6">
         <form action="/login" method="post" class="flex flex-col items-center">
-            <input type="hidden" name="id" value={model.AuthRequestID}>
+            <input type="hidden" name="req" value={model.AuthRequestID}>
             <div class="grid gap-4 w-full">
                 <div class="grid gap-2">
                     <p class="text-sm">
                     Choose a user scenaio to sign in with. Details of user scenarios and claims can be found <a href="/" target="_blank" class="link">here</a>.
                     </p>    
                 </div>
-                
                 <div class="grid gap-2">
-
                     <label class="form-control w-full">
                     <div class="label">
-                        <span class="label-text">Select user scenario to login with:</span>
+                        <span class="label-text">Select user to login as:</span>
                     </div>
-                        <select name="username" required class="select select-bordered w-full">
-                            <option disabled selected>Select User Scenario</option>
-                            for _, user := range model.Users {
-                                <optgroup label={user.DisplayName}>
-                                for _, option := range user.Options {
-                                    <option id={option.ID}>
-                                        <span>{option.DisplayName}</span>
-                                        <span>({option.ID})</span>
-                                    </option>
-                                }
-                                </optgroup>
+                    <select name="username" required class="select select-bordered w-full">
+                        <option disabled selected>Select User</option>
+                        for _, user := range model.Users {
+                            <optgroup label={user.DisplayName}>
+                            for _, option := range user.Options {
+                                <option value={option.ID}>
+                                    <span>{option.DisplayName}</span>
+                                    <span>({option.ID})</span>
+                                </option>
                             }
-                        </select>
+                            </optgroup>
+                        }
+                    </select>
                     </label>
                 </div>
                 

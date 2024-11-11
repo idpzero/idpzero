@@ -50,9 +50,7 @@ var startCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		connStr := "file:db//test.db?mode=memory&cache=shared"
-
-		db, err := sql.Open("sqlite", connStr)
+		db, err := sql.Open("sqlite", conf.GetStatePath())
 		if err != nil {
 			return err
 		}
@@ -73,7 +71,7 @@ var startCmd = &cobra.Command{
 			return err
 		}
 
-		s, err := server.NewServer(dbg.Logger, conf, idpStore)
+		s, err := server.NewServer(dbg.Logger, conf, qry, idpStore)
 
 		if err != nil {
 			return err

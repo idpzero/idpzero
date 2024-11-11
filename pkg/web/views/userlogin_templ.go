@@ -50,20 +50,20 @@ func UserLogin(model models.UserLoginModel) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div><h1 class=\"text-xl leading-tight text-center tracking-tight md:text-2xl\">Sign In to Account</h1></div><div class=\"grid gap-6\"><form action=\"/login\" method=\"post\" class=\"flex flex-col items-center\"><input type=\"hidden\" name=\"id\" value=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div><h1 class=\"text-xl leading-tight text-center tracking-tight md:text-2xl\">Sign In to Account</h1></div><div class=\"grid gap-6\"><form action=\"/login\" method=\"post\" class=\"flex flex-col items-center\"><input type=\"hidden\" name=\"req\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(model.AuthRequestID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pkg/web/views/userlogin.templ`, Line: 34, Col: 69}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pkg/web/views/userlogin.templ`, Line: 32, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"><div class=\"grid gap-4 w-full\"><div class=\"grid gap-2\"><p class=\"text-sm\">Choose a user scenaio to sign in with. Details of user scenarios and claims can be found <a href=\"/\" target=\"_blank\" class=\"link\">here</a>.</p></div><div class=\"grid gap-2\"><label class=\"form-control w-full\"><div class=\"label\"><span class=\"label-text\">Select user scenario to login with:</span></div><select name=\"username\" required class=\"select select-bordered w-full\"><option disabled selected>Select User Scenario</option> ")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"><div class=\"grid gap-4 w-full\"><div class=\"grid gap-2\"><p class=\"text-sm\">Choose a user scenaio to sign in with. Details of user scenarios and claims can be found <a href=\"/\" target=\"_blank\" class=\"link\">here</a>.</p></div><div class=\"grid gap-2\"><label class=\"form-control w-full\"><div class=\"label\"><span class=\"label-text\">Select user to login as:</span></div><select name=\"username\" required class=\"select select-bordered w-full\"><option disabled selected>Select User</option> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -75,7 +75,7 @@ func UserLogin(model models.UserLoginModel) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(user.DisplayName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `pkg/web/views/userlogin.templ`, Line: 51, Col: 65}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `pkg/web/views/userlogin.templ`, Line: 47, Col: 61}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -86,14 +86,14 @@ func UserLogin(model models.UserLoginModel) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			for _, option := range user.Options {
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<option id=\"")
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<option value=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(option.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `pkg/web/views/userlogin.templ`, Line: 53, Col: 57}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `pkg/web/views/userlogin.templ`, Line: 49, Col: 56}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -106,7 +106,7 @@ func UserLogin(model models.UserLoginModel) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(option.DisplayName)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `pkg/web/views/userlogin.templ`, Line: 54, Col: 65}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `pkg/web/views/userlogin.templ`, Line: 50, Col: 61}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -119,7 +119,7 @@ func UserLogin(model models.UserLoginModel) templ.Component {
 				var templ_7745c5c3_Var7 string
 				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(option.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `pkg/web/views/userlogin.templ`, Line: 55, Col: 57}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `pkg/web/views/userlogin.templ`, Line: 51, Col: 53}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 				if templ_7745c5c3_Err != nil {

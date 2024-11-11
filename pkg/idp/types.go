@@ -91,6 +91,8 @@ func NewClient(config configuration.ClientConfig) *Client {
 		c.responseTypes = append(c.responseTypes, oidc.ResponseType(gt))
 	}
 
+	c.authMehtod = (*oidc.AuthMethod)(&config.AuthMethod)
+
 	return c
 }
 

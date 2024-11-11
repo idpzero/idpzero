@@ -1,17 +1,20 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"sort"
+	"time"
 
 	"github.com/a-h/templ"
 	"github.com/idpzero/idpzero/pkg/configuration"
+	"github.com/idpzero/idpzero/pkg/store/query"
 	"github.com/idpzero/idpzero/pkg/web/models"
 	"github.com/idpzero/idpzero/pkg/web/views"
 )
 
-func userloginSubmit(config func() *configuration.ServerConfig) http.HandlerFunc {
+func userloginSubmit(config func() *configuration.ServerConfig, queries *query.Queries, callback func(context.Context, string) string) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		err := r.ParseForm()
@@ -21,27 +24,45 @@ func userloginSubmit(config func() *configuration.ServerConfig) http.HandlerFunc
 		}
 
 		username := r.FormValue("username")
-
+		req := r.FormValue("req")
 		if username == "" {
-
 			conf := config()
 
 			im := models.UserLoginModel{}
 			im.Error = "Select a user to continue"
-			im.AuthRequestID = r.FormValue("req")
+			im.AuthRequestID = req
 			populateScenarios(&im, conf)
 
 			idx := views.UserLogin(im)
 
 			templ.Handler(views.PanelView((idx))).ServeHTTP(w, r)
 		} else {
-			// todo - call back into the OIDC flow.
-			http.Redirect(w, r, "/", http.StatusFound)
+
+			count, err := queries.UpdateAuthRequestUser(r.Context(), query.UpdateAuthRequestUserParams{
+				UserID:          username,
+				AuthenticatedAt: time.Now().Unix(),
+				ID:              req,
+			})
+
+			if err != nil {
+				http.Error(w, fmt.Sprintf("cannot update auth request:%s", err), http.StatusInternalServerError)
+				return
+			} else if count == 0 {
+				ev := views.ErrorView(models.ErrorModel{
+					Code:    "invalid_request",
+					Title:   "Request is invalid",
+					Message: "Request has already been authenticated.",
+				})
+				templ.Handler(views.PanelView((ev))).ServeHTTP(w, r)
+				return
+			}
+
+			http.Redirect(w, r, callback(r.Context(), req), http.StatusFound)
 		}
 	})
 }
 
-func userlogin(config func() *configuration.ServerConfig) http.HandlerFunc {
+func userlogin(config func() *configuration.ServerConfig, queries *query.Queries) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		err := r.ParseForm()
@@ -54,6 +75,17 @@ func userlogin(config func() *configuration.ServerConfig) http.HandlerFunc {
 
 		im := models.UserLoginModel{}
 		im.AuthRequestID = r.FormValue("req")
+
+		if im.AuthRequestID == "" {
+			ev := views.ErrorView(models.ErrorModel{
+				Code:    "invalid_request",
+				Title:   "Request is invalid",
+				Message: "Missing 'req' parameter, start the login process again.",
+			})
+			templ.Handler(views.PanelView((ev))).ServeHTTP(w, r)
+			return
+		}
+
 		populateScenarios(&im, conf)
 
 		idx := views.UserLogin(im)
@@ -78,7 +110,6 @@ func populateScenarios(model *models.UserLoginModel, config *configuration.Serve
 	})
 
 	for _, group := range groups {
-		fmt.Println(group.Display)
 		og := models.OptionGroup{
 			DisplayName: group.Display,
 			Options:     make([]models.Option, 0),

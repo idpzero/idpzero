@@ -16,7 +16,8 @@ CREATE TABLE auth_requests (
         code_challenge_method text not null,
         complete boolean not null,
         created_at INTEGER NOT NULL, -- since epoch
-        authenticated_at INTEGER NOT NULL -- since epoch
+        authenticated_at INTEGER NOT NULL, -- since epoch
+        auth_code text 
     );
 
 -- +goose Down

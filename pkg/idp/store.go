@@ -2,6 +2,7 @@ package idp
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"sync"
@@ -74,28 +75,21 @@ func (s *Storage) setKeys(keys *configuration.KeysConfiguration) {
 }
 
 func (s *Storage) AuthRequestByCode(ctx context.Context, code string) (op.AuthRequest, error) {
-	panic("unimplemented AuthRequestByCode")
-	// requestID, ok := func() (string, bool) {
-	// 	s.lock.Lock()
-	// 	defer s.lock.Unlock()
-	// 	requestID, ok := s.codes[code]
-	// 	return requestID, ok
-	// }()
-	// if !ok {
-	// 	return nil, fmt.Errorf("code invalid or expired")
-	// }
-	// return s.AuthRequestByID(ctx, requestID)
+
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	return s.query.GetAuthRequestByAuthCode(ctx, sql.NullString{
+		String: code,
+		Valid:  true,
+	})
 }
 
 func (s *Storage) AuthRequestByID(ctx context.Context, id string) (op.AuthRequest, error) {
-	panic("unimplemented AuthRequestByID")
-	// s.lock.Lock()
-	// defer s.lock.Unlock()
-	// request, ok := s.authRequests[id]
-	// if !ok {
-	// 	return nil, fmt.Errorf("request not found")
-	// }
-	// return request, nil
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	return s.query.GetAuthRequestByID(ctx, id)
 }
 
 func (s *Storage) AuthorizeClientIDSecret(ctx context.Context, clientID string, clientSecret string) error {
@@ -120,7 +114,9 @@ func (s *Storage) CreateAccessAndRefreshTokens(ctx context.Context, request op.T
 }
 
 // CreateAccessToken implements op.Storage.
-func (s *Storage) CreateAccessToken(context.Context, op.TokenRequest) (accessTokenID string, expiration time.Time, err error) {
+func (s *Storage) CreateAccessToken(ctx context.Context, request op.TokenRequest) (accessTokenID string, expiration time.Time, err error) {
+
+	panic("**************")
 	panic("unimplemented CreateAccessToken")
 }
 
@@ -167,7 +163,7 @@ func (s *Storage) CreateAuthRequest(ctx context.Context, authReq *oidc.AuthReque
 	s.logger.Debug("created auth request", slog.String("id", req.ID))
 
 	// finally, return the request (which implements the AuthRequest interface of the OP
-	return &req, nil
+	return req, nil
 }
 
 // DeleteAuthRequest implements op.Storage.
@@ -230,8 +226,24 @@ func (s *Storage) RevokeToken(ctx context.Context, tokenOrTokenID string, userID
 }
 
 // SaveAuthCode implements op.Storage.
-func (s *Storage) SaveAuthCode(context.Context, string, string) error {
-	panic("unimplemented SaveAuthCode")
+func (s *Storage) SaveAuthCode(ctx context.Context, id string, code string) error {
+	count, err := s.query.UpdateAuthCode(ctx, query.UpdateAuthCodeParams{
+		ID: id,
+		AuthCode: sql.NullString{
+			String: code,
+			Valid:  true,
+		},
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if count == 0 {
+		return fmt.Errorf("auth request not found")
+	}
+
+	return nil
 }
 
 // SetIntrospectionFromToken implements op.Storage.

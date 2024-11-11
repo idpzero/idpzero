@@ -4,6 +4,10 @@
 
 package query
 
+import (
+	"database/sql"
+)
+
 type AuthRequest struct {
 	ID                  string
 	ApplicationID       string
@@ -22,4 +26,5 @@ type AuthRequest struct {
 	Complete            bool
 	CreatedAt           int64
 	AuthenticatedAt     int64
+	AuthCode            sql.NullString
 }

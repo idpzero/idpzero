@@ -13,6 +13,7 @@ import (
 	"github.com/idpzero/idpzero/pkg/configuration"
 	"github.com/idpzero/idpzero/pkg/dbg"
 	"github.com/idpzero/idpzero/pkg/idp"
+	"github.com/idpzero/idpzero/pkg/store/query"
 	"github.com/idpzero/idpzero/pkg/web/handlers"
 	"github.com/savioxavier/termlink"
 )
@@ -25,7 +26,7 @@ type Server struct {
 	config *configuration.ServerConfig
 }
 
-func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, storage *idp.Storage) (*Server, error) {
+func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, queries *query.Queries, storage *idp.Storage) (*Server, error) {
 
 	// Use chi as this is what OIDC is using internally, so keep it conistent
 	router := chi.NewRouter()
@@ -65,7 +66,7 @@ func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, 
 	rtr := provider.Handler.(*chi.Mux)
 	handlers.Routes(rtr, func() *configuration.ServerConfig {
 		return server.config
-	})
+	}, queries, provider)
 
 	//rtr.Get("/", )
 
