@@ -1,0 +1,45 @@
+package views
+
+
+templ PanelView(
+    items ...templ.Component,
+    ) {
+	@PanelLayout() {
+		 for _, item := range items {
+			@item
+		}
+	}
+}
+
+templ PanelLayout() {
+	<!DOCTYPE html>
+	<html lang="en" data-theme="light">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<meta name="description" content="Developer friendly local identity provider" />
+			<link href="/assets/styles.css" rel="stylesheet"/>
+			<title>IDP Zero: Developer friendly local identity provider</title>
+		</head>
+		<body>
+		 <section class="bg-gray-50 dark:bg-gray-900">
+        <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto min-h-screen lg:py-0">
+                
+                <div class="flex items-center justify-center mb-4">
+                    <a href="/" class="flex items-center">
+                        <span class="gradient text-2xl font-bold">idp<span class="font-normal">zero</span></span>
+                    </a>
+                </div>
+                <div class="sm:max-w-md">
+                  <div class="p-4 sm:p-2">
+                    	<div class="p-6 space-y-2 md:space-y-6 sm:p-8 bg-white">
+							{ children... }
+						</div>
+					</div>
+					</div>
+				</div>
+			</section>
+		</body>
+	</html>
+}
+

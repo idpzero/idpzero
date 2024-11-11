@@ -11,7 +11,7 @@ lint:
 
 # generate web resources
 web:
-	npx tailwindcss -i ./web/css/input.css -o ./pkg/web/assets/css/styles.css
+	npx tailwindcss -m -i ./web/css/input.css -o ./pkg/web/assets/styles.css
 	templ generate
 
 db:

@@ -31,4 +31,7 @@ func Routes(router *chi.Mux, config func() *configuration.ServerConfig) {
 	router.Handle("/site.webmanifest", favhanlder)
 
 	router.Get("/", index(config))
+	router.Get("/login", userlogin(config))
+	router.Post("/login", userloginSubmit(config))
+
 }

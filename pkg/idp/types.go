@@ -236,7 +236,7 @@ func (c *Client) IsScopeAllowed(scope string) bool {
 
 // LoginURL implements op.Client.
 func (c *Client) LoginURL(id string) string {
-	return "/login/user?authRequestID=" + id
+	return "/login?req=" + id
 }
 
 // PostLogoutRedirectURIs implements op.Client.

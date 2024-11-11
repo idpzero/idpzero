@@ -1,0 +1,90 @@
+package views
+
+import "github.com/idpzero/idpzero/pkg/web/models"
+
+templ UserLogin(model models.UserLoginModel) {
+   
+        if model.Error != "" {
+            <div role="alert" class="alert">
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6 shrink-0 stroke-current text-error"
+                fill="none"
+                viewBox="0 0 24 24">
+                <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="text-sm">{model.Error}</span>
+            </div>
+        }
+
+        <div>
+            <h1 class="text-xl leading-tight text-center tracking-tight md:text-2xl">
+            Sign In to Account
+            </h1>
+        </div>
+
+       
+
+        <div class="grid gap-6">
+        <form action="/login" method="post" class="flex flex-col items-center">
+            <input type="hidden" name="id" value={model.AuthRequestID}>
+            <div class="grid gap-4 w-full">
+                <div class="grid gap-2">
+                    <p class="text-sm">
+                    Choose a pre-configured user to sign in as. Details of users and claims can be found in <a href="/" target="_blank" class="link">configuration</a>.
+                    </p>    
+                </div>
+                
+                <div class="grid gap-2">
+
+                    <label class="form-control w-full">
+                    <div class="label">
+                        <span class="label-text">Select user to login as</span>
+                    </div>
+                        <select name="username" required class="select select-bordered w-full">
+                            <option disabled selected>Select User</option>
+                            <option>Han Solo</option>
+                            <option>Greedo</option>
+                        </select>
+                    </label>
+                </div>
+                
+                    <div class="grid gap-2">
+                    <div role="alert" class="alert">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            class="stroke-info h-6 w-6 shrink-0">
+                            <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="text-sm">You will not be prompted for a password.</span>
+                    </div>
+                </div>
+
+                <div class="grid gap-2">
+                    <button type="submit" class="btn btn-neutral">Sign In</button>
+                </div>
+            </div>
+        </form>
+
+        <hr/>
+
+
+        <div>
+            <p class="text-sm text-center text-muted-foreground">
+                This is a developer tool. Do not use in production.
+            </p>
+        </div>
+        </div>
+                   
+    
+}
