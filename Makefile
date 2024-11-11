@@ -14,4 +14,7 @@ web:
 	npx tailwindcss -i ./web/css/input.css -o ./pkg/web/assets/css/styles.css
 	templ generate
 
-.PHONY: test fmt lint web
+db:
+	sqlc generate --file ./pkg/store/sqlc.yaml
+
+.PHONY: test fmt lint web db

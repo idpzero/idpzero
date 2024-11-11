@@ -1,6 +1,7 @@
 package serve
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 	"os/signal"
@@ -11,7 +12,11 @@ import (
 	"github.com/idpzero/idpzero/pkg/dbg"
 	"github.com/idpzero/idpzero/pkg/idp"
 	"github.com/idpzero/idpzero/pkg/server"
+	"github.com/idpzero/idpzero/pkg/store"
+	"github.com/idpzero/idpzero/pkg/store/query"
 	"github.com/spf13/cobra"
+
+	_ "modernc.org/sqlite"
 )
 
 func New() *cobra.Command {
@@ -45,7 +50,24 @@ var startCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		idpStore, err := idp.NewStorage(dbg.Logger, conf)
+		connStr := "file:db//test.db?mode=memory&cache=shared"
+
+		db, err := sql.Open("sqlite", connStr)
+		if err != nil {
+			return err
+		}
+
+		defer db.Close()
+
+		// migrate the database to the latest version in memory
+		if err = store.Migrate(db); err != nil {
+			return err
+		}
+
+		// access to the data layer.
+		qry := query.New(db)
+
+		idpStore, err := idp.NewStorage(dbg.Logger, conf, qry)
 
 		if err != nil {
 			return err

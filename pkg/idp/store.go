@@ -8,7 +8,9 @@ import (
 	"time"
 
 	jose "github.com/go-jose/go-jose/v4"
+	"github.com/google/uuid"
 	"github.com/idpzero/idpzero/pkg/configuration"
+	"github.com/idpzero/idpzero/pkg/store/query"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"github.com/zitadel/oidc/v3/pkg/op"
 )
@@ -21,14 +23,16 @@ type Storage struct {
 	configMgr *configuration.ConfigurationManager
 	server    *configuration.ServerConfig
 	keys      *configuration.KeysConfiguration
+	query     *query.Queries
 }
 
-func NewStorage(logger *slog.Logger, configMgr *configuration.ConfigurationManager) (*Storage, error) {
+func NewStorage(logger *slog.Logger, configMgr *configuration.ConfigurationManager, query *query.Queries) (*Storage, error) {
 
 	store := &Storage{
 		logger:    logger,
 		configMgr: configMgr,
 		lock:      sync.Mutex{},
+		query:     query,
 	}
 
 	keys, err := configMgr.LoadKeys()
@@ -121,9 +125,49 @@ func (s *Storage) CreateAccessToken(context.Context, op.TokenRequest) (accessTok
 }
 
 // CreateAuthRequest implements op.Storage.
-func (s *Storage) CreateAuthRequest(context.Context, *oidc.AuthRequest, string) (op.AuthRequest, error) {
-	panic("****************************")
-	panic("unimplemented CreateAuthRequest")
+func (s *Storage) CreateAuthRequest(ctx context.Context, authReq *oidc.AuthRequest, userID string) (op.AuthRequest, error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	if len(authReq.Prompt) == 1 && authReq.Prompt[0] == "none" {
+		// With prompt=none, there is no way for the user to log in
+		// so return error right away.
+		return nil, oidc.ErrLoginRequired()
+	}
+
+	var maxAge int64 = 0
+	if authReq.MaxAge != nil {
+		maxAge = int64(*authReq.MaxAge)
+	}
+
+	req, err := s.query.CreateAuthRequest(ctx, query.CreateAuthRequestParams{
+		ID:                  uuid.NewString(),
+		ApplicationID:       authReq.ClientID,
+		Scopes:              authReq.Scopes.String(),
+		UserID:              userID,
+		RedirectUri:         authReq.RedirectURI,
+		State:               authReq.State,
+		Nonce:               authReq.Nonce,
+		Prompt:              authReq.Prompt.String(),
+		MaxAuthAgeSeconds:   maxAge,
+		LoginHint:           authReq.LoginHint,
+		ResponseType:        string(authReq.ResponseType),
+		ResponseMode:        string(authReq.ResponseMode),
+		CodeChallenge:       authReq.CodeChallenge,
+		CodeChallengeMethod: string(authReq.CodeChallengeMethod),
+		Complete:            false,
+		CreatedAt:           time.Now().Unix(),
+		AuthenticatedAt:     0,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	s.logger.Debug("created auth request", slog.String("id", req.ID))
+
+	// finally, return the request (which implements the AuthRequest interface of the OP
+	return &req, nil
 }
 
 // DeleteAuthRequest implements op.Storage.
