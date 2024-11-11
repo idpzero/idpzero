@@ -1,14 +1,17 @@
-package idp
+package server
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"sync"
 	"time"
 
 	jose "github.com/go-jose/go-jose/v4"
+	"github.com/google/uuid"
 	"github.com/idpzero/idpzero/pkg/configuration"
+	"github.com/idpzero/idpzero/pkg/store/query"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"github.com/zitadel/oidc/v3/pkg/op"
 )
@@ -21,14 +24,16 @@ type Storage struct {
 	configMgr *configuration.ConfigurationManager
 	server    *configuration.ServerConfig
 	keys      *configuration.KeysConfiguration
+	query     *query.Queries
 }
 
-func NewStorage(logger *slog.Logger, configMgr *configuration.ConfigurationManager) (*Storage, error) {
+func NewStorage(logger *slog.Logger, configMgr *configuration.ConfigurationManager, query *query.Queries) (*Storage, error) {
 
 	store := &Storage{
 		logger:    logger,
 		configMgr: configMgr,
 		lock:      sync.Mutex{},
+		query:     query,
 	}
 
 	keys, err := configMgr.LoadKeys()
@@ -70,39 +75,37 @@ func (s *Storage) setKeys(keys *configuration.KeysConfiguration) {
 }
 
 func (s *Storage) AuthRequestByCode(ctx context.Context, code string) (op.AuthRequest, error) {
-	panic("unimplemented AuthRequestByCode")
-	// requestID, ok := func() (string, bool) {
-	// 	s.lock.Lock()
-	// 	defer s.lock.Unlock()
-	// 	requestID, ok := s.codes[code]
-	// 	return requestID, ok
-	// }()
-	// if !ok {
-	// 	return nil, fmt.Errorf("code invalid or expired")
-	// }
-	// return s.AuthRequestByID(ctx, requestID)
+
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	return s.query.GetAuthRequestByAuthCode(ctx, sql.NullString{
+		String: code,
+		Valid:  true,
+	})
 }
 
 func (s *Storage) AuthRequestByID(ctx context.Context, id string) (op.AuthRequest, error) {
-	panic("unimplemented AuthRequestByID")
-	// s.lock.Lock()
-	// defer s.lock.Unlock()
-	// request, ok := s.authRequests[id]
-	// if !ok {
-	// 	return nil, fmt.Errorf("request not found")
-	// }
-	// return request, nil
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	return s.query.GetAuthRequestByID(ctx, id)
 }
 
 func (s *Storage) AuthorizeClientIDSecret(ctx context.Context, clientID string, clientSecret string) error {
-	panic("unimplemented AuthorizeClientIDSecret")
-	// for _, client := range s.config.Clients {
-	// 	if client.ClientId == clientID && client.Secret == clientSecret {
-	// 		return nil
-	// 	}
-	// }
 
-	// return fmt.Errorf("client not found")
+	// validate the client with client secret. plain text is used
+	for _, client := range s.server.Clients {
+		if client.ClientID == clientID {
+			if client.ClientSecret == clientSecret {
+				return nil
+			} else {
+				return fmt.Errorf("incorrect client secret provided")
+			}
+		}
+	}
+
+	return fmt.Errorf("client not found")
 }
 
 // CreateAccessAndRefreshTokens implements op.Storage.
@@ -111,13 +114,56 @@ func (s *Storage) CreateAccessAndRefreshTokens(ctx context.Context, request op.T
 }
 
 // CreateAccessToken implements op.Storage.
-func (s *Storage) CreateAccessToken(context.Context, op.TokenRequest) (accessTokenID string, expiration time.Time, err error) {
+func (s *Storage) CreateAccessToken(ctx context.Context, request op.TokenRequest) (accessTokenID string, expiration time.Time, err error) {
+
+	panic("**************")
 	panic("unimplemented CreateAccessToken")
 }
 
 // CreateAuthRequest implements op.Storage.
-func (s *Storage) CreateAuthRequest(context.Context, *oidc.AuthRequest, string) (op.AuthRequest, error) {
-	panic("unimplemented CreateAuthRequest")
+func (s *Storage) CreateAuthRequest(ctx context.Context, authReq *oidc.AuthRequest, userID string) (op.AuthRequest, error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	if len(authReq.Prompt) == 1 && authReq.Prompt[0] == "none" {
+		// With prompt=none, there is no way for the user to log in
+		// so return error right away.
+		return nil, oidc.ErrLoginRequired()
+	}
+
+	var maxAge int64 = 0
+	if authReq.MaxAge != nil {
+		maxAge = int64(*authReq.MaxAge)
+	}
+
+	req, err := s.query.CreateAuthRequest(ctx, query.CreateAuthRequestParams{
+		ID:                  uuid.NewString(),
+		ApplicationID:       authReq.ClientID,
+		Scopes:              authReq.Scopes.String(),
+		UserID:              userID,
+		RedirectUri:         authReq.RedirectURI,
+		State:               authReq.State,
+		Nonce:               authReq.Nonce,
+		Prompt:              authReq.Prompt.String(),
+		MaxAuthAgeSeconds:   maxAge,
+		LoginHint:           authReq.LoginHint,
+		ResponseType:        string(authReq.ResponseType),
+		ResponseMode:        string(authReq.ResponseMode),
+		CodeChallenge:       authReq.CodeChallenge,
+		CodeChallengeMethod: string(authReq.CodeChallengeMethod),
+		Complete:            false,
+		CreatedAt:           time.Now().Unix(),
+		AuthenticatedAt:     0,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	s.logger.Debug("created auth request", slog.String("id", req.ID))
+
+	// finally, return the request (which implements the AuthRequest interface of the OP
+	return req, nil
 }
 
 // DeleteAuthRequest implements op.Storage.
@@ -127,7 +173,14 @@ func (s *Storage) DeleteAuthRequest(context.Context, string) error {
 
 // GetClientByClientID implements op.Storage.
 func (s *Storage) GetClientByClientID(ctx context.Context, clientID string) (op.Client, error) {
-	panic("unimplemented GetClientByClientID")
+
+	for _, c := range s.server.Clients {
+		if c.ClientID == clientID {
+			return NewClient(c), nil
+		}
+	}
+
+	return nil, fmt.Errorf("no client registered with ID '%s'", clientID)
 }
 
 // GetKeyByIDAndClientID implements op.Storage.
@@ -173,8 +226,24 @@ func (s *Storage) RevokeToken(ctx context.Context, tokenOrTokenID string, userID
 }
 
 // SaveAuthCode implements op.Storage.
-func (s *Storage) SaveAuthCode(context.Context, string, string) error {
-	panic("unimplemented SaveAuthCode")
+func (s *Storage) SaveAuthCode(ctx context.Context, id string, code string) error {
+	count, err := s.query.UpdateAuthCode(ctx, query.UpdateAuthCodeParams{
+		ID: id,
+		AuthCode: sql.NullString{
+			String: code,
+			Valid:  true,
+		},
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if count == 0 {
+		return fmt.Errorf("auth request not found")
+	}
+
+	return nil
 }
 
 // SetIntrospectionFromToken implements op.Storage.

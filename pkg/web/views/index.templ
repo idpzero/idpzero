@@ -5,7 +5,7 @@ import "github.com/idpzero/idpzero/pkg/web/models"
 templ Index(model models.IndexModel) {
    
     <div class="py-5">
-        <h1 class="text-3xl gradient font-bold">Wahoo! Your ready to go!</h1>
+        <h1 class="text-3xl font-bold"><span class="gradient">Wahoo! Your ready to go!</span></h1>
         <p class="text-md py-3">
         See configuration below to configure your app ready to use <b>idpzero</b>. Changes to configuration are managed via the CLI (the same cli used to serve the IDP).
         </p>
@@ -49,7 +49,7 @@ templ Index(model models.IndexModel) {
          <tbody>
         for _, client := range model.Clients {
             <tr>
-                <td>{client.ID}</td>
+                <td>{client.ClientID}</td>
                 <td>{client.ApplicationType}</td>
                  <td>
                     for _,gt := range client.GrantTypes {

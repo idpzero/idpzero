@@ -31,7 +31,7 @@ func Index(model models.IndexModel) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"py-5\"><h1 class=\"text-3xl gradient font-bold\">Wahoo! Your ready to go!</h1><p class=\"text-md py-3\">See configuration below to configure your app ready to use <b>idpzero</b>. Changes to configuration are managed via the CLI (the same cli used to serve the IDP).</p></div><h2 class=\"text-lg font-bold\">Metadata and Discovery Endpoints</h2><p class=\"py-2 text-sm\">These are the commonly required metadata URLs required when configuring an identity provider for an application, check your framework / product documnetation for configuration details.</p><div class=\"bg-gray-100 p-2 rounded-lg \"><table class=\"table table-auto\"><thead><tr><th>Description</th><th>Link</th></tr></thead> <tbody>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"py-5\"><h1 class=\"text-3xl font-bold\"><span class=\"gradient\">Wahoo! Your ready to go!</span></h1><p class=\"text-md py-3\">See configuration below to configure your app ready to use <b>idpzero</b>. Changes to configuration are managed via the CLI (the same cli used to serve the IDP).</p></div><h2 class=\"text-lg font-bold\">Metadata and Discovery Endpoints</h2><p class=\"py-2 text-sm\">These are the commonly required metadata URLs required when configuring an identity provider for an application, check your framework / product documnetation for configuration details.</p><div class=\"bg-gray-100 p-2 rounded-lg \"><table class=\"table table-auto\"><thead><tr><th>Description</th><th>Link</th></tr></thead> <tbody>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -76,7 +76,7 @@ func Index(model models.IndexModel) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</tbody></table></div><h2 class=\"text-lg font-bold mt-10\">OpenID Connect / OAuth2 Clients</h2><p class=\"py-2 text-sm\">The following are the configured clients. For details on adding and managing client see CLI reference 'Managing Clients'.</p><div class=\"bg-gray-100 p-2 rounded-lg \"><table class=\"table\"><thead><tr><th>Client ID</th><th>Application Type</th><th>Grant Types</th><th>Redirection URIs</th></tr></thead> <tbody>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</tbody></table></div><h2 class=\"text-lg font-bold mt-10\">OpenID Connect / OAuth2 Clients</h2><p class=\"py-2 text-sm\">The following are the configured clients. For details on adding and managing client see CLI reference 'Managing Clients'.</p><div class=\"bg-gray-100 p-2 rounded-lg \"><table class=\"table table-auto\"><thead><tr><th>Client ID</th><th>Application Type</th><th>Grant Types</th><th>Redirection URIs</th></tr></thead> <tbody>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -86,9 +86,9 @@ func Index(model models.IndexModel) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
-			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(client.ID)
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(client.ClientID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `pkg/web/views/index.templ`, Line: 52, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `pkg/web/views/index.templ`, Line: 52, Col: 36}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {

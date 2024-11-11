@@ -9,9 +9,35 @@ fmt:
 lint:
 	golangci-lint run
 
-# generate web resources
-web:
-	npx tailwindcss -i ./web/css/input.css -o ./pkg/web/assets/css/styles.css
-	templ generate
+db:
+	sqlc generate --file ./pkg/store/sqlc.yaml
 
-.PHONY: test fmt lint web
+watch/tailwind:
+	npx --yes tailwindcss -i ./web/css/input.css -o ./pkg/web/assets/styles.css --minify --watch
+
+watch/templ:
+	templ generate --watch --proxy="http://localhost:4379" --open-browser=true -v
+
+watch/server:
+	go run github.com/cosmtrek/air@v1.51.0 \
+	--build.cmd "go build -o tmp/main" \
+	--build.bin "tmp/main" \
+	--build.args_bin "serve" \
+	--build.delay "100" \
+	--build.exclude_dir "node_modules" \
+	--build.include_ext "go" \
+	--build.stop_on_error "false" \
+	--misc.clean_on_exit true
+
+watch/assets:
+	go run github.com/cosmtrek/air@v1.51.0 \
+	--build.cmd "templ generate --notify-proxy" \
+	--build.bin "true" \
+	--build.delay "100" \
+	--build.exclude_dir "" \
+	--build.include_dir "pkg/web/assets" \
+
+dev: 
+	make -j4 watch/templ watch/server watch/tailwind watch/assets
+
+.PHONY: test fmt lint db

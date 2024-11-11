@@ -16,11 +16,13 @@ const (
 	dirName        string = ".idpzero"
 	serverFilename string = "server.yaml"
 	keysFilename   string = "keys.yaml"
+	stateFilename  string = "state.sqlite"
 )
 
 type ConfigurationManager struct {
 	keysDirectory string
 	keysPath      string
+	statePath     string
 
 	dirPath    string
 	configPath string
@@ -44,6 +46,7 @@ func NewConfigurationManager(serverDirectory string, keysDirectory string) (*Con
 		dirPath:       serverDirectory,
 		configPath:    path.Join(serverDirectory, serverFilename),
 		keysPath:      path.Join(keysDirectory, keysFilename),
+		statePath:     path.Join(keysDirectory, stateFilename),
 		w:             wtch,
 		done:          make(chan struct{}),
 		serverChanged: make([]func(x *ServerConfig), 0),
@@ -122,6 +125,10 @@ func (r *ConfigurationManager) GetServerPath() string {
 
 func (r *ConfigurationManager) GetKeysPath() string {
 	return r.keysPath
+}
+
+func (r *ConfigurationManager) GetStatePath() string {
+	return r.statePath
 }
 
 func (r *ConfigurationManager) LoadServer() (*ServerConfig, error) {

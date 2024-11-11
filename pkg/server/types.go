@@ -1,4 +1,4 @@
-package idp
+package server
 
 import (
 	"time"
@@ -82,6 +82,16 @@ func NewClient(config configuration.ClientConfig) *Client {
 		grantTypes:    []oidc.GrantType{},
 		responseTypes: []oidc.ResponseType{},
 	}
+
+	for _, gt := range config.GrantTypes {
+		c.grantTypes = append(c.grantTypes, oidc.GrantType(gt))
+	}
+
+	for _, gt := range config.ResponseTypes {
+		c.responseTypes = append(c.responseTypes, oidc.ResponseType(gt))
+	}
+
+	c.authMehtod = (*oidc.AuthMethod)(&config.AuthMethod)
 
 	return c
 }
@@ -203,7 +213,7 @@ func (c *Client) DevMode() bool {
 
 // GetID implements op.Client.
 func (c *Client) GetID() string {
-	return c.config.ID
+	return c.config.ClientID
 }
 
 // GrantTypes implements op.Client.
@@ -228,7 +238,7 @@ func (c *Client) IsScopeAllowed(scope string) bool {
 
 // LoginURL implements op.Client.
 func (c *Client) LoginURL(id string) string {
-	return "/login/user?authRequestID=" + id
+	return "/login?req=" + id
 }
 
 // PostLogoutRedirectURIs implements op.Client.

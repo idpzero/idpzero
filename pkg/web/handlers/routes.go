@@ -6,7 +6,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/idpzero/idpzero/pkg/configuration"
+	"github.com/idpzero/idpzero/pkg/store/query"
 	"github.com/idpzero/idpzero/pkg/web"
+	"github.com/zitadel/oidc/v3/pkg/op"
 )
 
 func mustFs(fs fs.FS, err error) fs.FS {
@@ -16,7 +18,7 @@ func mustFs(fs fs.FS, err error) fs.FS {
 	return fs
 }
 
-func Routes(router *chi.Mux, config func() *configuration.ServerConfig) {
+func Routes(router *chi.Mux, config func() *configuration.ServerConfig, query *query.Queries, provider op.OpenIDProvider) {
 
 	router.Handle("/assets/*", http.FileServer(http.FS(web.Assets)))
 
@@ -31,4 +33,7 @@ func Routes(router *chi.Mux, config func() *configuration.ServerConfig) {
 	router.Handle("/site.webmanifest", favhanlder)
 
 	router.Get("/", index(config))
+	router.Get("/login", userlogin(config, query))
+	router.Post("/login", userloginSubmit(config, query, op.AuthCallbackURL(provider)))
+
 }

@@ -1,4 +1,4 @@
-package idp
+package server
 
 import (
 	"crypto/rsa"
