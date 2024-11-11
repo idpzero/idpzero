@@ -12,7 +12,6 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/idpzero/idpzero/pkg/configuration"
 	"github.com/idpzero/idpzero/pkg/dbg"
-	"github.com/idpzero/idpzero/pkg/idp"
 	"github.com/idpzero/idpzero/pkg/store/query"
 	"github.com/idpzero/idpzero/pkg/web/handlers"
 	"github.com/savioxavier/termlink"
@@ -26,7 +25,7 @@ type Server struct {
 	config *configuration.ServerConfig
 }
 
-func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, queries *query.Queries, storage *idp.Storage) (*Server, error) {
+func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, queries *query.Queries, storage *Storage) (*Server, error) {
 
 	// Use chi as this is what OIDC is using internally, so keep it conistent
 	router := chi.NewRouter()
@@ -52,11 +51,11 @@ func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, 
 	router.Use(setProviderFromRequest) // set the issuer based on the request URL
 	router.Use(middleware.Recoverer)
 
-	options := idp.ProviderOptions{
+	options := ProviderOptions{
 		Storage: storage,
 	}
 
-	provider, err := idp.NewProvider(logger, options)
+	provider, err := NewProvider(logger, options)
 	if err != nil {
 		return nil, err
 	}

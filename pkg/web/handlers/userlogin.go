@@ -48,12 +48,12 @@ func userloginSubmit(config func() *configuration.ServerConfig, queries *query.Q
 				http.Error(w, fmt.Sprintf("cannot update auth request:%s", err), http.StatusInternalServerError)
 				return
 			} else if count == 0 {
-				ev := views.ErrorView(models.ErrorModel{
+				ev := views.Error(models.ErrorModel{
 					Code:    "invalid_request",
 					Title:   "Request is invalid",
 					Message: "Request has already been authenticated.",
 				})
-				templ.Handler(views.PanelView((ev))).ServeHTTP(w, r)
+				templ.Handler(ev).ServeHTTP(w, r)
 				return
 			}
 
@@ -77,12 +77,42 @@ func userlogin(config func() *configuration.ServerConfig, queries *query.Queries
 		im.AuthRequestID = r.FormValue("req")
 
 		if im.AuthRequestID == "" {
-			ev := views.ErrorView(models.ErrorModel{
+			ev := views.Error(models.ErrorModel{
 				Code:    "invalid_request",
 				Title:   "Request is invalid",
 				Message: "Missing 'req' parameter, start the login process again.",
 			})
-			templ.Handler(views.PanelView((ev))).ServeHTTP(w, r)
+			templ.Handler(ev).ServeHTTP(w, r)
+			return
+		}
+
+		a, err := queries.GetAuthRequestByID(r.Context(), im.AuthRequestID)
+
+		if err != nil {
+			ev := views.Error(models.ErrorModel{
+				Code:    "invalid_request",
+				Title:   "Request is invalid",
+				Message: "Unknown 'req' provided, start the login process again.",
+			})
+			templ.Handler(ev).ServeHTTP(w, r)
+			return
+		}
+
+		if a == nil {
+			ev := views.Error(models.ErrorModel{
+				Code:    "invalid_request",
+				Title:   "Request is invalid",
+				Message: "Request does not exist.",
+			})
+			templ.Handler(ev).ServeHTTP(w, r)
+			return
+		} else if a.AuthenticatedAt != 0 {
+			ev := views.Error(models.ErrorModel{
+				Code:    "invalid_request",
+				Title:   "Request is invalid",
+				Message: "Request has already been authenticated.",
+			})
+			templ.Handler(ev).ServeHTTP(w, r)
 			return
 		}
 

@@ -10,7 +10,6 @@ import (
 	"github.com/idpzero/idpzero/cmd/shared"
 	"github.com/idpzero/idpzero/pkg/configuration"
 	"github.com/idpzero/idpzero/pkg/dbg"
-	"github.com/idpzero/idpzero/pkg/idp"
 	"github.com/idpzero/idpzero/pkg/server"
 	"github.com/idpzero/idpzero/pkg/store"
 	"github.com/idpzero/idpzero/pkg/store/query"
@@ -65,7 +64,7 @@ var startCmd = &cobra.Command{
 		// access to the data layer.
 		qry := query.New(db)
 
-		idpStore, err := idp.NewStorage(dbg.Logger, conf, qry)
+		idpStore, err := server.NewStorage(dbg.Logger, conf, qry)
 
 		if err != nil {
 			return err

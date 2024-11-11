@@ -36,6 +36,6 @@ func index(config func() *configuration.ServerConfig) http.HandlerFunc {
 
 		idx := views.Index(im)
 
-		templ.Handler(views.View((idx))).ServeHTTP(w, r)
+		templ.Handler(views.DocsView((idx))).ServeHTTP(w, r)
 	})
 }
