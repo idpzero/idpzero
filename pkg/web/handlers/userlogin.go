@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
-	"sort"
 	"time"
 
 	"github.com/a-h/templ"
@@ -102,33 +101,13 @@ func userloginSubmit(config func() *configuration.ServerConfig, queries *query.Q
 
 func populateScenarios(model *models.UserLoginModel, config *configuration.ServerConfig) {
 
-	model.Users = make([]models.OptionGroup, 0)
+	model.Users = make([]models.UserOption, 0)
 
-	groups := []configuration.ScenarioGroup{}
-
-	for _, v := range config.ScenarioGroups {
-		groups = append(groups, v)
-	}
-
-	// Sort the groups by the field order
-	sort.Slice(groups, func(i, j int) bool {
-		return groups[i].Order < groups[j].Order
-	})
-
-	for _, group := range groups {
-		og := models.OptionGroup{
-			DisplayName: group.Display,
-			Options:     make([]models.Option, 0),
-		}
-
-		for _, scenario := range group.Scenarios {
-			og.Options = append(og.Options, models.Option{
-				ID:          scenario.ID,
-				DisplayName: scenario.Display,
-			})
-		}
-
-		model.Users = append(model.Users, og)
+	for _, scenario := range config.Users {
+		model.Users = append(model.Users, models.UserOption{
+			ID:          scenario.Subject,
+			DisplayName: scenario.LoginDisplay,
+		})
 	}
 
 }

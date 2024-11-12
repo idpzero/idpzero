@@ -3,15 +3,10 @@ package models
 type UserLoginModel struct {
 	Error         string
 	AuthRequestID string
-	Users         []OptionGroup
+	Users         []UserOption
 }
 
-type OptionGroup struct {
-	DisplayName string
-	Options     []Option
-}
-
-type Option struct {
+type UserOption struct {
 	ID          string
 	DisplayName string
 }

@@ -28,7 +28,8 @@ CREATE TABLE tokens (
         subject text NOT NULL,
         audience text NOT NULL,
         expiration INTEGER NOT NULL, -- since epoch
-        scopes text NOT NULL -- comma separated
+        scopes text NOT NULL, -- comma separated
+        created_at INTEGER NOT NULL -- since epoch
     );
 
 -- +goose Down

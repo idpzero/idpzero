@@ -52,14 +52,9 @@ templ login(model models.UserLoginModel) {
                     <select name="username" required class="select select-bordered w-full">
                         <option disabled selected>Select User</option>
                         for _, user := range model.Users {
-                            <optgroup label={user.DisplayName}>
-                            for _, option := range user.Options {
-                                <option value={option.ID}>
-                                    <span>{option.DisplayName}</span>
-                                    <span>({option.ID})</span>
-                                </option>
-                            }
-                            </optgroup>
+                            <option value={user.ID}>
+                                <span>{user.DisplayName}</span>
+                            </option>
                         }
                     </select>
                     </label>

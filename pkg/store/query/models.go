@@ -38,4 +38,5 @@ type Token struct {
 	Audience       string
 	Expiration     int64
 	Scopes         string
+	CreatedAt      int64
 }

@@ -98,6 +98,61 @@ func (q *Queries) CreateAuthRequest(ctx context.Context, arg CreateAuthRequestPa
 	return &i, err
 }
 
+const createToken = `-- name: CreateToken :one
+INSERT INTO tokens (
+    id,
+    auth_request_id,
+    application_id,
+    refresh_token_id,
+    subject,
+    audience,
+    expiration,
+    scopes,
+    created_at
+  )
+VALUES
+  (?, ?, ?, ?, ?, ?, ?,?, ?) RETURNING id, auth_request_id, application_id, refresh_token_id, subject, audience, expiration, scopes, created_at
+`
+
+type CreateTokenParams struct {
+	ID             string
+	AuthRequestID  sql.NullString
+	ApplicationID  string
+	RefreshTokenID string
+	Subject        string
+	Audience       string
+	Expiration     int64
+	Scopes         string
+	CreatedAt      int64
+}
+
+func (q *Queries) CreateToken(ctx context.Context, arg CreateTokenParams) (*Token, error) {
+	row := q.db.QueryRowContext(ctx, createToken,
+		arg.ID,
+		arg.AuthRequestID,
+		arg.ApplicationID,
+		arg.RefreshTokenID,
+		arg.Subject,
+		arg.Audience,
+		arg.Expiration,
+		arg.Scopes,
+		arg.CreatedAt,
+	)
+	var i Token
+	err := row.Scan(
+		&i.ID,
+		&i.AuthRequestID,
+		&i.ApplicationID,
+		&i.RefreshTokenID,
+		&i.Subject,
+		&i.Audience,
+		&i.Expiration,
+		&i.Scopes,
+		&i.CreatedAt,
+	)
+	return &i, err
+}
+
 const getAuthRequestByAuthCode = `-- name: GetAuthRequestByAuthCode :one
 SELECT id, application_id, redirect_uri, state, prompt, login_hint, max_auth_age_seconds, user_id, scopes, response_type, response_mode, nonce, code_challenge, code_challenge_method, complete, created_at, authenticated_at, auth_code FROM
   auth_requests
@@ -160,6 +215,30 @@ func (q *Queries) GetAuthRequestByID(ctx context.Context, id string) (*AuthReque
 		&i.CreatedAt,
 		&i.AuthenticatedAt,
 		&i.AuthCode,
+	)
+	return &i, err
+}
+
+const getTokenByID = `-- name: GetTokenByID :one
+SELECT id, auth_request_id, application_id, refresh_token_id, subject, audience, expiration, scopes, created_at FROM
+  tokens
+WHERE
+  id = ? LIMIT 1
+`
+
+func (q *Queries) GetTokenByID(ctx context.Context, id string) (*Token, error) {
+	row := q.db.QueryRowContext(ctx, getTokenByID, id)
+	var i Token
+	err := row.Scan(
+		&i.ID,
+		&i.AuthRequestID,
+		&i.ApplicationID,
+		&i.RefreshTokenID,
+		&i.Subject,
+		&i.Audience,
+		&i.Expiration,
+		&i.Scopes,
+		&i.CreatedAt,
 	)
 	return &i, err
 }
