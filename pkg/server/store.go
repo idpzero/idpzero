@@ -116,6 +116,20 @@ func (s *Storage) CreateAccessAndRefreshTokens(ctx context.Context, request op.T
 // CreateAccessToken implements op.Storage.
 func (s *Storage) CreateAccessToken(ctx context.Context, request op.TokenRequest) (accessTokenID string, expiration time.Time, err error) {
 
+	var applicationID string
+	var requestID string
+	switch req := request.(type) {
+	case *query.AuthRequest:
+		applicationID = req.ApplicationID
+		requestID = req.ID
+	case op.TokenExchangeRequest:
+		applicationID = req.GetClientID()
+	}
+
+	fmt.Println(applicationID, requestID, request.GetScopes(), request.GetSubject(), request.GetAudience())
+
+	// insert the token to DB
+
 	panic("**************")
 	panic("unimplemented CreateAccessToken")
 }

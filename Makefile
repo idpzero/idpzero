@@ -13,7 +13,7 @@ db:
 	sqlc generate --file ./pkg/store/sqlc.yaml
 
 watch/tailwind:
-	npx --yes tailwindcss -i ./web/css/input.css -o ./pkg/web/assets/styles.css --minify --watch
+	npx --yes tailwindcss -i ./pkg/web/assets/input.css -o ./pkg/web/assets/public/styles.css --minify --watch
 
 watch/templ:
 	templ generate --watch --proxy="http://localhost:4379" --open-browser=true -v
@@ -22,7 +22,7 @@ watch/server:
 	go run github.com/cosmtrek/air@v1.51.0 \
 	--build.cmd "go build -o tmp/main" \
 	--build.bin "tmp/main" \
-	--build.args_bin "serve" \
+	--build.args_bin "serve --debug" \
 	--build.delay "100" \
 	--build.exclude_dir "node_modules" \
 	--build.include_ext "go" \

@@ -7,7 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/idpzero/idpzero/pkg/configuration"
 	"github.com/idpzero/idpzero/pkg/store/query"
-	"github.com/idpzero/idpzero/pkg/web"
+	"github.com/idpzero/idpzero/pkg/web/assets"
 	"github.com/zitadel/oidc/v3/pkg/op"
 )
 
@@ -20,10 +20,10 @@ func mustFs(fs fs.FS, err error) fs.FS {
 
 func Routes(router *chi.Mux, config func() *configuration.ServerConfig, query *query.Queries, provider op.OpenIDProvider) {
 
-	router.Handle("/assets/*", http.FileServer(http.FS(web.Assets)))
+	router.Handle("/static/*", http.FileServer(http.FS(assets.Static)))
 
 	// manage the favicons
-	favhanlder := http.FileServer(http.FS(mustFs(fs.Sub(web.Assets, "assets/favicon"))))
+	favhanlder := http.FileServer(http.FS(mustFs(fs.Sub(assets.Static, "static/favicon"))))
 	router.Handle("/android-chrome-192x192.png", favhanlder)
 	router.Handle("/android-chrome-512x512.png", favhanlder)
 	router.Handle("/apple-touch-icon.png", favhanlder)

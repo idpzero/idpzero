@@ -1,11 +1,11 @@
-package views
+package layouts
 
 
-templ DocsView(
+templ ContentLayout(
     items ...templ.Component,
     ) {
-	@BaseLayout() {
-        @DocsLayout() {
+	@baseLayout() {
+        @contentLayout() {
             for _, item := range items {
                 @item
             }
@@ -13,7 +13,7 @@ templ DocsView(
 	}
 }
 
-templ DocsLayout() {
+templ contentLayout() {
 	
     <header>
         <nav class="navbar fixed top-0 z-10 px-8 h-12">
@@ -30,7 +30,7 @@ templ DocsLayout() {
             </div>
             <div class="navbar-end"> 
                 <a href="https://github.com/idpzero/idpzero" title="IDP Zero on GitHub" target="_blank">
-                    <img src="/assets/github-mark.svg" alt="Github Logo" class="h-6 w-6"/>
+                    <img src="/static/github-mark.svg" alt="Github Logo" class="h-6 w-6"/>
                 </a>
             </div>
         </nav>

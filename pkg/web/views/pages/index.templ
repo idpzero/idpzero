@@ -1,8 +1,16 @@
-package views
+package pages
 
-import "github.com/idpzero/idpzero/pkg/web/models"
 
-templ Index(model models.IndexModel) {
+import (
+"github.com/idpzero/idpzero/pkg/web/models"
+"github.com/idpzero/idpzero/pkg/web/views/layouts"
+)
+
+templ IndexView(model models.IndexModel) {
+    @layouts.ContentLayout(index(model)) 
+}
+
+templ index(model models.IndexModel) {
    
     <div class="py-5">
         <h1 class="text-3xl font-bold"><span class="gradient">Wahoo! Your ready to go!</span></h1>
