@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"strings"
 	"sync"
 	"time"
 
@@ -25,15 +26,19 @@ type Storage struct {
 	server    *configuration.ServerConfig
 	keys      *configuration.KeysConfiguration
 	query     *query.Queries
+	users     *users
+	clients   map[string]configuration.ClientConfig
 }
 
-func NewStorage(logger *slog.Logger, configMgr *configuration.ConfigurationManager, query *query.Queries) (*Storage, error) {
+func NewStorage(logger *slog.Logger, configMgr *configuration.ConfigurationManager, query *query.Queries, users *users) (*Storage, error) {
 
 	store := &Storage{
 		logger:    logger,
 		configMgr: configMgr,
 		lock:      sync.Mutex{},
 		query:     query,
+		users:     users,
+		clients:   make(map[string]configuration.ClientConfig),
 	}
 
 	keys, err := configMgr.LoadKeys()
@@ -42,7 +47,7 @@ func NewStorage(logger *slog.Logger, configMgr *configuration.ConfigurationManag
 		return nil, err
 	}
 
-	store.keys = keys
+	store.setKeys(keys)
 
 	svrconf, err := configMgr.LoadServer()
 
@@ -50,7 +55,7 @@ func NewStorage(logger *slog.Logger, configMgr *configuration.ConfigurationManag
 		return nil, err
 	}
 
-	store.server = svrconf
+	store.setConfig(svrconf)
 
 	// setup watching for changes
 	configMgr.OnKeysChanged(store.setKeys)
@@ -65,6 +70,11 @@ func (s *Storage) setConfig(config *configuration.ServerConfig) {
 	defer s.lock.Unlock()
 
 	s.server = config
+	s.clients = make(map[string]configuration.ClientConfig)
+
+	for _, client := range config.Clients {
+		s.clients[client.ClientID] = client
+	}
 }
 
 func (s *Storage) setKeys(keys *configuration.KeysConfiguration) {
@@ -116,8 +126,36 @@ func (s *Storage) CreateAccessAndRefreshTokens(ctx context.Context, request op.T
 // CreateAccessToken implements op.Storage.
 func (s *Storage) CreateAccessToken(ctx context.Context, request op.TokenRequest) (accessTokenID string, expiration time.Time, err error) {
 
-	panic("**************")
-	panic("unimplemented CreateAccessToken")
+	var applicationID string
+	var requestID sql.NullString
+	switch req := request.(type) {
+	case *query.AuthRequest:
+		applicationID = req.ApplicationID
+		requestID.String = req.ID
+		requestID.Valid = true
+	case op.TokenExchangeRequest:
+		applicationID = req.GetClientID()
+	}
+
+	fmt.Println(applicationID, requestID, request.GetScopes(), request.GetSubject(), request.GetAudience())
+
+	token, err := s.query.CreateToken(ctx, query.CreateTokenParams{
+		ID:             uuid.NewString(),
+		ApplicationID:  applicationID,
+		AuthRequestID:  requestID,
+		Scopes:         strings.Join(request.GetScopes(), " "),
+		RefreshTokenID: "",
+		Subject:        request.GetSubject(),
+		Audience:       strings.Join(request.GetAudience(), " "),
+		Expiration:     time.Now().Add(time.Hour).Unix(),
+		CreatedAt:      time.Now().Unix(),
+	})
+
+	if err != nil {
+		return "", time.Time{}, err
+	}
+
+	return token.ID, time.Unix(token.Expiration, 0), nil
 }
 
 // CreateAuthRequest implements op.Storage.
@@ -167,8 +205,9 @@ func (s *Storage) CreateAuthRequest(ctx context.Context, authReq *oidc.AuthReque
 }
 
 // DeleteAuthRequest implements op.Storage.
-func (s *Storage) DeleteAuthRequest(context.Context, string) error {
-	panic("unimplemented DeleteAuthRequest")
+func (s *Storage) DeleteAuthRequest(ctx context.Context, id string) error {
+	// TODO: Do we need to do anything here? Add soft delete?
+	return nil
 }
 
 // GetClientByClientID implements op.Storage.
@@ -251,14 +290,27 @@ func (s *Storage) SetIntrospectionFromToken(ctx context.Context, userinfo *oidc.
 	panic("unimplemented SetIntrospectionFromToken")
 }
 
-// SetUserinfoFromScopes implements op.Storage.
 func (s *Storage) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.UserInfo, userID string, clientID string, scopes []string) error {
-	panic("unimplemented SetUserinfoFromScopes")
+	return nil // not required
+}
+
+func (s *Storage) SetUserinfoFromRequest(ctx context.Context, userinfo *oidc.UserInfo, token op.IDTokenRequest, scopes []string) error {
+	// TODO: Implement this
+	fmt.Println("SetUserinfoFromRequest", userinfo, token, scopes)
+
+	return s.populateUserInfo(ctx, userinfo, token.GetSubject(), token.GetClientID(), scopes)
 }
 
 // SetUserinfoFromToken implements op.Storage.
 func (s *Storage) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.UserInfo, tokenID string, subject string, origin string) error {
-	panic("unimplemented SetUserinfoFromToken")
+
+	token, err := s.query.GetTokenByID(ctx, tokenID)
+
+	if err != nil {
+		return err
+	}
+
+	return s.populateUserInfo(ctx, userinfo, subject, token.ApplicationID, strings.Split(token.Scopes, " "))
 }
 
 // SignatureAlgorithms implements op.Storage.
@@ -300,4 +352,79 @@ func (s *Storage) TokenRequestByRefreshToken(ctx context.Context, refreshTokenID
 // ValidateJWTProfileScopes implements op.Storage.
 func (s *Storage) ValidateJWTProfileScopes(ctx context.Context, userID string, scopes []string) ([]string, error) {
 	panic("unimplemented ValidateJWTProfileScopes")
+}
+
+func (s *Storage) populateUserInfo(ctx context.Context, userInfo *oidc.UserInfo, userID, clientID string, scopes []string) (err error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	user, ok := s.users.GetByID(userID)
+	if !ok {
+		return fmt.Errorf("user not found")
+	}
+
+	for _, scope := range scopes {
+		switch scope {
+		case oidc.ScopeOpenID:
+			userInfo.Subject = user.Subject
+		case oidc.ScopeEmail:
+			if user.Claims.Email != nil {
+				userInfo.Email = *user.Claims.Email
+			}
+			if user.Claims.EmailVerified != nil {
+				userInfo.EmailVerified = oidc.Bool(*user.Claims.EmailVerified)
+			}
+		case oidc.ScopeProfile:
+			if user.Claims.PreferredUsername != nil {
+				userInfo.PreferredUsername = *user.Claims.PreferredUsername
+			}
+
+			if user.Claims.GivenName != nil {
+				userInfo.GivenName = *user.Claims.GivenName
+			}
+
+			if user.Claims.FamilyName != nil {
+				userInfo.FamilyName = *user.Claims.FamilyName
+			}
+
+			if user.Claims.MiddleName != nil {
+				userInfo.MiddleName = *user.Claims.MiddleName
+			}
+
+			if user.Claims.Nickname != nil {
+				userInfo.Nickname = *user.Claims.Nickname
+			}
+
+			if user.Claims.Name != nil {
+				userInfo.Name = *user.Claims.Name
+			} else if userInfo.GivenName != "" && userInfo.FamilyName != "" {
+				userInfo.Name = fmt.Sprintf("%s %s", userInfo.GivenName, userInfo.FamilyName)
+			}
+
+			if user.Claims.UpdatedAt != nil {
+				userInfo.UpdatedAt = oidc.Time(user.Claims.UpdatedAt.Unix())
+			}
+
+		case oidc.ScopePhone:
+			if user.Claims.Phone != nil {
+				userInfo.PhoneNumber = *user.Claims.Phone
+			}
+			if user.Claims.PhoneVerified != nil {
+				userInfo.PhoneNumberVerified = *user.Claims.PhoneVerified
+			}
+		default:
+			{
+				client, ok := s.clients[clientID]
+				if ok {
+					if claims, ok := client.CustomScopes[scope]; ok {
+						for _, claim := range claims {
+							if value, ok := user.Claims.Custom[claim]; ok {
+								userInfo.AppendClaims(claim, value)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return nil
 }

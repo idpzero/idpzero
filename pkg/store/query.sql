@@ -42,3 +42,24 @@ INSERT INTO auth_requests (
   )
 VALUES
   (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?, ?) RETURNING *;
+
+-- name: CreateToken :one
+INSERT INTO tokens (
+    id,
+    auth_request_id,
+    application_id,
+    refresh_token_id,
+    subject,
+    audience,
+    expiration,
+    scopes,
+    created_at
+  )
+VALUES
+  (?, ?, ?, ?, ?, ?, ?,?, ?) RETURNING *;
+
+-- name: GetTokenByID :one
+SELECT * FROM
+  tokens
+WHERE
+  id = ? LIMIT 1;

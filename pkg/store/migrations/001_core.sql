@@ -20,5 +20,18 @@ CREATE TABLE auth_requests (
         auth_code text 
     );
 
+CREATE TABLE tokens (
+        id text PRIMARY KEY,
+        auth_request_id text, -- originator if available
+        application_id text NOT NULL,
+        refresh_token_id text NOT NULL,
+        subject text NOT NULL,
+        audience text NOT NULL,
+        expiration INTEGER NOT NULL, -- since epoch
+        scopes text NOT NULL, -- comma separated
+        created_at INTEGER NOT NULL -- since epoch
+    );
+
 -- +goose Down
 DROP TABLE auth_requests;
+DROP TABLE tokens;

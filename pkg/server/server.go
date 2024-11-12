@@ -23,9 +23,10 @@ type Server struct {
 	lock   sync.RWMutex
 	logger *slog.Logger
 	config *configuration.ServerConfig
+	users  *users
 }
 
-func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, queries *query.Queries, storage *Storage) (*Server, error) {
+func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, queries *query.Queries) (*Server, error) {
 
 	// Use chi as this is what OIDC is using internally, so keep it conistent
 	router := chi.NewRouter()
@@ -40,9 +41,12 @@ func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, 
 		waiter: sync.WaitGroup{},
 		lock:   sync.RWMutex{},
 		logger: logger,
-		config: c,
 		server: &http.Server{Addr: fmt.Sprintf("0.0.0.0:%d", c.Server.Port), Handler: router},
+		users:  newUsers(),
 	}
+
+	// set the config using the initial data provided.
+	server.setConfig(c)
 
 	// update for changes to be loaded
 	config.OnServerChanged(server.setConfig)
@@ -50,6 +54,13 @@ func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, 
 	router.Use(middleware.RequestID)
 	router.Use(setProviderFromRequest) // set the issuer based on the request URL
 	router.Use(middleware.Recoverer)
+
+	// create the storage provider
+	storage, err := NewStorage(logger, config, queries, server.users)
+
+	if err != nil {
+		return nil, err
+	}
 
 	options := ProviderOptions{
 		Storage: storage,
@@ -79,6 +90,7 @@ func (s *Server) setConfig(config *configuration.ServerConfig) {
 	defer s.lock.Unlock()
 
 	s.config = config
+	s.users.Update(config.Users)
 }
 
 func (s *Server) Run(ctx context.Context) error {

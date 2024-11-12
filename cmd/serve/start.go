@@ -64,13 +64,7 @@ var startCmd = &cobra.Command{
 		// access to the data layer.
 		qry := query.New(db)
 
-		idpStore, err := server.NewStorage(dbg.Logger, conf, qry)
-
-		if err != nil {
-			return err
-		}
-
-		s, err := server.NewServer(dbg.Logger, conf, qry, idpStore)
+		s, err := server.NewServer(dbg.Logger, conf, qry)
 
 		if err != nil {
 			return err

@@ -28,3 +28,15 @@ type AuthRequest struct {
 	AuthenticatedAt     int64
 	AuthCode            sql.NullString
 }
+
+type Token struct {
+	ID             string
+	AuthRequestID  sql.NullString
+	ApplicationID  string
+	RefreshTokenID string
+	Subject        string
+	Audience       string
+	Expiration     int64
+	Scopes         string
+	CreatedAt      int64
+}

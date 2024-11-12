@@ -8,7 +8,7 @@ import (
 	"github.com/a-h/templ"
 	"github.com/idpzero/idpzero/pkg/configuration"
 	"github.com/idpzero/idpzero/pkg/web/models"
-	"github.com/idpzero/idpzero/pkg/web/views"
+	"github.com/idpzero/idpzero/pkg/web/views/pages"
 )
 
 func index(config func() *configuration.ServerConfig) http.HandlerFunc {
@@ -34,8 +34,8 @@ func index(config func() *configuration.ServerConfig) http.HandlerFunc {
 
 		im.Clients = idpConfig.Clients
 
-		idx := views.Index(im)
+		view := pages.IndexView(im)
 
-		templ.Handler(views.DocsView((idx))).ServeHTTP(w, r)
+		templ.Handler(view).ServeHTTP(w, r)
 	})
 }

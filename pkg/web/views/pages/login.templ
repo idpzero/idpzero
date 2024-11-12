@@ -1,8 +1,16 @@
-package views
+package pages
 
-import "github.com/idpzero/idpzero/pkg/web/models"
 
-templ UserLogin(model models.UserLoginModel) {
+import (
+"github.com/idpzero/idpzero/pkg/web/models"
+"github.com/idpzero/idpzero/pkg/web/views/layouts"
+)
+
+templ LoginView(model models.UserLoginModel) {
+    @layouts.CenteredLayout(login(model))
+}
+
+templ login(model models.UserLoginModel) {
    
         if model.Error != "" {
             <div role="alert" class="alert">
@@ -44,14 +52,9 @@ templ UserLogin(model models.UserLoginModel) {
                     <select name="username" required class="select select-bordered w-full">
                         <option disabled selected>Select User</option>
                         for _, user := range model.Users {
-                            <optgroup label={user.DisplayName}>
-                            for _, option := range user.Options {
-                                <option value={option.ID}>
-                                    <span>{option.DisplayName}</span>
-                                    <span>({option.ID})</span>
-                                </option>
-                            }
-                            </optgroup>
+                            <option value={user.ID}>
+                                <span>{user.DisplayName}</span>
+                            </option>
                         }
                     </select>
                     </label>
