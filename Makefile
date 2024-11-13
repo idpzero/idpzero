@@ -13,7 +13,7 @@ db:
 	sqlc generate --file ./pkg/store/sqlc.yaml
 
 watch/tailwind:
-	npx --yes tailwindcss -i ./pkg/web/assets/input.css -o ./pkg/web/assets/public/styles.css --minify --watch
+	npx --yes tailwindcss -i ./pkg/web/assets/input.css -o ./pkg/web/assets/static/styles.css --minify --watch
 
 watch/templ:
 	templ generate --watch --proxy="http://localhost:4379" --open-browser=true -v
@@ -25,7 +25,7 @@ watch/server:
 	--build.args_bin "serve --debug" \
 	--build.delay "100" \
 	--build.exclude_dir "node_modules" \
-	--build.include_ext "go" \
+	--build.include_ext "go,css" \
 	--build.stop_on_error "false" \
 	--misc.clean_on_exit true
 

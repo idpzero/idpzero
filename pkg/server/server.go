@@ -13,7 +13,7 @@ import (
 	"github.com/idpzero/idpzero/pkg/configuration"
 	"github.com/idpzero/idpzero/pkg/dbg"
 	"github.com/idpzero/idpzero/pkg/store/query"
-	"github.com/idpzero/idpzero/pkg/web/handlers"
+	"github.com/idpzero/idpzero/pkg/web/controllers"
 	"github.com/savioxavier/termlink"
 )
 
@@ -74,7 +74,7 @@ func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, 
 	// we need to add a route to the root because we  are mounting
 	// the provider on the root, we cant double map the '/'
 	rtr := provider.Handler.(*chi.Mux)
-	handlers.Routes(rtr, func() *configuration.ServerConfig {
+	controllers.Routes(rtr, func() *configuration.ServerConfig {
 		return server.config
 	}, queries, provider)
 

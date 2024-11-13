@@ -25,7 +25,8 @@ templ contentLayout() {
             <div class="navbar-center flex">
                 <ul class="menu menu-horizontal px-1">
                     <li><a href="/">Overview</a></li>
-                    <li><a href="/cli">CLI Reference</a></li>
+                    <li><a href="/users">Users</a></li>
+                    <li><a href="/docs">Docs</a></li>
                 </ul>
             </div>
             <div class="navbar-end"> 
@@ -36,9 +37,11 @@ templ contentLayout() {
         </nav>
     </header>
     <main class="mt-16">
-        <div class="px-8">
+        
+        <div class="px-8 py-4">
         { children... }
         </div>
+    
     </main>
     
 }

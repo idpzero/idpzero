@@ -17,6 +17,7 @@ type HostConfig struct {
 }
 
 type ClientConfig struct {
+	Name                           string              `yaml:"name"`
 	ClientID                       string              `yaml:"client_id"`
 	AccessTokenType                string              `yaml:"access_token_type"` // bearer or jwt.
 	ApplicationType                string              `yaml:"application_type"`  // web, native, or service.

@@ -75,5 +75,6 @@ func NewProvider(logger *slog.Logger, options ProviderOptions) (*op.Provider, er
 	if err != nil {
 		return nil, err
 	}
+
 	return handler, nil
 }

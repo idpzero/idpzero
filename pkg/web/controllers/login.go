@@ -1,4 +1,4 @@
-package handlers
+package controllers
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"github.com/idpzero/idpzero/pkg/web/views/pages"
 )
 
-func userlogin(config func() *configuration.ServerConfig, queries *query.Queries) http.HandlerFunc {
+func login(config func() *configuration.ServerConfig, queries *query.Queries) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		err := r.ParseForm()
@@ -53,7 +53,7 @@ func userlogin(config func() *configuration.ServerConfig, queries *query.Queries
 	})
 }
 
-func userloginSubmit(config func() *configuration.ServerConfig, queries *query.Queries, callback func(context.Context, string) string) http.HandlerFunc {
+func loginSubmit(config func() *configuration.ServerConfig, queries *query.Queries, callback func(context.Context, string) string) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		err := r.ParseForm()

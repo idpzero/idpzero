@@ -296,9 +296,6 @@ func (s *Storage) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.User
 }
 
 func (s *Storage) SetUserinfoFromRequest(ctx context.Context, userinfo *oidc.UserInfo, token op.IDTokenRequest, scopes []string) error {
-	// TODO: Implement this
-	fmt.Println("SetUserinfoFromRequest", userinfo, token, scopes)
-
 	return s.populateUserInfo(ctx, userinfo, token.GetSubject(), token.GetClientID(), scopes)
 }
 
@@ -355,14 +352,17 @@ func (s *Storage) ValidateJWTProfileScopes(ctx context.Context, userID string, s
 	panic("unimplemented ValidateJWTProfileScopes")
 }
 
-func (s *Storage) populateUserInfo(ctx context.Context, userInfo *oidc.UserInfo, userID, clientID string, scopes []string) (err error) {
+func (s *Storage) populateUserInfo(_ context.Context, userInfo *oidc.UserInfo, userID string, clientID string, scopes []string) (err error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
+
 	user, ok := s.users.GetByID(userID)
 	if !ok {
 		return fmt.Errorf("user not found")
 	}
 
+	// loop through the scopes and assign the claims based on those supported
+	// within each of the well known scope types, and then custom scope configuration
 	for _, scope := range scopes {
 		switch scope {
 		case oidc.ScopeOpenID:

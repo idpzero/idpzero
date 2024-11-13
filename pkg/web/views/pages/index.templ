@@ -4,6 +4,7 @@ package pages
 import (
 "github.com/idpzero/idpzero/pkg/web/models"
 "github.com/idpzero/idpzero/pkg/web/views/layouts"
+"github.com/idpzero/idpzero/pkg/configuration"
 )
 
 templ IndexView(model models.IndexModel) {
@@ -12,7 +13,7 @@ templ IndexView(model models.IndexModel) {
 
 templ index(model models.IndexModel) {
    
-    <div class="py-5">
+    <div class="pb-5">
         <h1 class="text-3xl font-bold"><span class="gradient">Wahoo! Your ready to go!</span></h1>
         <p class="text-md py-3">
         See configuration below to configure your app ready to use <b>idpzero</b>. Changes to configuration are managed via the CLI (the same cli used to serve the IDP).
@@ -44,36 +45,47 @@ templ index(model models.IndexModel) {
 
     <h2 class="text-lg font-bold mt-10">OpenID Connect / OAuth2 Clients</h2>
     <p class="py-2 text-sm">The following are the configured clients. For details on adding and managing client see CLI reference 'Managing Clients'.</p>
-    <div class="bg-gray-100 p-2 rounded-lg ">
-        <table class="table table-auto">
-         <thead>
-            <tr>
-            <th>Client ID</th>
-            <th>Application Type</th>
-            <th>Grant Types</th>
-            <th>Redirection URIs</th>
-            </tr>
-        </thead>
-         <tbody>
-        for _, client := range model.Clients {
-            <tr>
-                <td>{client.ClientID}</td>
-                <td>{client.ApplicationType}</td>
-                 <td>
-                    for _,gt := range client.GrantTypes {
-                        <span>{gt}</span><br/>
-                    }
-                </td>
-                <td>
-                    for _,ruri := range client.RedirectURIs {
-                        <span>{ruri}</span><br/>
-                    }
-                </td>
-            </tr>
-        }
-        </tbody>
-        </table>
-    </div>
+    
+    for _, c := range model.Clients {
+         @client(c)
+    }
     
 
+}
+
+templ field(label string, value ...string) {
+    <div class="w-full pb-2">
+        <div class="text-xs font-bold">{label}</div>
+        <div class="py-1 w-full text-gray-800 text-xs">
+            for _, v := range value {
+                <span>{v}</span><br/>
+            }
+        </div>
+    </div>
+}
+
+templ client(config configuration.ClientConfig) {
+    <div class="bg-gray-100 py-2 px-5 mb-5 rounded-lg">
+        <h2 class="text-xl py-2 mb-2">{config.Name}</h2>
+        <div class="grid grid-cols-4 gap-4 ">
+            <div>
+                @field("Client ID",config.ClientID)
+                @field("Access Token Type", config.AccessTokenType)
+                @field("Authentication Method", config.AuthMethod)
+            </div>
+            <div>
+                @field("Client Secret", config.ClientSecret)
+                @field("Response Types", config.ResponseTypes...)
+                @field("Grant Types", config.GrantTypes...)
+            </div>
+            <div>
+                @field("Application Type", config.ApplicationType)
+                @field("Clock Skew", config.ClockSkew.String())
+                @field("ID Token Lifetime", config.IDTokenLifetime.String())
+            </div>
+            <div>
+                @field("Redirection URIs", config.RedirectURIs...)
+            </div>
+        </div>
+    </div>
 }
