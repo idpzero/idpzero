@@ -18,13 +18,13 @@ const (
 func resolveIcon(icon Icon) (string, func(fmt string, args ...interface{}) string) {
 	switch icon {
 	case IconCheck:
-		return "✔", color.GreenString
+		return "(✔)", color.GreenString
 	case IconCross:
-		return "✖", color.RedString
+		return "(✖)", color.RedString
 	case IconDash:
-		return "-", color.BlueString
+		return "(-)", color.BlueString
 	case IconQuestion:
-		return "?", color.YellowString
+		return "(?)", color.YellowString
 	default:
 		return "", color.WhiteString
 	}

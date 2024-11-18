@@ -1,43 +1,43 @@
 package keys
 
-import (
-	"fmt"
+// import (
+// 	"fmt"
 
-	"github.com/fatih/color"
-	"github.com/idpzero/idpzero/pkg/configuration"
-	"github.com/spf13/cobra"
-)
+// 	"github.com/fatih/color"
+// 	"github.com/idpzero/idpzero/pkg/configuration"
+// 	"github.com/spf13/cobra"
+// )
 
-var removeKeyCmd = &cobra.Command{
-	Use:   "remove",
-	Short: "Remove a key from the configuration if it exists",
-	Long:  `Generate and append a new key to the configuration`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+// var removeKeyCmd = &cobra.Command{
+// 	Use:   "remove",
+// 	Short: "Remove a key from the configuration if it exists",
+// 	Long:  `Generate and append a new key to the configuration`,
+// 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		cfg, err := conf.LoadKeys()
+// 		cfg, err := conf.LoadKeys()
 
-		if err != nil {
-			return err
-		}
+// 		if err != nil {
+// 			return err
+// 		}
 
-		removed := configuration.RemoveKey(cfg, *kid)
+// 		removed := configuration.RemoveKey(cfg, *kid)
 
-		if removed {
-			color.Yellow("Key '%s' removed from configuration\n", *kid)
+// 		if removed {
+// 			color.Yellow("Key '%s' removed from configuration\n", *kid)
 
-			if err := conf.SaveKeys(*cfg); err != nil {
-				color.Red("Failed to save configuration")
-				return err
-			}
+// 			if err := conf.SaveKeys(*cfg); err != nil {
+// 				color.Red("Failed to save configuration")
+// 				return err
+// 			}
 
-			fmt.Println()
-			color.Green("Configuration saved OK.")
+// 			fmt.Println()
+// 			color.Green("Configuration saved OK.")
 
-		} else {
-			color.Yellow("Key '%s' not found. No action required.\n", *kid)
-			fmt.Println()
-		}
+// 		} else {
+// 			color.Yellow("Key '%s' not found. No action required.\n", *kid)
+// 			fmt.Println()
+// 		}
 
-		return nil
-	},
-}
+// 		return nil
+// 	},
+// }

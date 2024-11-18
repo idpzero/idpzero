@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/idpzero/idpzero/pkg/configuration"
+	"github.com/idpzero/idpzero/pkg/console"
 	"github.com/idpzero/idpzero/pkg/dbg"
 	"github.com/idpzero/idpzero/pkg/store/query"
 	"github.com/idpzero/idpzero/pkg/web/controllers"
@@ -18,12 +20,13 @@ import (
 )
 
 type Server struct {
-	server *http.Server
-	waiter sync.WaitGroup
-	lock   sync.RWMutex
-	logger *slog.Logger
-	config *configuration.ServerConfig
-	users  *users
+	server  *http.Server
+	waiter  sync.WaitGroup
+	lock    sync.RWMutex
+	logger  *slog.Logger
+	config  *configuration.ServerConfig
+	users   *users
+	queries *query.Queries
 }
 
 func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, queries *query.Queries) (*Server, error) {
@@ -38,11 +41,12 @@ func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, 
 	}
 
 	server := &Server{
-		waiter: sync.WaitGroup{},
-		lock:   sync.RWMutex{},
-		logger: logger,
-		server: &http.Server{Addr: fmt.Sprintf("0.0.0.0:%d", c.Server.Port), Handler: router},
-		users:  newUsers(),
+		waiter:  sync.WaitGroup{},
+		lock:    sync.RWMutex{},
+		logger:  logger,
+		server:  &http.Server{Addr: fmt.Sprintf("0.0.0.0:%d", c.Server.Port), Handler: router},
+		users:   newUsers(),
+		queries: queries,
 	}
 
 	// set the config using the initial data provided.
@@ -93,7 +97,50 @@ func (s *Server) setConfig(config *configuration.ServerConfig) {
 	s.users.Update(config.Users)
 }
 
+const signingKeyID = "signing"
+
+func (s *Server) onStart(ctx context.Context) error {
+
+	key, err := s.queries.GetKeyByID(ctx, signingKeyID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			console.PrintCheck(console.IconQuestion, "No signing key found. Generating a new one.")
+			keyArgs, err := newRSAKey(signingKeyID, KeyUseSig)
+
+			if err != nil {
+				return err
+			}
+
+			key, err = s.queries.CreateKey(ctx, keyArgs)
+
+			if err != nil {
+				return err
+			}
+
+			console.PrintCheck(console.IconCheck, "Signing key generated successfully.")
+
+		} else {
+			return err
+		}
+	} else {
+		if key.Usage == KeyUseSig {
+			console.PrintCheck(console.IconCheck, "Existing signing key found OK")
+		} else {
+			console.PrintCheck(console.IconCross, "Expecing a signing key, but found a different use key with ID '%s'", key.ID)
+			return fmt.Errorf("key with ID '%s' is not a signing key", key.ID)
+		}
+	}
+
+	return nil
+}
+
 func (s *Server) Run(ctx context.Context) error {
+
+	// setup local state as needed.
+	if err := s.onStart(ctx); err != nil {
+		return err
+	}
 
 	// server context so we can control the shutdown order
 	serverCtx, serverStopCtx := context.WithCancel(context.Background())

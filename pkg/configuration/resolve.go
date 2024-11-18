@@ -18,13 +18,7 @@ func Resolve(path string) (*ConfigurationManager, error) {
 		return nil, err
 	}
 
-	home, err := os.UserHomeDir()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return NewConfigurationManager(configDir, filepath.Join(home, dirName))
+	return NewConfigurationManager(configDir)
 }
 
 func DefaultDirectory() (string, error) {

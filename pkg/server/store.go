@@ -24,7 +24,6 @@ type Storage struct {
 	lock      sync.Mutex
 	configMgr *configuration.ConfigurationManager
 	server    *configuration.ServerConfig
-	keys      *configuration.KeysConfiguration
 	query     *query.Queries
 	users     *users
 	clients   map[string]configuration.ClientConfig
@@ -41,14 +40,6 @@ func NewStorage(logger *slog.Logger, configMgr *configuration.ConfigurationManag
 		clients:   make(map[string]configuration.ClientConfig),
 	}
 
-	keys, err := configMgr.LoadKeys()
-
-	if err != nil {
-		return nil, err
-	}
-
-	store.setKeys(keys)
-
 	svrconf, err := configMgr.LoadServer()
 
 	if err != nil {
@@ -58,7 +49,6 @@ func NewStorage(logger *slog.Logger, configMgr *configuration.ConfigurationManag
 	store.setConfig(svrconf)
 
 	// setup watching for changes
-	configMgr.OnKeysChanged(store.setKeys)
 	configMgr.OnServerChanged(store.setConfig)
 
 	return store, nil
@@ -75,13 +65,6 @@ func (s *Storage) setConfig(config *configuration.ServerConfig) {
 	for _, client := range config.Clients {
 		s.clients[client.ClientID] = client
 	}
-}
-
-func (s *Storage) setKeys(keys *configuration.KeysConfiguration) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	s.keys = keys
 }
 
 func (s *Storage) AuthRequestByCode(ctx context.Context, code string) (op.AuthRequest, error) {
@@ -248,13 +231,17 @@ func (s *Storage) Health(context.Context) error {
 }
 
 // KeySet implements op.Storage.
-func (s *Storage) KeySet(context.Context) ([]op.Key, error) {
+func (s *Storage) KeySet(ctx context.Context) ([]op.Key, error) {
 	keys := make([]op.Key, 0)
 
-	for _, key := range s.keys.Keys {
-		if key.Use == "sig" {
-			keys = append(keys, &opPublicKey{key: key})
-		}
+	signingKeys, err := s.query.GetKeysByUse(ctx, KeyUseSig)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, key := range signingKeys {
+		keys = append(keys, &opPublicKey{key: *key})
 	}
 
 	return keys, nil
@@ -312,29 +299,33 @@ func (s *Storage) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.UserI
 }
 
 // SignatureAlgorithms implements op.Storage.
-func (s *Storage) SignatureAlgorithms(context.Context) ([]jose.SignatureAlgorithm, error) {
+func (s *Storage) SignatureAlgorithms(ctx context.Context) ([]jose.SignatureAlgorithm, error) {
 	algs := make([]jose.SignatureAlgorithm, 0)
 
-	for _, key := range s.keys.Keys {
-		if key.Use == "sig" {
-			sa := jose.SignatureAlgorithm(key.Algorithm)
-			algs = append(algs, sa)
-		}
+	signingKeys, err := s.query.GetKeysByUse(ctx, KeyUseSig)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, key := range signingKeys {
+		sa := jose.SignatureAlgorithm(key.Alg)
+		algs = append(algs, sa)
 	}
 
 	return algs, nil
 }
 
 // SigningKey implements op.Storage.
-func (s *Storage) SigningKey(context.Context) (op.SigningKey, error) {
+func (s *Storage) SigningKey(ctx context.Context) (op.SigningKey, error) {
 
-	for _, key := range s.keys.Keys {
-		if key.Use == "sig" {
-			return &opPrivateKey{key: key}, nil
-		}
+	key, err := s.query.GetKeyByID(ctx, signingKeyID)
+
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, fmt.Errorf("no signing key found")
+	return &opPrivateKey{key: *key}, nil
 }
 
 // TerminateSession implements op.Storage.

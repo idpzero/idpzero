@@ -63,3 +63,29 @@ SELECT * FROM
   tokens
 WHERE
   id = ? LIMIT 1;
+
+
+  
+-- name: CreateKey :one
+INSERT INTO keys (
+    id,
+    alg,
+    usage,
+    public_key,
+    private_key,
+    created_at
+  )
+VALUES
+  (?, ?, ?, ?, ?, ?) RETURNING *;
+  
+-- name: GetKeyByID :one
+SELECT * FROM
+  keys
+WHERE
+  id = ? LIMIT 1;
+
+-- name: GetKeysByUse :many
+SELECT * FROM
+  keys
+WHERE
+  usage = ?;

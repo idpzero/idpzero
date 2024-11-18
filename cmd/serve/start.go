@@ -39,9 +39,7 @@ var startCmd = &cobra.Command{
 
 		defer conf.Close()
 
-		configuration.PrintStatus(conf)
-
-		if initialized, err := conf.IsInitialized(); err != nil {
+		if initialized, err := conf.IsServerInitialized(); err != nil {
 			return err
 		} else if !initialized {
 			color.Yellow("Configuration not valid. Run 'idpzero init' to initialize")

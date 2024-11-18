@@ -60,39 +60,37 @@ var initializeCmd = &cobra.Command{
 			console.PrintCheck(console.IconCheck, "Server configuration initialized successfully.")
 		}
 
-		if ok, err := conf.IsKeysInitialized(); err != nil {
-			return err
-		} else if ok {
-			console.PrintCheck(console.IconCheck, "Keys configuration already initialized. Skipping.")
-		} else {
-			fmt.Printf("Initializing new keys directory.")
-			fmt.Println()
+		// if ok, err := conf.IsKeysInitialized(); err != nil {
+		// 	return err
+		// } else if ok {
+		// 	console.PrintCheck(console.IconCheck, "Keys configuration already initialized. Skipping.")
+		// } else {
+		// 	fmt.Printf("Initializing new keys directory.")
+		// 	fmt.Println()
 
-			keys := configuration.KeysConfiguration{}
-			keys.Keys = []configuration.Key{}
+		// 	keys := configuration.KeysConfiguration{}
+		// 	keys.Keys = []configuration.Key{}
 
-			nk, err := configuration.NewRSAKey("default", "sig")
+		// 	nk, err := configuration.NewRSAKey("default", "sig")
 
-			if err != nil {
-				return err
-			}
+		// 	if err != nil {
+		// 		return err
+		// 	}
 
-			keys.Keys = append(keys.Keys, *nk)
+		// 	keys.Keys = append(keys.Keys, *nk)
 
-			if err := conf.SaveKeys(keys); err != nil {
-				return err
-			}
+		// 	if err := conf.SaveKeys(keys); err != nil {
+		// 		return err
+		// 	}
 
-			console.PrintCheck(console.IconCheck, "Keys configuration initialized successfully.")
-		}
+		// 	console.PrintCheck(console.IconCheck, "Keys configuration initialized successfully.")
+		// }
 
 		conf, err = configuration.Resolve(*shared.Location)
 
 		if err != nil {
 			return err
 		}
-
-		configuration.PrintStatus(conf)
 
 		fmt.Println()
 		color.Green("Initialized OK!")

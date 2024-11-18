@@ -32,6 +32,16 @@ CREATE TABLE tokens (
         created_at INTEGER NOT NULL -- since epoch
     );
 
+CREATE TABLE keys (
+        id text PRIMARY KEY,
+        alg text NOT NULL,
+        usage text NOT NULL,
+        public_key text NOT NULL,
+        private_key text NOT NULL,
+        created_at INTEGER NOT NULL -- since epoch
+    );
+
 -- +goose Down
 DROP TABLE auth_requests;
 DROP TABLE tokens;
+DROP TABLE keys;
