@@ -24,7 +24,6 @@ type Storage struct {
 	lock      sync.Mutex
 	configMgr *configuration.ConfigurationManager
 	server    *configuration.ServerConfig
-	keys      *configuration.KeysConfiguration
 	query     *query.Queries
 	users     *users
 	clients   map[string]configuration.ClientConfig
@@ -41,15 +40,7 @@ func NewStorage(logger *slog.Logger, configMgr *configuration.ConfigurationManag
 		clients:   make(map[string]configuration.ClientConfig),
 	}
 
-	keys, err := configMgr.LoadKeys()
-
-	if err != nil {
-		return nil, err
-	}
-
-	store.setKeys(keys)
-
-	svrconf, err := configMgr.LoadServer()
+	svrconf, err := configMgr.LoadConfiguration()
 
 	if err != nil {
 		return nil, err
@@ -58,7 +49,6 @@ func NewStorage(logger *slog.Logger, configMgr *configuration.ConfigurationManag
 	store.setConfig(svrconf)
 
 	// setup watching for changes
-	configMgr.OnKeysChanged(store.setKeys)
 	configMgr.OnServerChanged(store.setConfig)
 
 	return store, nil
@@ -75,13 +65,6 @@ func (s *Storage) setConfig(config *configuration.ServerConfig) {
 	for _, client := range config.Clients {
 		s.clients[client.ClientID] = client
 	}
-}
-
-func (s *Storage) setKeys(keys *configuration.KeysConfiguration) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	s.keys = keys
 }
 
 func (s *Storage) AuthRequestByCode(ctx context.Context, code string) (op.AuthRequest, error) {
@@ -120,6 +103,7 @@ func (s *Storage) AuthorizeClientIDSecret(ctx context.Context, clientID string, 
 
 // CreateAccessAndRefreshTokens implements op.Storage.
 func (s *Storage) CreateAccessAndRefreshTokens(ctx context.Context, request op.TokenRequest, currentRefreshToken string) (accessTokenID string, newRefreshTokenID string, expiration time.Time, err error) {
+	panic("***********************") // up to here!
 	panic("unimplemented CreateAccessAndRefreshTokens")
 }
 
@@ -247,13 +231,17 @@ func (s *Storage) Health(context.Context) error {
 }
 
 // KeySet implements op.Storage.
-func (s *Storage) KeySet(context.Context) ([]op.Key, error) {
+func (s *Storage) KeySet(ctx context.Context) ([]op.Key, error) {
 	keys := make([]op.Key, 0)
 
-	for _, key := range s.keys.Keys {
-		if key.Use == "sig" {
-			keys = append(keys, &opPublicKey{key: key})
-		}
+	signingKeys, err := s.query.GetKeysByUse(ctx, KeyUseSig)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, key := range signingKeys {
+		keys = append(keys, &opPublicKey{key: *key})
 	}
 
 	return keys, nil
@@ -295,9 +283,6 @@ func (s *Storage) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.User
 }
 
 func (s *Storage) SetUserinfoFromRequest(ctx context.Context, userinfo *oidc.UserInfo, token op.IDTokenRequest, scopes []string) error {
-	// TODO: Implement this
-	fmt.Println("SetUserinfoFromRequest", userinfo, token, scopes)
-
 	return s.populateUserInfo(ctx, userinfo, token.GetSubject(), token.GetClientID(), scopes)
 }
 
@@ -314,29 +299,33 @@ func (s *Storage) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.UserI
 }
 
 // SignatureAlgorithms implements op.Storage.
-func (s *Storage) SignatureAlgorithms(context.Context) ([]jose.SignatureAlgorithm, error) {
+func (s *Storage) SignatureAlgorithms(ctx context.Context) ([]jose.SignatureAlgorithm, error) {
 	algs := make([]jose.SignatureAlgorithm, 0)
 
-	for _, key := range s.keys.Keys {
-		if key.Use == "sig" {
-			sa := jose.SignatureAlgorithm(key.Algorithm)
-			algs = append(algs, sa)
-		}
+	signingKeys, err := s.query.GetKeysByUse(ctx, KeyUseSig)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, key := range signingKeys {
+		sa := jose.SignatureAlgorithm(key.Alg)
+		algs = append(algs, sa)
 	}
 
 	return algs, nil
 }
 
 // SigningKey implements op.Storage.
-func (s *Storage) SigningKey(context.Context) (op.SigningKey, error) {
+func (s *Storage) SigningKey(ctx context.Context) (op.SigningKey, error) {
 
-	for _, key := range s.keys.Keys {
-		if key.Use == "sig" {
-			return &opPrivateKey{key: key}, nil
-		}
+	key, err := s.query.GetKeyByID(ctx, signingKeyID)
+
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, fmt.Errorf("no signing key found")
+	return &opPrivateKey{key: *key}, nil
 }
 
 // TerminateSession implements op.Storage.
@@ -354,14 +343,17 @@ func (s *Storage) ValidateJWTProfileScopes(ctx context.Context, userID string, s
 	panic("unimplemented ValidateJWTProfileScopes")
 }
 
-func (s *Storage) populateUserInfo(ctx context.Context, userInfo *oidc.UserInfo, userID, clientID string, scopes []string) (err error) {
+func (s *Storage) populateUserInfo(_ context.Context, userInfo *oidc.UserInfo, userID string, clientID string, scopes []string) (err error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
+
 	user, ok := s.users.GetByID(userID)
 	if !ok {
 		return fmt.Errorf("user not found")
 	}
 
+	// loop through the scopes and assign the claims based on those supported
+	// within each of the well known scope types, and then custom scope configuration
 	for _, scope := range scopes {
 		switch scope {
 		case oidc.ScopeOpenID:

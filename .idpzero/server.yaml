@@ -2,7 +2,8 @@ server:
   port: 4379
   keyphrase: 060df9bc-aea6-41bd-b702-8bcfc5c058e6
 clients:
-  - client_id: web
+  - name: Sample Web App
+    client_id: web
     access_token_type: bearer
     application_type: web
     auth_method: client_secret_basic
@@ -32,10 +33,18 @@ users:
       custom:
         "Custom:Sample": "Sample"
   - subject: mary_verified_email
-    login_display: Mary Smith
+    login_display: Mary Smith (Verified Email)
     claims:
       name: Mary Smith
       given_name: Mary
       family_name: Smith
       email: mary@example.com
       email_verified: true
+  - subject: mary_unverified_email
+    login_display: Mary Smith (Unverified Email)
+    claims:
+      name: Mary Smith
+      given_name: Mary
+      family_name: Smith
+      email: mary@example.com
+      email_verified: false

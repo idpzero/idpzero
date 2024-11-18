@@ -98,6 +98,49 @@ func (q *Queries) CreateAuthRequest(ctx context.Context, arg CreateAuthRequestPa
 	return &i, err
 }
 
+const createKey = `-- name: CreateKey :one
+INSERT INTO keys (
+    id,
+    alg,
+    usage,
+    public_key,
+    private_key,
+    created_at
+  )
+VALUES
+  (?, ?, ?, ?, ?, ?) RETURNING id, alg, usage, public_key, private_key, created_at
+`
+
+type CreateKeyParams struct {
+	ID         string
+	Alg        string
+	Usage      string
+	PublicKey  string
+	PrivateKey string
+	CreatedAt  int64
+}
+
+func (q *Queries) CreateKey(ctx context.Context, arg CreateKeyParams) (*Key, error) {
+	row := q.db.QueryRowContext(ctx, createKey,
+		arg.ID,
+		arg.Alg,
+		arg.Usage,
+		arg.PublicKey,
+		arg.PrivateKey,
+		arg.CreatedAt,
+	)
+	var i Key
+	err := row.Scan(
+		&i.ID,
+		&i.Alg,
+		&i.Usage,
+		&i.PublicKey,
+		&i.PrivateKey,
+		&i.CreatedAt,
+	)
+	return &i, err
+}
+
 const createToken = `-- name: CreateToken :one
 INSERT INTO tokens (
     id,
@@ -151,6 +194,33 @@ func (q *Queries) CreateToken(ctx context.Context, arg CreateTokenParams) (*Toke
 		&i.CreatedAt,
 	)
 	return &i, err
+}
+
+const deleteAllAuthRequests = `-- name: DeleteAllAuthRequests :exec
+DELETE FROM auth_requests
+`
+
+func (q *Queries) DeleteAllAuthRequests(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteAllAuthRequests)
+	return err
+}
+
+const deleteAllKeys = `-- name: DeleteAllKeys :exec
+DELETE FROM keys
+`
+
+func (q *Queries) DeleteAllKeys(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteAllKeys)
+	return err
+}
+
+const deleteAllTokens = `-- name: DeleteAllTokens :exec
+DELETE FROM tokens
+`
+
+func (q *Queries) DeleteAllTokens(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteAllTokens)
+	return err
 }
 
 const getAuthRequestByAuthCode = `-- name: GetAuthRequestByAuthCode :one
@@ -217,6 +287,64 @@ func (q *Queries) GetAuthRequestByID(ctx context.Context, id string) (*AuthReque
 		&i.AuthCode,
 	)
 	return &i, err
+}
+
+const getKeyByID = `-- name: GetKeyByID :one
+SELECT id, alg, usage, public_key, private_key, created_at FROM
+  keys
+WHERE
+  id = ? LIMIT 1
+`
+
+func (q *Queries) GetKeyByID(ctx context.Context, id string) (*Key, error) {
+	row := q.db.QueryRowContext(ctx, getKeyByID, id)
+	var i Key
+	err := row.Scan(
+		&i.ID,
+		&i.Alg,
+		&i.Usage,
+		&i.PublicKey,
+		&i.PrivateKey,
+		&i.CreatedAt,
+	)
+	return &i, err
+}
+
+const getKeysByUse = `-- name: GetKeysByUse :many
+SELECT id, alg, usage, public_key, private_key, created_at FROM
+  keys
+WHERE
+  usage = ?
+`
+
+func (q *Queries) GetKeysByUse(ctx context.Context, usage string) ([]*Key, error) {
+	rows, err := q.db.QueryContext(ctx, getKeysByUse, usage)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Key
+	for rows.Next() {
+		var i Key
+		if err := rows.Scan(
+			&i.ID,
+			&i.Alg,
+			&i.Usage,
+			&i.PublicKey,
+			&i.PrivateKey,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getTokenByID = `-- name: GetTokenByID :one

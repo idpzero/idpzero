@@ -95,7 +95,7 @@ func login(model models.UserLoginModel) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"><div class=\"grid gap-4 w-full\"><div class=\"grid gap-2\"><p class=\"text-sm\">Choose a user scenaio to sign in with. Details of user scenarios and claims can be found <a href=\"/\" target=\"_blank\" class=\"link\">here</a>.</p></div><div class=\"grid gap-2\"><label class=\"form-control w-full\"><div class=\"label\"><span class=\"label-text\">Select user to login as:</span></div><select name=\"username\" required class=\"select select-bordered w-full\"><option disabled selected>Select User</option> ")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"><div class=\"grid gap-4 w-full\"><div class=\"grid gap-2\"><p class=\"text-sm\">Choose a user to sign in with. Details of user scenarios and claims can be found <a href=\"/\" target=\"_blank\" class=\"link\">here</a>.</p></div><div class=\"grid gap-2\"><label class=\"form-control w-full\"><div class=\"label\"><span class=\"label-text\">Select user to login as:</span></div><select name=\"username\" required class=\"select select-bordered w-full\"><option disabled selected>Select User</option> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

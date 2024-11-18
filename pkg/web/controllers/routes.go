@@ -1,4 +1,4 @@
-package handlers
+package controllers
 
 import (
 	"io/fs"
@@ -33,7 +33,8 @@ func Routes(router *chi.Mux, config func() *configuration.ServerConfig, query *q
 	router.Handle("/site.webmanifest", favhanlder)
 
 	router.Get("/", index(config))
-	router.Get("/login", userlogin(config, query))
-	router.Post("/login", userloginSubmit(config, query, op.AuthCallbackURL(provider)))
+	router.Get("/users", users(config))
+	router.Get("/login", login(config, query))
+	router.Post("/login", loginSubmit(config, query, op.AuthCallbackURL(provider)))
 
 }

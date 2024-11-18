@@ -1,0 +1,18 @@
+package pages
+
+import (
+"github.com/idpzero/idpzero/pkg/web/models"
+"github.com/idpzero/idpzero/pkg/web/views/layouts"
+)
+
+
+templ UsersView(model models.UsersModel) {
+    @layouts.ContentLayout(users(model)) 
+}
+
+templ users(model models.UsersModel) {
+    
+    <div>
+    <h1 class="text-3xl font-bold"><span class="gradient">Registered Users</span></h1>
+    </div>
+}

@@ -18,13 +18,7 @@ func Resolve(path string) (*ConfigurationManager, error) {
 		return nil, err
 	}
 
-	home, err := os.UserHomeDir()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return NewConfigurationManager(configDir, filepath.Join(home, dirName))
+	return NewConfigurationManager(configDir)
 }
 
 func DefaultDirectory() (string, error) {
@@ -34,7 +28,7 @@ func DefaultDirectory() (string, error) {
 		return "", err
 	}
 
-	return filepath.Join(cwd, dirName), nil
+	return filepath.Join(cwd, defaultDirectoryName), nil
 }
 
 func resolveDirectory(path string) (string, error) {
@@ -61,9 +55,9 @@ func discoverConfigDir(cwd string) (string, error) {
 
 	currentPath := cwd
 	for {
-		if info, err := os.Stat(filepath.Join(currentPath, dirName)); !os.IsNotExist(err) {
+		if info, err := os.Stat(filepath.Join(currentPath, defaultDirectoryName)); !os.IsNotExist(err) {
 			if info.IsDir() {
-				return filepath.Join(currentPath, dirName), nil
+				return filepath.Join(currentPath, defaultDirectoryName), nil
 			}
 		}
 		parentPath := filepath.Dir(currentPath)

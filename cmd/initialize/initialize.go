@@ -38,10 +38,10 @@ var initializeCmd = &cobra.Command{
 			return err
 		}
 
-		if ok, err := conf.IsServerInitialized(); err != nil {
+		if ok, err := conf.IsInitialized(); err != nil {
 			return err
 		} else if ok {
-			console.PrintCheck(console.IconCheck, "Server configuration already initialized. Skipping.")
+			console.PrintCheck(console.IconDash, "Server configuration already initialized. Skipping.")
 		} else {
 			cfg := configuration.ServerConfig{}
 			cfg.Server = configuration.HostConfig{}
@@ -53,46 +53,12 @@ var initializeCmd = &cobra.Command{
 
 			cfg.Clients = []configuration.ClientConfig{}
 
-			if err := conf.SaveServer(cfg); err != nil {
+			if err := conf.SaveConfiguration(cfg); err != nil {
 				return err
 			}
 
 			console.PrintCheck(console.IconCheck, "Server configuration initialized successfully.")
 		}
-
-		if ok, err := conf.IsKeysInitialized(); err != nil {
-			return err
-		} else if ok {
-			console.PrintCheck(console.IconCheck, "Keys configuration already initialized. Skipping.")
-		} else {
-			fmt.Printf("Initializing new keys directory.")
-			fmt.Println()
-
-			keys := configuration.KeysConfiguration{}
-			keys.Keys = []configuration.Key{}
-
-			nk, err := configuration.NewRSAKey("default", "sig")
-
-			if err != nil {
-				return err
-			}
-
-			keys.Keys = append(keys.Keys, *nk)
-
-			if err := conf.SaveKeys(keys); err != nil {
-				return err
-			}
-
-			console.PrintCheck(console.IconCheck, "Keys configuration initialized successfully.")
-		}
-
-		conf, err = configuration.Resolve(*shared.Location)
-
-		if err != nil {
-			return err
-		}
-
-		configuration.PrintStatus(conf)
 
 		fmt.Println()
 		color.Green("Initialized OK!")

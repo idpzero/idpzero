@@ -39,8 +39,6 @@ var startCmd = &cobra.Command{
 
 		defer conf.Close()
 
-		configuration.PrintStatus(conf)
-
 		if initialized, err := conf.IsInitialized(); err != nil {
 			return err
 		} else if !initialized {
@@ -49,7 +47,7 @@ var startCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		db, err := sql.Open("sqlite", conf.GetStatePath())
+		db, err := sql.Open("sqlite", conf.GetStateDatabasePath())
 		if err != nil {
 			return err
 		}

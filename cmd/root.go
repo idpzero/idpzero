@@ -8,7 +8,9 @@ import (
 	"github.com/common-nighthawk/go-figure"
 	"github.com/fatih/color"
 	"github.com/idpzero/idpzero/cmd/initialize"
-	"github.com/idpzero/idpzero/cmd/keys"
+	"github.com/idpzero/idpzero/cmd/reset"
+
+	//"github.com/idpzero/idpzero/cmd/keys"
 	"github.com/idpzero/idpzero/cmd/serve"
 	"github.com/idpzero/idpzero/cmd/shared"
 	"github.com/idpzero/idpzero/pkg/dbg"
@@ -23,7 +25,7 @@ var (
 func init() {
 
 	// add top level commands which add their own sub commands
-	keysCmd := keys.New()
+	resetCmd := reset.New()
 	initCmd := initialize.New()
 	startCmd := serve.New()
 
@@ -35,7 +37,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(dbg.Debug, "debug", false, "show debug and logging in output")
 	rootCmd.PersistentFlags().StringVar(shared.Location, "config", "", "configuration directory (default is .idpzero/ in current or parent heirachy)")
 
-	rootCmd.AddCommand(startCmd, initCmd, keysCmd)
+	rootCmd.AddCommand(startCmd, initCmd, resetCmd)
 }
 
 var rootCmd = &cobra.Command{

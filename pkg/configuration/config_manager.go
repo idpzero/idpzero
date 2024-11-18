@@ -13,28 +13,27 @@ import (
 )
 
 const (
-	dirName        string = ".idpzero"
-	serverFilename string = "server.yaml"
-	keysFilename   string = "keys.yaml"
-	stateFilename  string = "state.sqlite"
+	defaultDirectoryName string = ".idpzero"
+	stateDirectoryName   string = "state"
+	// filenames
+	gitignoreFilename     string = ".gitignore"
+	configurationFilename string = "server.yaml"
+	dbFilename            string = "state.sqlite"
 )
 
 type ConfigurationManager struct {
-	keysDirectory string
-	keysPath      string
-	statePath     string
-
-	dirPath    string
-	configPath string
-
-	w    *fsnotify.Watcher
-	done chan struct{}
-
+	// storage locations
+	configurationDirectory string
+	// file paths for the configuration and state database
+	stateDbFilePath       string
+	configurationFilePath string
+	// watcher configuration for the configuration file
+	w             *fsnotify.Watcher
+	done          chan struct{}
 	serverChanged []func(x *ServerConfig)
-	keysChanged   []func(x *KeysConfiguration)
 }
 
-func NewConfigurationManager(serverDirectory string, keysDirectory string) (*ConfigurationManager, error) {
+func NewConfigurationManager(dir string) (*ConfigurationManager, error) {
 	wtch, err := fsnotify.NewWatcher()
 
 	if err != nil {
@@ -42,19 +41,40 @@ func NewConfigurationManager(serverDirectory string, keysDirectory string) (*Con
 	}
 
 	cm := ConfigurationManager{
-		keysDirectory: keysDirectory,
-		dirPath:       serverDirectory,
-		configPath:    path.Join(serverDirectory, serverFilename),
-		keysPath:      path.Join(keysDirectory, keysFilename),
-		statePath:     path.Join(keysDirectory, stateFilename),
+		configurationDirectory: dir,
+		// paths to use
+		configurationFilePath: path.Join(dir, configurationFilename),
+		stateDbFilePath:       path.Join(dir, stateDirectoryName, dbFilename),
+		// watch configuration
 		w:             wtch,
 		done:          make(chan struct{}),
 		serverChanged: make([]func(x *ServerConfig), 0),
-		keysChanged:   make([]func(x *KeysConfiguration), 0),
+	}
+
+	if err := ensureDirectory(path.Dir(cm.configurationFilePath)); err != nil {
+		return nil, err
+	}
+	if err := ensureDirectory(path.Dir(cm.stateDbFilePath)); err != nil {
+		return nil, err
+	}
+
+	// create the gitignore with the default content
+	if ok, err := fileExists(path.Join(dir, gitignoreFilename)); err != nil {
+		return nil, err
+	} else {
+		if !ok {
+			content := `
+# the state directory should not be committed to source control
+state/
+`
+			if err := os.WriteFile(path.Join(dir, gitignoreFilename), []byte(content), 0644); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	// add the watcher.
-	wtch.Add(cm.configPath)
+	wtch.Add(cm.configurationFilePath)
 
 	// start the watcher
 	go watcher(&cm)
@@ -62,77 +82,28 @@ func NewConfigurationManager(serverDirectory string, keysDirectory string) (*Con
 	return &cm, nil
 }
 
-func fileExists(file string) (bool, error) {
-	_, err := os.Stat(file)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		} else {
-			return false, err
-		}
-	} else {
-		return true, nil
-	}
+func (r *ConfigurationManager) IsInitialized() (bool, error) {
+	return fileExists(r.configurationFilePath)
 }
 
-func (c *ConfigurationManager) IsInitialized() (bool, error) {
-	si, err := c.IsServerInitialized()
-
-	if err != nil {
-		return false, err
-	}
-
-	if si {
-		ki, err := c.IsKeysInitialized()
-
-		if err != nil {
-			return false, err
-		}
-
-		return ki, nil
-	}
-
-	return false, nil
-}
-
-func (c *ConfigurationManager) IsServerInitialized() (bool, error) {
-	return fileExists(c.configPath)
-}
-
-func (c *ConfigurationManager) IsKeysInitialized() (bool, error) {
-	return fileExists(c.keysPath)
-}
-
-func (r *ConfigurationManager) SaveServer(config ServerConfig) error {
-	return marshal(r.configPath, config)
+func (r *ConfigurationManager) SaveConfiguration(config ServerConfig) error {
+	return marshal(r.configurationFilePath, config)
 }
 
 func (r *ConfigurationManager) OnServerChanged(changed func(x *ServerConfig)) {
 	r.serverChanged = append(r.serverChanged, changed)
 }
 
-func (r *ConfigurationManager) OnKeysChanged(changed func(x *KeysConfiguration)) {
-	r.keysChanged = append(r.keysChanged, changed)
+func (r *ConfigurationManager) GetConfigurationFilePath() string {
+	return r.configurationFilePath
 }
 
-func (r *ConfigurationManager) SaveKeys(config KeysConfiguration) error {
-	return marshal(r.keysPath, config)
+func (r *ConfigurationManager) GetStateDatabasePath() string {
+	return r.stateDbFilePath
 }
 
-func (r *ConfigurationManager) GetServerPath() string {
-	return r.configPath
-}
-
-func (r *ConfigurationManager) GetKeysPath() string {
-	return r.keysPath
-}
-
-func (r *ConfigurationManager) GetStatePath() string {
-	return r.statePath
-}
-
-func (r *ConfigurationManager) LoadServer() (*ServerConfig, error) {
-	file, err := os.Open(r.configPath)
+func (r *ConfigurationManager) LoadConfiguration() (*ServerConfig, error) {
+	file, err := os.Open(r.configurationFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -154,34 +125,12 @@ func (r *ConfigurationManager) LoadServer() (*ServerConfig, error) {
 
 }
 
-func (r *ConfigurationManager) LoadKeys() (*KeysConfiguration, error) {
-	file, err := os.Open(r.keysPath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	doc := &KeysConfiguration{}
-	buf := new(bytes.Buffer)
-	_, err = buf.ReadFrom(file)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if err := yaml.Unmarshal(buf.Bytes(), doc); err != nil {
-		return nil, err
-	}
-
-	return doc, nil
-}
-
 func (w *ConfigurationManager) Close() {
 	w.w.Close()
 	<-w.done // wait for the go routine to finish
 }
 
-func marshal[T ServerConfig | KeysConfiguration](path string, config T) error {
+func marshal[T ServerConfig](path string, config T) error {
 	data, err := yaml.Marshal(config)
 
 	if err != nil {
@@ -230,29 +179,16 @@ func watcher(cm *ConfigurationManager) {
 				return
 			}
 			if event.Has(fsnotify.Write) {
-				if event.Name == cm.configPath {
+				if event.Name == cm.configurationFilePath {
 
 					color.Yellow("Server configuration changed.")
 
-					t, err := cm.LoadServer()
+					t, err := cm.LoadConfiguration()
 					if err != nil {
 						color.Red("Error loading config file from watch")
 					}
 					if t != nil {
 						for _, changed := range cm.serverChanged {
-							go changed(t)
-						}
-					}
-				} else if event.Name == cm.keysPath {
-
-					color.Yellow("Server configuration changed.")
-
-					t, err := cm.LoadKeys()
-					if err != nil {
-						color.Red("Error loading keys file from watch")
-					}
-					if t != nil {
-						for _, changed := range cm.keysChanged {
 							go changed(t)
 						}
 					}
@@ -267,4 +203,17 @@ func watcher(cm *ConfigurationManager) {
 		}
 	}
 
+}
+
+func fileExists(file string) (bool, error) {
+	_, err := os.Stat(file)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		} else {
+			return false, err
+		}
+	} else {
+		return true, nil
+	}
 }

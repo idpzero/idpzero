@@ -29,6 +29,15 @@ type AuthRequest struct {
 	AuthCode            sql.NullString
 }
 
+type Key struct {
+	ID         string
+	Alg        string
+	Usage      string
+	PublicKey  string
+	PrivateKey string
+	CreatedAt  int64
+}
+
 type Token struct {
 	ID             string
 	AuthRequestID  sql.NullString

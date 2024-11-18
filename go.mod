@@ -54,7 +54,6 @@ require (
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
 	github.com/fatih/color v1.18.0
 	github.com/fsnotify/fsnotify v1.7.0
-	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/zitadel/oidc/v3 v3.30.1
 	golang.org/x/sys v0.25.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
