@@ -43,6 +43,9 @@ INSERT INTO auth_requests (
 VALUES
   (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?, ?) RETURNING *;
 
+-- name: DeleteAllAuthRequests :exec
+DELETE FROM auth_requests;
+
 -- name: CreateToken :one
 INSERT INTO tokens (
     id,
@@ -65,6 +68,8 @@ WHERE
   id = ? LIMIT 1;
 
 
+-- name: DeleteAllTokens :exec
+DELETE FROM tokens;
   
 -- name: CreateKey :one
 INSERT INTO keys (
@@ -89,3 +94,7 @@ SELECT * FROM
   keys
 WHERE
   usage = ?;
+
+
+-- name: DeleteAllKeys :exec
+DELETE FROM keys;

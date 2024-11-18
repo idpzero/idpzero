@@ -196,6 +196,33 @@ func (q *Queries) CreateToken(ctx context.Context, arg CreateTokenParams) (*Toke
 	return &i, err
 }
 
+const deleteAllAuthRequests = `-- name: DeleteAllAuthRequests :exec
+DELETE FROM auth_requests
+`
+
+func (q *Queries) DeleteAllAuthRequests(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteAllAuthRequests)
+	return err
+}
+
+const deleteAllKeys = `-- name: DeleteAllKeys :exec
+DELETE FROM keys
+`
+
+func (q *Queries) DeleteAllKeys(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteAllKeys)
+	return err
+}
+
+const deleteAllTokens = `-- name: DeleteAllTokens :exec
+DELETE FROM tokens
+`
+
+func (q *Queries) DeleteAllTokens(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteAllTokens)
+	return err
+}
+
 const getAuthRequestByAuthCode = `-- name: GetAuthRequestByAuthCode :one
 SELECT id, application_id, redirect_uri, state, prompt, login_hint, max_auth_age_seconds, user_id, scopes, response_type, response_mode, nonce, code_challenge, code_challenge_method, complete, created_at, authenticated_at, auth_code FROM
   auth_requests
