@@ -40,7 +40,7 @@ func NewStorage(logger *slog.Logger, configMgr *configuration.ConfigurationManag
 		clients:   make(map[string]configuration.ClientConfig),
 	}
 
-	svrconf, err := configMgr.LoadServer()
+	svrconf, err := configMgr.LoadConfiguration()
 
 	if err != nil {
 		return nil, err

@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	defaultDirectoryName  string = ".idpzero"
-	stateDirectoryName    string = "state"
+	defaultDirectoryName string = ".idpzero"
+	stateDirectoryName   string = "state"
+	// filenames
 	gitignoreFilename     string = ".gitignore"
 	configurationFilename string = "server.yaml"
 	dbFilename            string = "state.sqlite"
@@ -32,7 +33,7 @@ type ConfigurationManager struct {
 	serverChanged []func(x *ServerConfig)
 }
 
-func NewConfigurationManager(configDirectory string) (*ConfigurationManager, error) {
+func NewConfigurationManager(dir string) (*ConfigurationManager, error) {
 	wtch, err := fsnotify.NewWatcher()
 
 	if err != nil {
@@ -40,12 +41,11 @@ func NewConfigurationManager(configDirectory string) (*ConfigurationManager, err
 	}
 
 	cm := ConfigurationManager{
-		configurationDirectory: configDirectory,
-
+		configurationDirectory: dir,
 		// paths to use
-		configurationFilePath: path.Join(configDirectory, configurationFilename),
-		stateDbFilePath:       path.Join(configDirectory, stateDirectoryName, dbFilename),
-
+		configurationFilePath: path.Join(dir, configurationFilename),
+		stateDbFilePath:       path.Join(dir, stateDirectoryName, dbFilename),
+		// watch configuration
 		w:             wtch,
 		done:          make(chan struct{}),
 		serverChanged: make([]func(x *ServerConfig), 0),
@@ -57,7 +57,9 @@ func NewConfigurationManager(configDirectory string) (*ConfigurationManager, err
 	if err := ensureDirectory(path.Dir(cm.stateDbFilePath)); err != nil {
 		return nil, err
 	}
-	if ok, err := fileExists(path.Join(configDirectory, gitignoreFilename)); err != nil {
+
+	// create the gitignore with the default content
+	if ok, err := fileExists(path.Join(dir, gitignoreFilename)); err != nil {
 		return nil, err
 	} else {
 		if !ok {
@@ -65,7 +67,7 @@ func NewConfigurationManager(configDirectory string) (*ConfigurationManager, err
 # the state directory should not be committed to source control
 state/
 `
-			if err := os.WriteFile(path.Join(configDirectory, gitignoreFilename), []byte(content), 0644); err != nil {
+			if err := os.WriteFile(path.Join(dir, gitignoreFilename), []byte(content), 0644); err != nil {
 				return nil, err
 			}
 		}
@@ -80,24 +82,11 @@ state/
 	return &cm, nil
 }
 
-func fileExists(file string) (bool, error) {
-	_, err := os.Stat(file)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		} else {
-			return false, err
-		}
-	} else {
-		return true, nil
-	}
-}
-
-func (r *ConfigurationManager) IsServerInitialized() (bool, error) {
+func (r *ConfigurationManager) IsInitialized() (bool, error) {
 	return fileExists(r.configurationFilePath)
 }
 
-func (r *ConfigurationManager) SaveServer(config ServerConfig) error {
+func (r *ConfigurationManager) SaveConfiguration(config ServerConfig) error {
 	return marshal(r.configurationFilePath, config)
 }
 
@@ -105,15 +94,15 @@ func (r *ConfigurationManager) OnServerChanged(changed func(x *ServerConfig)) {
 	r.serverChanged = append(r.serverChanged, changed)
 }
 
-func (r *ConfigurationManager) GetServerPath() string {
+func (r *ConfigurationManager) GetConfigurationFilePath() string {
 	return r.configurationFilePath
 }
 
-func (r *ConfigurationManager) GetStatePath() string {
+func (r *ConfigurationManager) GetStateDatabasePath() string {
 	return r.stateDbFilePath
 }
 
-func (r *ConfigurationManager) LoadServer() (*ServerConfig, error) {
+func (r *ConfigurationManager) LoadConfiguration() (*ServerConfig, error) {
 	file, err := os.Open(r.configurationFilePath)
 	if err != nil {
 		return nil, err
@@ -141,7 +130,7 @@ func (w *ConfigurationManager) Close() {
 	<-w.done // wait for the go routine to finish
 }
 
-func marshal[T ServerConfig | KeysConfiguration](path string, config T) error {
+func marshal[T ServerConfig](path string, config T) error {
 	data, err := yaml.Marshal(config)
 
 	if err != nil {
@@ -194,7 +183,7 @@ func watcher(cm *ConfigurationManager) {
 
 					color.Yellow("Server configuration changed.")
 
-					t, err := cm.LoadServer()
+					t, err := cm.LoadConfiguration()
 					if err != nil {
 						color.Red("Error loading config file from watch")
 					}
@@ -214,4 +203,17 @@ func watcher(cm *ConfigurationManager) {
 		}
 	}
 
+}
+
+func fileExists(file string) (bool, error) {
+	_, err := os.Stat(file)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		} else {
+			return false, err
+		}
+	} else {
+		return true, nil
+	}
 }

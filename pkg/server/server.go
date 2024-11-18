@@ -34,7 +34,7 @@ func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, 
 	// Use chi as this is what OIDC is using internally, so keep it conistent
 	router := chi.NewRouter()
 
-	c, err := config.LoadServer()
+	c, err := config.LoadConfiguration()
 
 	if err != nil {
 		return nil, err

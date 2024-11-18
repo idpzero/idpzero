@@ -50,19 +50,6 @@ type UserClaims struct {
 	GivenName         *string                `yaml:"given_name"`
 	MiddleName        *string                `yaml:"middle_name"`
 	FamilyName        *string                `yaml:"family_name"`
-	Custom            map[string]interface{} `yaml:"custom"`
 	UpdatedAt         *time.Time             `yaml:"updated_at"`
-}
-
-// KeysConfiguration is a struct that holds the keys configuration and is stored against the local user account so that it
-// can be used to sign and verify tokens, and survive restarts (and not be committed to source control).
-type KeysConfiguration struct {
-	Keys []Key `yaml:"keys"`
-}
-
-type Key struct {
-	ID        string            `yaml:"id"`
-	Algorithm string            `yaml:"algorithm"`
-	Use       string            `yaml:"use"`
-	Data      map[string]string `yaml:"data"`
+	Custom            map[string]interface{} `yaml:"custom"`
 }

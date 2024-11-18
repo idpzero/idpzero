@@ -39,7 +39,7 @@ var startCmd = &cobra.Command{
 
 		defer conf.Close()
 
-		if initialized, err := conf.IsServerInitialized(); err != nil {
+		if initialized, err := conf.IsInitialized(); err != nil {
 			return err
 		} else if !initialized {
 			color.Yellow("Configuration not valid. Run 'idpzero init' to initialize")
@@ -47,7 +47,7 @@ var startCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		db, err := sql.Open("sqlite", conf.GetStatePath())
+		db, err := sql.Open("sqlite", conf.GetStateDatabasePath())
 		if err != nil {
 			return err
 		}
