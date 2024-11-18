@@ -3,65 +3,76 @@ package configuration
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"os"
 	"path"
 	"path/filepath"
 
 	"github.com/fatih/color"
 	"github.com/fsnotify/fsnotify"
-	"github.com/idpzero/idpzero/pkg/dbg"
 	"gopkg.in/yaml.v2"
 )
 
 const (
-	dirName        string = ".idpzero"
-	serverFilename string = "server.yaml"
-	dbFilename     string = "state.sqlite"
+	defaultDirectoryName  string = ".idpzero"
+	stateDirectoryName    string = "state"
+	gitignoreFilename     string = ".gitignore"
+	configurationFilename string = "server.yaml"
+	dbFilename            string = "state.sqlite"
 )
 
 type ConfigurationManager struct {
-	dirPath        string
-	stateDirectory string
-	stateFilePath  string
-	configPath     string
-
-	w    *fsnotify.Watcher
-	done chan struct{}
-
+	// storage locations
+	configurationDirectory string
+	// file paths for the configuration and state database
+	stateDbFilePath       string
+	configurationFilePath string
+	// watcher configuration for the configuration file
+	w             *fsnotify.Watcher
+	done          chan struct{}
 	serverChanged []func(x *ServerConfig)
 }
 
-func NewConfigurationManager(serverDirectory string) (*ConfigurationManager, error) {
+func NewConfigurationManager(configDirectory string) (*ConfigurationManager, error) {
 	wtch, err := fsnotify.NewWatcher()
 
 	if err != nil {
 		return nil, err
 	}
 
-	color.Cyan("Using configuration directory: %s", serverDirectory)
-
 	cm := ConfigurationManager{
-		dirPath:        serverDirectory,
-		stateDirectory: path.Join(serverDirectory, "/state"),
+		configurationDirectory: configDirectory,
 
-		configPath:    path.Join(serverDirectory, serverFilename),
-		stateFilePath: path.Join(serverDirectory, "/state", dbFilename),
+		// paths to use
+		configurationFilePath: path.Join(configDirectory, configurationFilename),
+		stateDbFilePath:       path.Join(configDirectory, stateDirectoryName, dbFilename),
 
 		w:             wtch,
 		done:          make(chan struct{}),
 		serverChanged: make([]func(x *ServerConfig), 0),
 	}
 
-	if err := ensureDirectory(cm.dirPath); err != nil {
+	if err := ensureDirectory(path.Dir(cm.configurationFilePath)); err != nil {
 		return nil, err
 	}
-	if err := ensureDirectory(cm.stateDirectory); err != nil {
+	if err := ensureDirectory(path.Dir(cm.stateDbFilePath)); err != nil {
 		return nil, err
+	}
+	if ok, err := fileExists(path.Join(configDirectory, gitignoreFilename)); err != nil {
+		return nil, err
+	} else {
+		if !ok {
+			content := `
+# the state directory should not be committed to source control
+state/
+`
+			if err := os.WriteFile(path.Join(configDirectory, gitignoreFilename), []byte(content), 0644); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	// add the watcher.
-	wtch.Add(cm.configPath)
+	wtch.Add(cm.configurationFilePath)
 
 	// start the watcher
 	go watcher(&cm)
@@ -83,11 +94,11 @@ func fileExists(file string) (bool, error) {
 }
 
 func (r *ConfigurationManager) IsServerInitialized() (bool, error) {
-	return fileExists(r.configPath)
+	return fileExists(r.configurationFilePath)
 }
 
 func (r *ConfigurationManager) SaveServer(config ServerConfig) error {
-	return marshal(r.configPath, config)
+	return marshal(r.configurationFilePath, config)
 }
 
 func (r *ConfigurationManager) OnServerChanged(changed func(x *ServerConfig)) {
@@ -95,15 +106,15 @@ func (r *ConfigurationManager) OnServerChanged(changed func(x *ServerConfig)) {
 }
 
 func (r *ConfigurationManager) GetServerPath() string {
-	return r.configPath
+	return r.configurationFilePath
 }
 
 func (r *ConfigurationManager) GetStatePath() string {
-	return r.stateFilePath
+	return r.stateDbFilePath
 }
 
 func (r *ConfigurationManager) LoadServer() (*ServerConfig, error) {
-	file, err := os.Open(r.configPath)
+	file, err := os.Open(r.configurationFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -148,9 +159,6 @@ func marshal[T ServerConfig | KeysConfiguration](path string, config T) error {
 // EnsureDirectory checks if the directory exists at the path provided and creates it if it doesn't.
 func ensureDirectory(path string) error {
 
-	fmt.Println(path)
-	dbg.Logger.Debug("Ensuring directory exists", "path", path)
-
 	if fi, err := os.Stat(path); os.IsNotExist(err) {
 
 		if fi != nil && !fi.IsDir() {
@@ -182,7 +190,7 @@ func watcher(cm *ConfigurationManager) {
 				return
 			}
 			if event.Has(fsnotify.Write) {
-				if event.Name == cm.configPath {
+				if event.Name == cm.configurationFilePath {
 
 					color.Yellow("Server configuration changed.")
 

@@ -28,7 +28,7 @@ func DefaultDirectory() (string, error) {
 		return "", err
 	}
 
-	return filepath.Join(cwd, dirName), nil
+	return filepath.Join(cwd, defaultDirectoryName), nil
 }
 
 func resolveDirectory(path string) (string, error) {
@@ -55,9 +55,9 @@ func discoverConfigDir(cwd string) (string, error) {
 
 	currentPath := cwd
 	for {
-		if info, err := os.Stat(filepath.Join(currentPath, dirName)); !os.IsNotExist(err) {
+		if info, err := os.Stat(filepath.Join(currentPath, defaultDirectoryName)); !os.IsNotExist(err) {
 			if info.IsDir() {
-				return filepath.Join(currentPath, dirName), nil
+				return filepath.Join(currentPath, defaultDirectoryName), nil
 			}
 		}
 		parentPath := filepath.Dir(currentPath)
