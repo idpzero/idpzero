@@ -2,6 +2,8 @@ package initialize
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/fatih/color"
 	"github.com/google/uuid"
@@ -38,18 +40,18 @@ var initializeCmd = &cobra.Command{
 			return err
 		}
 
+		fmt.Printf("Initializing configuration.")
+		fmt.Println()
+
 		if ok, err := conf.IsInitialized(); err != nil {
 			return err
 		} else if ok {
-			console.PrintCheck(console.IconDash, "Server configuration already initialized. Skipping.")
+			console.PrintCheck(console.IconCheck, "Existing configuration found. Skipping.")
 		} else {
 			cfg := configuration.ServerConfig{}
 			cfg.Server = configuration.HostConfig{}
 			cfg.Server.Port = 4379
 			cfg.Server.KeyPhrase = uuid.New().String()
-
-			fmt.Printf("Initializing new configuration directory.")
-			fmt.Println()
 
 			cfg.Clients = []configuration.ClientConfig{}
 
@@ -57,11 +59,24 @@ var initializeCmd = &cobra.Command{
 				return err
 			}
 
-			console.PrintCheck(console.IconCheck, "Server configuration initialized successfully.")
+			console.PrintCheck(console.IconCheck, "Default configuration initialized.")
+
+			fmt.Println()
+			fmt.Println(
+				color.YellowString("Update your"),
+				color.MagentaString(".gitignore"),
+				color.YellowString("to include"),
+				color.MagentaString(".idpzero/cache"),
+				color.YellowString("as this directory should not be added to source control."),
+			)
 		}
 
 		fmt.Println()
-		color.Green("Initialized OK!")
+
+		fmt.Println(
+			"To start the server run",
+			color.CyanString(fmt.Sprintf("%s serve", filepath.Base(os.Args[0]))),
+		)
 		fmt.Println()
 
 		return nil
