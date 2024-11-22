@@ -14,9 +14,8 @@ import (
 
 const (
 	defaultDirectoryName string = ".idpzero"
-	stateDirectoryName   string = "state"
+	stateDirectoryName   string = "cache"
 	// filenames
-	gitignoreFilename     string = ".gitignore"
 	configurationFilename string = "server.yaml"
 	dbFilename            string = "state.sqlite"
 )
@@ -56,21 +55,6 @@ func NewConfigurationManager(dir string) (*ConfigurationManager, error) {
 	}
 	if err := ensureDirectory(path.Dir(cm.stateDbFilePath)); err != nil {
 		return nil, err
-	}
-
-	// create the gitignore with the default content
-	if ok, err := fileExists(path.Join(dir, gitignoreFilename)); err != nil {
-		return nil, err
-	} else {
-		if !ok {
-			content := `
-# the state directory should not be committed to source control
-state/
-`
-			if err := os.WriteFile(path.Join(dir, gitignoreFilename), []byte(content), 0644); err != nil {
-				return nil, err
-			}
-		}
 	}
 
 	// add the watcher.

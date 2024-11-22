@@ -103,33 +103,54 @@ func (s *Server) onStart(ctx context.Context) error {
 
 	key, err := s.queries.GetKeyByID(ctx, signingKeyID)
 
+	fmt.Println()
+	fmt.Println("Running pre-statup checks...")
+
+	c := console.NewCheck("Checking cache for JWT signing key")
+
 	if err != nil {
 		if err == sql.ErrNoRows {
-			console.PrintCheck(console.IconQuestion, "No signing key found. Generating a new one.")
+			//console.PrintCheck(console.IconQuestion, "No signing key found. Generating a new one.")
 			keyArgs, err := newRSAKey(signingKeyID, KeyUseSig)
 
 			if err != nil {
 				return err
 			}
 
-			key, err = s.queries.CreateKey(ctx, keyArgs)
+			_, err = s.queries.CreateKey(ctx, keyArgs)
 
 			if err != nil {
 				return err
 			}
 
-			console.PrintCheck(console.IconCheck, "Signing key generated successfully.")
+			c.Print(console.IconCheck, "Created")
 
 		} else {
 			return err
 		}
 	} else {
 		if key.Usage == KeyUseSig {
-			console.PrintCheck(console.IconCheck, "Existing signing key found OK")
+			c.Print(console.IconCheck, "OK")
 		} else {
-			console.PrintCheck(console.IconCross, "Expecing a signing key, but found a different use key with ID '%s'", key.ID)
+			c.Print(console.IconCross, "Expecing a signing key, but found a different use key with ID '%s'", key.ID)
 			return fmt.Errorf("key with ID '%s' is not a signing key", key.ID)
 		}
+	}
+
+	c = console.NewCheck("Checking configuration for clients")
+	clientsCount := len(s.config.Clients)
+	if clientsCount == 0 {
+		c.Print(console.IconQuestion, "Missing")
+	} else {
+		c.Print(console.IconCheck, "OK")
+	}
+
+	c = console.NewCheck("Checking configuration for users")
+	userCount := len(s.users.users)
+	if userCount == 0 {
+		c.Print(console.IconQuestion, "Missing")
+	} else {
+		c.Print(console.IconCheck, "OK")
 	}
 
 	return nil
@@ -157,6 +178,7 @@ func (s *Server) Run(ctx context.Context) error {
 
 	hosted := fmt.Sprintf("http://localhost:%d", s.config.Server.Port)
 
+	fmt.Println()
 	fmt.Println(
 		"Identity Provider started at",
 		color.CyanString(termlink.Link(hosted, hosted)),

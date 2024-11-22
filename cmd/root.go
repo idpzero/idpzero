@@ -49,11 +49,9 @@ var rootCmd = &cobra.Command{
 			color.NoColor = true
 		}
 
-		if *showVersion { //revive:disable:unexported-return
-			color.Yellow(figure.NewFigure("idpzero", "", true).String())
-			fmt.Println("v", color.MagentaString(dbg.Version.Version), "sha", color.MagentaString(dbg.Version.Commit))
-			fmt.Println()
-		}
+		color.Yellow(figure.NewFigure("idpzero", "", true).String())
+		fmt.Println("v", color.MagentaString(dbg.Version.Version), "sha", color.MagentaString(dbg.Version.Commit))
+		fmt.Println()
 
 		if *dbg.Debug {
 			// setup the logger for debugging purposes.
