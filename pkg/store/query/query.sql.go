@@ -223,6 +223,41 @@ func (q *Queries) DeleteAllTokens(ctx context.Context) error {
 	return err
 }
 
+const getAllKeys = `-- name: GetAllKeys :many
+SELECT id, alg, usage, public_key, private_key, created_at FROM
+  keys
+`
+
+func (q *Queries) GetAllKeys(ctx context.Context) ([]*Key, error) {
+	rows, err := q.db.QueryContext(ctx, getAllKeys)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Key
+	for rows.Next() {
+		var i Key
+		if err := rows.Scan(
+			&i.ID,
+			&i.Alg,
+			&i.Usage,
+			&i.PublicKey,
+			&i.PrivateKey,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAuthRequestByAuthCode = `-- name: GetAuthRequestByAuthCode :one
 SELECT id, application_id, redirect_uri, state, prompt, login_hint, max_auth_age_seconds, user_id, scopes, response_type, response_mode, nonce, code_challenge, code_challenge_method, complete, created_at, authenticated_at, auth_code FROM
   auth_requests
