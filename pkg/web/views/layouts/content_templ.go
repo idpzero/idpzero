@@ -8,6 +8,10 @@ package layouts
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
+import (
+	"github.com/idpzero/idpzero/pkg/dbg"
+)
+
 func ContentLayout(
 	items ...templ.Component,
 ) templ.Component {
@@ -98,7 +102,33 @@ func contentLayout() templ.Component {
 			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<header><nav class=\"navbar fixed top-0 z-10 px-8 h-12\"><div class=\"navbar-start\"><a href=\"/\" class=\"\"><span class=\"gradient text-2xl font-bold\">idp<span class=\"font-normal\">zero</span></span></a></div><div class=\"navbar-center flex\"><ul class=\"menu menu-horizontal px-1\"><li><a href=\"/\">Overview</a></li><li><a href=\"/users\">Users</a></li><li><a href=\"/docs\">Docs</a></li></ul></div><div class=\"navbar-end\"><a href=\"https://github.com/idpzero/idpzero\" title=\"IDP Zero on GitHub\" target=\"_blank\"><img src=\"/static/github-mark.svg\" alt=\"Github Logo\" class=\"h-6 w-6\"></a></div></nav></header><main class=\"mt-16\"><div class=\"px-8 py-4\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<header><nav class=\"navbar fixed top-0 z-10 px-8 h-12\"><div class=\"navbar-start\"><a href=\"/\" class=\"\"><span class=\"gradient text-2xl font-bold\">idp<span class=\"font-normal\">zero</span></span></a></div><div class=\"navbar-center flex\"><ul class=\"menu menu-horizontal px-1\"><li><a href=\"/\">Overview</a></li><li><a href=\"/users\">Users</a></li><li><a href=\"/docs\">Docs</a></li></ul></div><div class=\"navbar-end\"><div class=\"text-xs pr-5 text-gray-400\"><span class=\"font-bold\">commit: </span>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var5 string
+		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(dbg.Version.Commit)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pkg/web/views/layouts/content.templ`, Line: 36, Col: 116}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" / <span class=\"font-bold\">version: </span>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var6 string
+		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(dbg.Version.Version)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pkg/web/views/layouts/content.templ`, Line: 36, Col: 182}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div><a href=\"https://github.com/idpzero/idpzero\" title=\"IDP Zero on GitHub\" target=\"_blank\"><img src=\"/static/github-mark.svg\" alt=\"Github Logo\" class=\"h-6 w-6\"></a></div></nav></header><main class=\"mt-16\"><div class=\"px-8 py-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

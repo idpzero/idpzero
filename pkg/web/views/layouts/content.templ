@@ -1,5 +1,8 @@
 package layouts
 
+import ( 
+    "github.com/idpzero/idpzero/pkg/dbg"
+)
 
 templ ContentLayout(
     items ...templ.Component,
@@ -30,6 +33,7 @@ templ contentLayout() {
                 </ul>
             </div>
             <div class="navbar-end"> 
+                <div class="text-xs pr-5 text-gray-400"> <span class="font-bold">commit: </span>{ dbg.Version.Commit } / <span class="font-bold">version: </span>{ dbg.Version.Version }</div>
                 <a href="https://github.com/idpzero/idpzero" title="IDP Zero on GitHub" target="_blank">
                     <img src="/static/github-mark.svg" alt="Github Logo" class="h-6 w-6"/>
                 </a>
