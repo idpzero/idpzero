@@ -69,7 +69,7 @@ WHERE
 
 
 -- name: DeleteAllTokens :exec
-DELETE FROM tokens;
+DELETE FROM tokens; 
   
 -- name: CreateKey :one
 INSERT INTO keys (
@@ -95,6 +95,9 @@ SELECT * FROM
 WHERE
   usage = ?;
 
+-- name: GetAllKeys :many
+SELECT * FROM
+  keys;
 
 -- name: DeleteAllKeys :exec
 DELETE FROM keys;

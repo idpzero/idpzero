@@ -8,7 +8,7 @@ import (
 var (
 	Debug   *bool        = new(bool)
 	Logger  *slog.Logger = slog.New(slog.NewTextHandler(io.Discard, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	Version VersionInfo  = VersionInfo{Version: "dev", Commit: "none"}
+	Version VersionInfo  = VersionInfo{Version: "dev", Commit: "dev"}
 )
 
 type VersionInfo struct {

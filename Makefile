@@ -37,7 +37,16 @@ watch/assets:
 	--build.exclude_dir "" \
 	--build.include_dir "pkg/web/assets" \
 
-dev: 
-	make -j4 watch/templ watch/server watch/tailwind watch/assets
+watch/dbquery:
+	go run github.com/cosmtrek/air@v1.51.0 \
+	--build.cmd "sqlc generate --file ./pkg/store/sqlc.yaml" \
+	--build.bin "true" \
+	--build.delay "100" \
+	--build.exclude_dir "" \
+	--build.include_ext "sql" \
+	--build.include_dir "pkg/store" \
+
+watch:
+	make -j5 watch/templ watch/server watch/tailwind watch/assets watch/dbquery
 
 .PHONY: test fmt lint db
