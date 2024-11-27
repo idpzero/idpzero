@@ -51,6 +51,7 @@ changelog:
 brews:
 - name: idpzero
   homepage: https://idpzero.dev
+  description: Single binary Identity Provider (IDP) for local dev/test
   repository:
     owner: idpzero
     name: homebrew-idpzero
