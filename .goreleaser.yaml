@@ -54,4 +54,5 @@ brews:
   repository:
     owner: idpzero
     name: homebrew-idpzero
+    token: "{{ .Env.PUBLISHER_TOKEN }}"
   
