@@ -47,3 +47,11 @@ changelog:
       - "^docs:"
       - "^test:"
       - "^examples:"
+
+brews:
+- name: idpzero
+  homepage: https://idpzero.dev
+  tap:
+    owner: idpzero
+    name: homebrew-idpzero
+  
