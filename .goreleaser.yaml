@@ -51,7 +51,7 @@ changelog:
 brews:
 - name: idpzero
   homepage: https://idpzero.dev
-  tap:
+  repository:
     owner: idpzero
     name: homebrew-idpzero
   
