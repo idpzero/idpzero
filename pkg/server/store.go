@@ -63,7 +63,7 @@ func (s *Storage) setConfig(config *configuration.ServerConfig) {
 	s.clients = make(map[string]configuration.ClientConfig)
 
 	for _, client := range config.Clients {
-		s.clients[client.ClientID] = client
+		s.clients[client.ClientID] = *client
 	}
 }
 
@@ -120,8 +120,6 @@ func (s *Storage) CreateAccessToken(ctx context.Context, request op.TokenRequest
 	case op.TokenExchangeRequest:
 		applicationID = req.GetClientID()
 	}
-
-	fmt.Println(applicationID, requestID, request.GetScopes(), request.GetSubject(), request.GetAudience())
 
 	token, err := s.query.CreateToken(ctx, query.CreateTokenParams{
 		ID:             uuid.NewString(),
@@ -199,7 +197,7 @@ func (s *Storage) GetClientByClientID(ctx context.Context, clientID string) (op.
 
 	for _, c := range s.server.Clients {
 		if c.ClientID == clientID {
-			return NewClient(c), nil
+			return NewClient(*c), nil
 		}
 	}
 

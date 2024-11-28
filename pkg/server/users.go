@@ -26,13 +26,13 @@ func (u *users) GetByID(id string) (configuration.User, bool) {
 	return user, ok
 }
 
-func (u *users) Update(users []configuration.User) {
+func (u *users) Update(users []*configuration.User) {
 	u.lock.Lock()
 	defer u.lock.Unlock()
 
 	// clear existing
 	u.users = make(map[string]configuration.User)
 	for _, user := range users {
-		u.users[user.Subject] = user
+		u.users[user.Subject] = *user
 	}
 }
