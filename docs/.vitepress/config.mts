@@ -3,7 +3,7 @@ import { defineConfig } from 'vitepress'
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   title: "idpzero",
-  base: "https://idpzero.github.io/idpzero/",
+  base: "https://idpzero.dev",
   description: "Developer first Identity Provider",
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
