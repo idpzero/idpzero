@@ -1,6 +1,7 @@
 package initialize
 
 import (
+	"embed"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,10 +12,21 @@ import (
 	"github.com/idpzero/idpzero/pkg/configuration"
 	"github.com/idpzero/idpzero/pkg/console"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
+)
+
+var (
+	includeSampleConfig *bool = new(bool)
+	//go:embed "samples"
+	samples embed.FS
 )
 
 func New() *cobra.Command {
 	return initializeCmd
+}
+
+func init() {
+	initializeCmd.Flags().BoolVar(includeSampleConfig, "with-sample-config", false, "include sample configuration for clients")
 }
 
 var initializeCmd = &cobra.Command{
@@ -53,13 +65,30 @@ var initializeCmd = &cobra.Command{
 			cfg.Server.Port = 4379
 			cfg.Server.KeyPhrase = uuid.New().String()
 
-			cfg.Clients = []configuration.ClientConfig{}
+			cfg.Users = []*configuration.User{}
+			cfg.Clients = []*configuration.ClientConfig{}
+
+			if *includeSampleConfig {
+				sampleConfig, err := getSampleConfig()
+
+				if err != nil {
+					return err
+				}
+
+				// we just take the users
+				cfg.Users = sampleConfig.Users
+				cfg.Clients = sampleConfig.Clients
+			}
 
 			if err := conf.SaveConfiguration(cfg); err != nil {
 				return err
 			}
 
 			console.PrintCheck(console.IconCheck, "Default configuration initialized.")
+
+			if *includeSampleConfig {
+				console.PrintCheck(console.IconCheck, "Sample configuration applied.")
+			}
 
 			fmt.Println()
 			fmt.Println(
@@ -81,4 +110,21 @@ var initializeCmd = &cobra.Command{
 
 		return nil
 	},
+}
+
+func getSampleConfig() (configuration.ServerConfig, error) {
+	config := configuration.ServerConfig{}
+
+	// load the sample users
+	userData, err := samples.ReadFile("samples/sample.yaml")
+
+	if err != nil {
+		return config, err
+	}
+
+	if err := yaml.Unmarshal(userData, &config); err != nil {
+		return config, err
+	}
+
+	return config, nil
 }

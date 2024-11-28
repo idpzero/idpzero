@@ -49,9 +49,11 @@ var rootCmd = &cobra.Command{
 			color.NoColor = true
 		}
 
-		color.Yellow(figure.NewFigure("idpzero", "", true).String())
-		fmt.Println("v", color.MagentaString(dbg.Version.Version), "sha", color.MagentaString(dbg.Version.Commit))
-		fmt.Println()
+		if *showVersion {
+			color.Yellow(figure.NewFigure("idpzero", "", true).String())
+			fmt.Println("version", color.MagentaString(dbg.Version.Version), "commit", color.MagentaString(dbg.Version.Commit))
+			fmt.Println()
+		}
 
 		if *dbg.Debug {
 			// setup the logger for debugging purposes.

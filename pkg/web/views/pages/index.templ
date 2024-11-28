@@ -47,7 +47,7 @@ templ index(model models.IndexModel) {
     <p class="py-2 text-sm">The following are the configured clients. For details on adding and managing client see CLI reference 'Managing Clients'.</p>
     
     for _, c := range model.Clients {
-         @client(c)
+         @client(*c)
     }
     
 

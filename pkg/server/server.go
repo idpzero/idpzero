@@ -26,6 +26,7 @@ type Server struct {
 	logger  *slog.Logger
 	config  *configuration.ServerConfig
 	users   *users
+	clients *clients
 	queries *query.Queries
 }
 
@@ -46,6 +47,7 @@ func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, 
 		logger:  logger,
 		server:  &http.Server{Addr: fmt.Sprintf("0.0.0.0:%d", c.Server.Port), Handler: router},
 		users:   newUsers(),
+		clients: newClients(),
 		queries: queries,
 	}
 
@@ -60,7 +62,7 @@ func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, 
 	router.Use(middleware.Recoverer)
 
 	// create the storage provider
-	storage, err := NewStorage(logger, config, queries, server.users)
+	storage, err := NewStorage(logger, config, queries, server.users, server.clients)
 
 	if err != nil {
 		return nil, err
@@ -95,6 +97,7 @@ func (s *Server) setConfig(config *configuration.ServerConfig) {
 
 	s.config = config
 	s.users.Update(config.Users)
+	s.clients.Update(config.Clients)
 }
 
 const signingKeyID = "signing"

@@ -9,5 +9,5 @@ type UrlInfo struct {
 
 type IndexModel struct {
 	Urls    []UrlInfo
-	Clients []configuration.ClientConfig
+	Clients []*configuration.ClientConfig
 }

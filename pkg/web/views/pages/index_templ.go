@@ -114,7 +114,7 @@ func index(model models.IndexModel) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		for _, c := range model.Clients {
-			templ_7745c5c3_Err = client(c).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = client(*c).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

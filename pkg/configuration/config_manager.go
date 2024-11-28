@@ -2,6 +2,8 @@ package configuration
 
 import (
 	"bytes"
+	"crypto/sha1"
+	"encoding/hex"
 	"errors"
 	"os"
 	"path"
@@ -103,6 +105,14 @@ func (r *ConfigurationManager) LoadConfiguration() (*ServerConfig, error) {
 
 	if err := yaml.Unmarshal(buf.Bytes(), doc); err != nil {
 		return nil, err
+	}
+
+	// process the parts that shouldnt be marshalled or processed separately
+	for _, c := range doc.Clients {
+		h := sha1.New()
+		h.Write([]byte(doc.Server.KeyPhrase))
+		h.Write([]byte(c.ClientID))
+		c.ClientSecret = hex.EncodeToString(h.Sum(nil))
 	}
 
 	return doc, nil

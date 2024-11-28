@@ -214,16 +214,3 @@ func (c *Client) RestrictAdditionalIdTokenScopes() func(scopes []string) []strin
 		return scopes
 	}
 }
-
-func parseDurationOrDefault(s *string, def time.Duration) (time.Duration, error) {
-	if s == nil {
-		return def, nil
-	}
-
-	t, err := time.ParseDuration(*s)
-	if err != nil {
-		return def, err
-	}
-
-	return t, nil
-}
