@@ -26,10 +26,11 @@ type Storage struct {
 	server    *configuration.ServerConfig
 	query     *query.Queries
 	users     *users
-	clients   map[string]configuration.ClientConfig
+	clients   *clients
+	//clients   map[string]configuration.ClientConfig
 }
 
-func NewStorage(logger *slog.Logger, configMgr *configuration.ConfigurationManager, query *query.Queries, users *users) (*Storage, error) {
+func NewStorage(logger *slog.Logger, configMgr *configuration.ConfigurationManager, query *query.Queries, users *users, clients *clients) (*Storage, error) {
 
 	store := &Storage{
 		logger:    logger,
@@ -37,7 +38,7 @@ func NewStorage(logger *slog.Logger, configMgr *configuration.ConfigurationManag
 		lock:      sync.Mutex{},
 		query:     query,
 		users:     users,
-		clients:   make(map[string]configuration.ClientConfig),
+		clients:   clients,
 	}
 
 	svrconf, err := configMgr.LoadConfiguration()
@@ -60,11 +61,6 @@ func (s *Storage) setConfig(config *configuration.ServerConfig) {
 	defer s.lock.Unlock()
 
 	s.server = config
-	s.clients = make(map[string]configuration.ClientConfig)
-
-	for _, client := range config.Clients {
-		s.clients[client.ClientID] = *client
-	}
 }
 
 func (s *Storage) AuthRequestByCode(ctx context.Context, code string) (op.AuthRequest, error) {
@@ -403,7 +399,7 @@ func (s *Storage) populateUserInfo(_ context.Context, userInfo *oidc.UserInfo, u
 			}
 		default:
 			{
-				client, ok := s.clients[clientID]
+				client, ok := s.clients.GetByID(clientID)
 				if ok {
 					if claims, ok := client.CustomScopes[scope]; ok {
 						for _, claim := range claims {

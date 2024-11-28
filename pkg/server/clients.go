@@ -26,13 +26,13 @@ func (u *clients) GetByID(id string) (configuration.ClientConfig, bool) {
 	return client, ok
 }
 
-func (u *clients) Update(clients []configuration.ClientConfig) {
+func (u *clients) Update(clients []*configuration.ClientConfig) {
 	u.lock.Lock()
 	defer u.lock.Unlock()
 
 	// clear existing
 	u.clients = make(map[string]configuration.ClientConfig)
 	for _, client := range clients {
-		u.clients[client.ClientID] = client
+		u.clients[client.ClientID] = *client
 	}
 }
