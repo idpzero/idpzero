@@ -11,8 +11,6 @@ import (
 	"github.com/idpzero/idpzero/pkg/configuration"
 	"github.com/idpzero/idpzero/pkg/dbg"
 	"github.com/idpzero/idpzero/pkg/server"
-	"github.com/idpzero/idpzero/pkg/store"
-	"github.com/idpzero/idpzero/pkg/store/query"
 	"github.com/spf13/cobra"
 
 	_ "modernc.org/sqlite"
@@ -54,15 +52,7 @@ var startCmd = &cobra.Command{
 
 		defer db.Close()
 
-		// migrate the database to the latest version in memory
-		if err = store.Migrate(db); err != nil {
-			return err
-		}
-
-		// access to the data layer.
-		qry := query.New(db)
-
-		s, err := server.NewServer(dbg.Logger, conf, qry)
+		s, err := server.NewServer(dbg.Logger, conf, db)
 
 		if err != nil {
 			return err

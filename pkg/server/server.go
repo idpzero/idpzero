@@ -14,6 +14,7 @@ import (
 	"github.com/idpzero/idpzero/pkg/configuration"
 	"github.com/idpzero/idpzero/pkg/console"
 	"github.com/idpzero/idpzero/pkg/dbg"
+	"github.com/idpzero/idpzero/pkg/store"
 	"github.com/idpzero/idpzero/pkg/store/query"
 	"github.com/idpzero/idpzero/pkg/web/controllers"
 	"github.com/savioxavier/termlink"
@@ -28,9 +29,10 @@ type Server struct {
 	users   *users
 	clients *clients
 	queries *query.Queries
+	db      *sql.DB
 }
 
-func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, queries *query.Queries) (*Server, error) {
+func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, db *sql.DB) (*Server, error) {
 
 	// Use chi as this is what OIDC is using internally, so keep it conistent
 	router := chi.NewRouter()
@@ -48,7 +50,8 @@ func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, 
 		server:  &http.Server{Addr: fmt.Sprintf("0.0.0.0:%d", c.Server.Port), Handler: router},
 		users:   newUsers(),
 		clients: newClients(),
-		queries: queries,
+		queries: query.New(db),
+		db:      db,
 	}
 
 	// set the config using the initial data provided.
@@ -62,7 +65,7 @@ func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, 
 	router.Use(middleware.Recoverer)
 
 	// create the storage provider
-	storage, err := NewStorage(logger, config, queries, server.users, server.clients)
+	storage, err := NewStorage(logger, config, server.queries, server.users, server.clients)
 
 	if err != nil {
 		return nil, err
@@ -82,7 +85,7 @@ func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, 
 	rtr := provider.Handler.(*chi.Mux)
 	controllers.Routes(rtr, func() *configuration.ServerConfig {
 		return server.config
-	}, queries, provider)
+	}, server.queries, provider)
 
 	//rtr.Get("/", )
 
@@ -104,10 +107,19 @@ const signingKeyID = "signing"
 
 func (s *Server) onStart(ctx context.Context) error {
 
-	key, err := s.queries.GetKeyByID(ctx, signingKeyID)
-
-	fmt.Println()
 	fmt.Println("Running pre-statup checks...")
+
+	cacheCheck := console.NewCheck("Verifying cache")
+
+	// migrate the database to the latest version in memory
+	if err := store.Migrate(s.db); err != nil {
+		cacheCheck.Print(console.IconCross, "Error")
+		return err
+	} else {
+		cacheCheck.Print(console.IconCheck, "OK")
+	}
+
+	key, err := s.queries.GetKeyByID(ctx, signingKeyID)
 
 	c := console.NewCheck("Checking cache for JWT signing key")
 
