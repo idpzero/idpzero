@@ -5,21 +5,21 @@ layout: home
 hero:
   name: "idpzero"
   text: "Single binary Identity Provider (IdP)"
-  #tagline: 
+  tagline: Built for developers.
   actions:
     - theme: brand
-      text: Markdown Examples
-      link: /markdown-examples
+      text: Get Started Now
+      link: /guide/getting-started
     - theme: alt
-      text: API Examples
-      link: /api-examples
+      text: Wait. What is it?
+      link: /guide/what-is-it
 
 features:
-  - title: Feature A
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature B
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature C
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+  - title: Single CLI for simplicity
+    details: Configure and serve an OpenID Connect and OAuth2 IDP with a single CLI binary.
+  - title: Designed for Sharing
+    details: Configuration is designed to be stored in your source repository and shared.
+  - title: Delightful Experience
+    details: Choose the user you want to login as, no need to store or manage passwords.
 ---
 

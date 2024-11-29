@@ -1,6 +1,6 @@
 server:
   port: 4379
-  keyphrase: 947dc26e-72b2-4fce-a82d-634bd6da084c
+  keyphrase: 268ac6c8-2a10-49f8-8b01-6f468451c168
 clients:
 - name: Sample Web App
   client_id: web
