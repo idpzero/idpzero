@@ -17,9 +17,8 @@ hero:
 features:
   - title: Single CLI for simplicity
     details: Configure and serve an OpenID Connect and OAuth2 IDP with a single CLI binary.
-  - title: Designed for Sharing
-    details: Configuration is designed to be stored in your source repository and shared.
-  - title: Delightful Experience
-    details: Choose the user you want to login as, no need to store or manage passwords.
+  - title: Commit to Git 
+    details: Configuration is designed to be added to your repo and shared across teams.
+  - title: Delightful Login Experience
+    details: During login flows, select the user to login as, no need passwords needed.
 ---
-

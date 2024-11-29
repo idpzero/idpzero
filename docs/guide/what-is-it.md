@@ -4,10 +4,8 @@ outline: deep
 
 # What is idpzero?
 
-The goal of `idpzero` is to enable developers to implement best practice security and authentication as early as possible. Typically hosting and configuring an identity provider can be a complexity and time consuming; we've all been there, it's simpler to ignore up front!
+The goal of <span class="idpzero-text">idpzero</span> is to enable developers to implement best practice security and authentication in projects as early as possible. Typically hosting and configuring an identity provider is complexity and time consuming; it's simpler to ignore authentication. We've all been there!
 
-**idpzero is different**. 
-
-It's a single binary identity provider that plays nicely with the local dev/test experience, and designed to have its configuration safely stored in source control. 
+**<span class="idpzero-text">idpzero</span> is different** - it's a single binary IdP that is designed to complement the local dev/test experience - not fight with it!
 
 By making the hosting of an OpenID Connect / OAuth2 compliant IDP as simple as `idpzero serve` the complexity has been taken away, replaced by a simple and all round *delightful* experience for local development.

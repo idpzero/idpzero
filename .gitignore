@@ -5,4 +5,6 @@ dist/
 node_modules/
 docs/.vitepress/dist
 docs/.vitepress/cache
-.idpzero/cache
+scripts/vhs/*.gif
+# Normally would commit this, but for this repo we don't want to
+.idpzero

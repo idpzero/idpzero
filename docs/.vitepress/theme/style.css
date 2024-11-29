@@ -137,7 +137,7 @@
   --docsearch-primary-color: var(--vp-c-brand-1) !important;
 }
 
-.VPNavBarTitle .title span { 
+.VPNavBarTitle .title span, .idpzero-text { 
   color: transparent;
   background: -webkit-linear-gradient(
     180deg,

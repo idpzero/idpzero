@@ -6,7 +6,7 @@ outline: deep
 
 ## Install
 
-Select the installation approach that works for you, ensuring it is added to your path.
+Select the installation approach that works for you, or download from Github [releases](https://github.com/idpzero/idpzero/releases). Make sure the binary is available in your local path.
 
 ::: code-group
 
@@ -20,12 +20,13 @@ $ brew install idpzero
 ```
 :::
 
+
 ## Initialize
 
-Once the binary has been installed you can initalize a new ```.idpzero``` directory and related configuration by running the init command. Generally this is only done once per application, and the configuration directory added to source control.
+Once the binary has been installed you can initalize a new configuration directory by running the `init` command. Generally this is only done once per application, and the configuration directory added to source control.
 
 ::: tip NOTE
-```.idpzero``` has been designed to work nicely with source control. It is recommended that you run the following initialization command within the root of the repository.
+The generate `.idpzero` directory has been designed to work nicely with source control. It is recommended that you run the following initialization command within the root of the repository.
 :::
 
 The following includes the `--with-sample-config` flag which will generate sample client and user configuration to help get started. 
@@ -46,19 +47,10 @@ idpzero.exe init --with-sample-config
 
 You should see output similar to the below
 
-```sh
-Initializing configuration.
-(✔) Default configuration initialized.
-(✔) Sample configuration applied.
-
-Update your .gitignore to include .idpzero/cache as this directory should not be added to source control.
-
-To start the server run idpzero serve
-
-```
+![idpzero init](/shell/init.gif)
 
 ::: warning
-The `.idpzero\cache` directory is not intended to be shared and should be added to your `.gitignore`
+The `.idpzero/cache` directory should be added to your `.gitignore`
 :::
 
 
@@ -89,16 +81,8 @@ idpzero.exe serve
 
 As part of the startup, various checks will be executed, and you will see output similar to below.
 
-```sh
-Running pre-statup checks...
-(✔) Verifying cache [OK]
-(✔) Checking cache for JWT signing key [OK]
-(✔) Checking configuration for clients [OK]
-(✔) Checking configuration for users [OK]
+![idpzero init](/shell/serve.gif)
 
-Identity Provider started at http://localhost:4379
-```
-
-You can shut down `idpzero` by simply ending the running command.
+You can shut down server by simply ending the running command.
 
 Thats it, your ready to go!

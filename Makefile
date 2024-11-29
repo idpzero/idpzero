@@ -12,6 +12,12 @@ lint:
 db:
 	sqlc generate --file ./pkg/store/sqlc.yaml
 
+vhs:
+	rm -rf .idpzero
+	vhs ./scripts/vhs/init.tape
+	vhs ./scripts/vhs/serve.tape
+	rm -rf .idpzero
+
 watch/tailwind:
 	npx --yes tailwindcss -i ./pkg/web/assets/input.css -o ./pkg/web/assets/static/styles.css --minify --watch
 
