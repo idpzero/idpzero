@@ -86,3 +86,11 @@ As part of the startup, various checks will be executed, and you will see output
 You can shut down server by simply ending the running command.
 
 Thats it, your ready to go!
+
+## View Configuration
+
+Once running, open the dashboard (default is http://localhost:4379/) where configuration for the server including metadata endpoints to add to your application, as well as configured client information can be viewed.
+
+If client secrets are applicable for the application, these will be available here to copy.
+
+![Dashboard](/screenshots/dashboard.png)

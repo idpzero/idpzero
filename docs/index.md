@@ -22,3 +22,9 @@ features:
   - title: Delightful Login Experience
     details: During login flows, select the user to login as, no need passwords needed.
 ---
+
+### Simple Login Experience
+
+Simplify your dev/test experience though the simplified OpenID Connect / OAuth2 login experience <span class="idpzero-text">idpzero</span> provides. As part of the login flow, simply select the user to login as from the drop down list. No passwords to worry about. Users and the claims that they have are managed in your local `.idpzero` configuration directory.
+
+![Login](/screenshots/login.png)
