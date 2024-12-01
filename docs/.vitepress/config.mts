@@ -4,6 +4,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: "idpzero",
   description: "Developer first Identity Provider",
+  ignoreDeadLinks: 'localhostLinks',
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
@@ -25,4 +26,5 @@ export default defineConfig({
       { icon: 'github', link: 'https://github.com/idpzero/idpzero' }
     ]
   }
+
 })
