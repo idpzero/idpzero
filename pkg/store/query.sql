@@ -101,3 +101,40 @@ SELECT * FROM
 
 -- name: DeleteAllKeys :exec
 DELETE FROM keys;
+
+
+
+-- name: CreateRefreshToken :one
+INSERT INTO refresh_tokens (
+    id,
+    auth_time,
+    amr,
+    audience,
+    subject,
+    application_id,
+    expiration,
+    scopes,
+    created_at
+  )
+VALUES
+  (?, ?, ?, ?, ?, ?, ?,?, ?) RETURNING *;
+
+
+-- name: GetRefreshTokenByID :one
+SELECT * FROM
+  refresh_tokens
+WHERE
+  id = ? LIMIT 1;
+
+
+-- CREATE TABLE refresh_tokens (
+--         id text PRIMARY KEY,
+--         auth_time INTEGER NOT NULL,
+--         amr text NOT NULL,
+--         audience text NOT NULL,
+--         user_id text NOT NULL,
+--         application_id text NOT NULL,
+--         expiration INTEGER NOT NULL, -- since epoch
+--         scopes text NOT NULL, -- comma separated
+--         created_at INTEGER NOT NULL -- since epoch
+--     );

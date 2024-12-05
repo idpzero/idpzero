@@ -38,11 +38,23 @@ type Key struct {
 	CreatedAt  int64
 }
 
+type RefreshToken struct {
+	ID            string
+	AuthTime      int64
+	Amr           sql.NullString
+	Audience      string
+	Subject       string
+	ApplicationID string
+	Expiration    int64
+	Scopes        string
+	CreatedAt     int64
+}
+
 type Token struct {
 	ID             string
 	AuthRequestID  sql.NullString
 	ApplicationID  string
-	RefreshTokenID string
+	RefreshTokenID sql.NullString
 	Subject        string
 	Audience       string
 	Expiration     int64

@@ -65,7 +65,7 @@ func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, 
 	router.Use(middleware.Recoverer)
 
 	// create the storage provider
-	storage, err := NewStorage(logger, config, server.queries, server.users, server.clients)
+	storage, err := NewStorage(logger, config, db, server.queries, server.users, server.clients)
 
 	if err != nil {
 		return nil, err
