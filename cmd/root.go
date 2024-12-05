@@ -64,6 +64,11 @@ var rootCmd = &cobra.Command{
 			)
 		}
 
+		color.Yellow("**********************************************************************")
+		color.Yellow("    WARNING: This is experimental release and may not be stable.")
+		color.Yellow("    If startup fails, run 'idpzero reset --hard' to reset ")
+		color.Yellow("**********************************************************************")
+		fmt.Println()
 	},
 }
 
