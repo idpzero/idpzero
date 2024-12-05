@@ -12,6 +12,7 @@ import (
 	jose "github.com/go-jose/go-jose/v4"
 	"github.com/google/uuid"
 	"github.com/idpzero/idpzero/pkg/configuration"
+	"github.com/idpzero/idpzero/pkg/dbg"
 	"github.com/idpzero/idpzero/pkg/store/query"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"github.com/zitadel/oidc/v3/pkg/op"
@@ -20,25 +21,29 @@ import (
 var _ op.Storage = &Storage{}
 
 type Storage struct {
-	logger    *slog.Logger
-	lock      sync.Mutex
-	configMgr *configuration.ConfigurationManager
-	server    *configuration.ServerConfig
-	query     *query.Queries
-	users     *users
-	clients   *clients
+	logger       *slog.Logger
+	lock         sync.Mutex
+	configMgr    *configuration.ConfigurationManager
+	server       *configuration.ServerConfig
+	db           *sql.DB
+	query        *query.Queries
+	users        *users
+	clients      *clients
+	tokenManager *tokenManager
 	//clients   map[string]configuration.ClientConfig
 }
 
-func NewStorage(logger *slog.Logger, configMgr *configuration.ConfigurationManager, query *query.Queries, users *users, clients *clients) (*Storage, error) {
+func NewStorage(logger *slog.Logger, configMgr *configuration.ConfigurationManager, db *sql.DB, queries *query.Queries, users *users, clients *clients) (*Storage, error) {
 
 	store := &Storage{
-		logger:    logger,
-		configMgr: configMgr,
-		lock:      sync.Mutex{},
-		query:     query,
-		users:     users,
-		clients:   clients,
+		logger:       logger,
+		configMgr:    configMgr,
+		lock:         sync.Mutex{},
+		db:           db,
+		query:        queries,
+		users:        users,
+		clients:      clients,
+		tokenManager: newTokenManager(queries, clients),
 	}
 
 	svrconf, err := configMgr.LoadConfiguration()
@@ -97,41 +102,92 @@ func (s *Storage) AuthorizeClientIDSecret(ctx context.Context, clientID string, 
 	return fmt.Errorf("client not found")
 }
 
-// CreateAccessAndRefreshTokens implements op.Storage.
 func (s *Storage) CreateAccessAndRefreshTokens(ctx context.Context, request op.TokenRequest, currentRefreshToken string) (accessTokenID string, newRefreshTokenID string, expiration time.Time, err error) {
-	panic("***********************") // up to here!
-	panic("unimplemented CreateAccessAndRefreshTokens")
+
+	dbg.Logger.Debug("Processing create and refresh token for request", slog.String("type", fmt.Sprintf("%T", request)), slog.String("currentRefreshToken", currentRefreshToken))
+
+	// generate tokens via token exchange flow if request is relevant
+	if teReq, ok := request.(op.TokenExchangeRequest); ok {
+		tx, err := s.db.Begin()
+
+		if err != nil {
+			return "", "", time.Time{}, err
+		}
+
+		defer tx.Rollback()
+
+		accessToken, refreshToken, err := s.tokenManager.ExchangeRefreshToken(ctx, tx, ExchangeRefreshTokenArgs{
+			TokenRequest: teReq,
+		})
+
+		if err != nil {
+			return "", "", time.Time{}, err
+		}
+
+		tx.Commit()
+		return accessToken.ID, refreshToken.ID, time.Unix(accessToken.Expiration, 0), nil
+	}
+
+	// if currentRefreshToken is empty (Code Flow) we will have to create a new refresh token
+	if currentRefreshToken == "" {
+
+		tx, err := s.db.Begin()
+
+		if err != nil {
+			return "", "", time.Time{}, err
+		}
+
+		defer tx.Rollback()
+
+		accessToken, refreshToken, err := s.tokenManager.IssueTokens(ctx, tx, IssueTokensArgs{
+			TokenRequest:      request,
+			IssueRefreshToken: true,
+		})
+
+		if err != nil {
+			return "", "", time.Time{}, err
+		}
+
+		tx.Commit()
+		return accessToken.ID, refreshToken.ID, time.Unix(accessToken.Expiration, 0), nil
+	}
+
+	tx, err := s.db.Begin()
+
+	if err != nil {
+		return "", "", time.Time{}, err
+	}
+
+	accessToken, refreshToken, err := s.tokenManager.IssueFromRequestToken(ctx, tx, request, currentRefreshToken)
+
+	if err != nil {
+		return "", "", time.Time{}, err
+	}
+
+	return accessToken.ID, refreshToken.ID, time.Unix(accessToken.Expiration, 0), nil
 }
 
 // CreateAccessToken implements op.Storage.
 func (s *Storage) CreateAccessToken(ctx context.Context, request op.TokenRequest) (accessTokenID string, expiration time.Time, err error) {
 
-	var applicationID string
-	var requestID sql.NullString
-	switch req := request.(type) {
-	case *query.AuthRequest:
-		applicationID = req.ApplicationID
-		requestID.String = req.ID
-		requestID.Valid = true
-	case op.TokenExchangeRequest:
-		applicationID = req.GetClientID()
+	tx, err := s.db.Begin()
+
+	if err != nil {
+		return "", time.Time{}, err
 	}
 
-	token, err := s.query.CreateToken(ctx, query.CreateTokenParams{
-		ID:             uuid.NewString(),
-		ApplicationID:  applicationID,
-		AuthRequestID:  requestID,
-		Scopes:         strings.Join(request.GetScopes(), " "),
-		RefreshTokenID: "",
-		Subject:        request.GetSubject(),
-		Audience:       strings.Join(request.GetAudience(), " "),
-		Expiration:     time.Now().Add(time.Hour).Unix(),
-		CreatedAt:      time.Now().Unix(),
+	defer tx.Rollback()
+
+	token, _, err := s.tokenManager.IssueTokens(ctx, tx, IssueTokensArgs{
+		TokenRequest:      request,
+		IssueRefreshToken: false,
 	})
 
 	if err != nil {
 		return "", time.Time{}, err
 	}
+
+	tx.Commit()
 
 	return token.ID, time.Unix(token.Expiration, 0), nil
 }
@@ -176,9 +232,6 @@ func (s *Storage) CreateAuthRequest(ctx context.Context, authReq *oidc.AuthReque
 		return nil, err
 	}
 
-	s.logger.Debug("created auth request", slog.String("id", req.ID))
-
-	// finally, return the request (which implements the AuthRequest interface of the OP
 	return req, nil
 }
 

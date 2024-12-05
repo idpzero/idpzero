@@ -76,3 +76,37 @@ func (a *AuthRequest) GetSubject() string {
 func (a *AuthRequest) Done() bool {
 	return a.Complete
 }
+
+//var _ op.RefreshToken = (*RefreshToken)(nil)
+
+func (r *RefreshToken) GetAMR() []string {
+	if !r.Amr.Valid {
+		return nil
+	} else {
+		return strings.Split(r.Amr.String, " ")
+	}
+}
+
+func (r *RefreshToken) GetAudience() []string {
+	return []string{r.Audience}
+}
+
+func (r *RefreshToken) GetAuthTime() time.Time {
+	return time.Unix(r.AuthTime, 0)
+}
+
+func (r *RefreshToken) GetClientID() string {
+	return r.ApplicationID
+}
+
+func (r *RefreshToken) GetScopes() []string {
+	return strings.Split(r.Scopes, " ")
+}
+
+func (r *RefreshToken) GetSubject() string {
+	return r.Subject
+}
+
+func (r *RefreshToken) SetCurrentScopes(scopes []string) {
+	r.Scopes = strings.Join(scopes, " ")
+}

@@ -141,6 +141,61 @@ func (q *Queries) CreateKey(ctx context.Context, arg CreateKeyParams) (*Key, err
 	return &i, err
 }
 
+const createRefreshToken = `-- name: CreateRefreshToken :one
+INSERT INTO refresh_tokens (
+    id,
+    auth_time,
+    amr,
+    audience,
+    subject,
+    application_id,
+    expiration,
+    scopes,
+    created_at
+  )
+VALUES
+  (?, ?, ?, ?, ?, ?, ?,?, ?) RETURNING id, auth_time, amr, audience, subject, application_id, expiration, scopes, created_at
+`
+
+type CreateRefreshTokenParams struct {
+	ID            string
+	AuthTime      int64
+	Amr           sql.NullString
+	Audience      string
+	Subject       string
+	ApplicationID string
+	Expiration    int64
+	Scopes        string
+	CreatedAt     int64
+}
+
+func (q *Queries) CreateRefreshToken(ctx context.Context, arg CreateRefreshTokenParams) (*RefreshToken, error) {
+	row := q.db.QueryRowContext(ctx, createRefreshToken,
+		arg.ID,
+		arg.AuthTime,
+		arg.Amr,
+		arg.Audience,
+		arg.Subject,
+		arg.ApplicationID,
+		arg.Expiration,
+		arg.Scopes,
+		arg.CreatedAt,
+	)
+	var i RefreshToken
+	err := row.Scan(
+		&i.ID,
+		&i.AuthTime,
+		&i.Amr,
+		&i.Audience,
+		&i.Subject,
+		&i.ApplicationID,
+		&i.Expiration,
+		&i.Scopes,
+		&i.CreatedAt,
+	)
+	return &i, err
+}
+
 const createToken = `-- name: CreateToken :one
 INSERT INTO tokens (
     id,
@@ -161,7 +216,7 @@ type CreateTokenParams struct {
 	ID             string
 	AuthRequestID  sql.NullString
 	ApplicationID  string
-	RefreshTokenID string
+	RefreshTokenID sql.NullString
 	Subject        string
 	Audience       string
 	Expiration     int64
@@ -380,6 +435,30 @@ func (q *Queries) GetKeysByUse(ctx context.Context, usage string) ([]*Key, error
 		return nil, err
 	}
 	return items, nil
+}
+
+const getRefreshTokenByID = `-- name: GetRefreshTokenByID :one
+SELECT id, auth_time, amr, audience, subject, application_id, expiration, scopes, created_at FROM
+  refresh_tokens
+WHERE
+  id = ? LIMIT 1
+`
+
+func (q *Queries) GetRefreshTokenByID(ctx context.Context, id string) (*RefreshToken, error) {
+	row := q.db.QueryRowContext(ctx, getRefreshTokenByID, id)
+	var i RefreshToken
+	err := row.Scan(
+		&i.ID,
+		&i.AuthTime,
+		&i.Amr,
+		&i.Audience,
+		&i.Subject,
+		&i.ApplicationID,
+		&i.Expiration,
+		&i.Scopes,
+		&i.CreatedAt,
+	)
+	return &i, err
 }
 
 const getTokenByID = `-- name: GetTokenByID :one

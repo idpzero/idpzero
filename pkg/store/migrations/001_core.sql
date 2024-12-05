@@ -24,9 +24,21 @@ CREATE TABLE tokens (
         id text PRIMARY KEY,
         auth_request_id text, -- originator if available
         application_id text NOT NULL,
-        refresh_token_id text NOT NULL,
+        refresh_token_id text,
         subject text NOT NULL,
         audience text NOT NULL,
+        expiration INTEGER NOT NULL, -- since epoch
+        scopes text NOT NULL, -- comma separated
+        created_at INTEGER NOT NULL -- since epoch
+    );
+
+CREATE TABLE refresh_tokens (
+        id text PRIMARY KEY,
+        auth_time INTEGER NOT NULL,
+        amr text,
+        audience text NOT NULL,
+        subject text NOT NULL,
+        application_id text NOT NULL,
         expiration INTEGER NOT NULL, -- since epoch
         scopes text NOT NULL, -- comma separated
         created_at INTEGER NOT NULL -- since epoch
