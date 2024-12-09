@@ -3,6 +3,7 @@ package server
 import (
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/idpzero/idpzero/pkg/configuration"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"github.com/zitadel/oidc/v3/pkg/op"
@@ -38,97 +39,26 @@ func NewClient(config configuration.ClientConfig) *Client {
 
 	c.authMehtod = (*oidc.AuthMethod)(&config.AuthMethod)
 
+	att, err := op.AccessTokenTypeString(config.AccessTokenType)
+
+	if err != nil {
+		color.Red("Error parsing client AccessTokenType: %s - defaulting to jwt", config.AccessTokenType)
+		c.accessTokenType = op.AccessTokenTypeJWT
+	} else {
+		c.accessTokenType = att
+	}
+
+	at, err := op.ApplicationTypeString(config.ApplicationType)
+
+	if err != nil {
+		color.Red("Error parsing client ApplicationType: %s - defaulting to web", config.ApplicationType)
+		c.appType = op.ApplicationTypeWeb
+	} else {
+		c.appType = at
+	}
+
 	return c
 }
-
-// func (c *Client) parseAndValidate() {
-// 	c.validations = []*validation.ChecklistItem{}
-
-// 	ot, err := op.ApplicationTypeString(c.config.ApplicationType)
-// 	if err != nil {
-// 		ci := validation.NewChecklistItem(false, "application_type").
-// 			WithValue(c.config.ApplicationType).
-// 			WithError(err)
-
-// 		c.validations = append(c.validations, ci)
-// 	} else {
-// 		c.appType = ot
-// 	}
-
-// 	at, err := op.AccessTokenTypeString(c.config.AccessTokenType)
-// 	if err != nil {
-// 		ci := validation.NewChecklistItem(false, "access_token_type").
-// 			WithValue(c.config.AccessTokenType).
-// 			WithError(err)
-// 		c.validations = append(c.validations, ci)
-// 	} else {
-// 		c.accessTokenType = at
-// 	}
-
-// 	parsedAuthMethod := oidc.AuthMethod(c.config.AuthMethod)
-
-// 	allAuthMethods := []string{}
-// 	for _, am := range oidc.AllAuthMethods {
-// 		allAuthMethods = append(allAuthMethods, string(am))
-// 		if parsedAuthMethod == am {
-// 			c.authMehtod = &am
-// 			break
-// 		}
-// 	}
-
-// 	if c.authMehtod == nil {
-// 		ci := validation.NewChecklistItem(false, "auth_method").
-// 			WithValue(c.config.AuthMethod).
-// 			WithError(fmt.Errorf("'auth_method' not valid")).
-// 			WithOptions(allAuthMethods)
-
-// 		c.validations = append(c.validations, ci)
-// 	}
-
-// 	for _, gt := range c.config.GrantTypes {
-// 		parsedGrantType := oidc.GrantType(gt)
-// 		allGrantTypes := []string{}
-// 		valid := false
-// 		for _, gt := range oidc.AllGrantTypes {
-// 			allGrantTypes = append(allGrantTypes, string(gt))
-// 			if parsedGrantType == gt {
-// 				valid = true
-// 				c.grantTypes = append(c.grantTypes, gt)
-// 				break
-// 			}
-// 		}
-
-// 		if !valid {
-// 			ci := validation.NewChecklistItem(false, "grant_types").
-// 				WithValue(gt).
-// 				WithError(fmt.Errorf("'grant_types' not valid")).
-// 				WithOptions(allGrantTypes)
-
-// 			c.validations = append(c.validations, ci)
-// 		}
-// 	}
-
-// 	for _, gt := range c.config.ResponseTypes {
-// 		parsedResponseType := oidc.ResponseType(gt)
-// 		if parsedResponseType == oidc.ResponseTypeCode ||
-// 			parsedResponseType == oidc.ResponseTypeIDToken ||
-// 			parsedResponseType == oidc.ResponseTypeIDTokenOnly {
-// 			c.responseTypes = append(c.responseTypes, parsedResponseType)
-// 		} else {
-// 			ci := validation.NewChecklistItem(false, "response_types").
-// 				WithValue(gt).
-// 				WithError(fmt.Errorf("'response_types' not valid")).
-// 				WithOptions([]string{
-// 					string(oidc.ResponseTypeCode),
-// 					string(oidc.ResponseTypeIDToken),
-// 					string(oidc.ResponseTypeIDTokenOnly),
-// 				})
-
-// 			c.validations = append(c.validations, ci)
-// 		}
-// 	}
-
-// }
 
 // AccessTokenType implements op.Client.
 func (c *Client) AccessTokenType() op.AccessTokenType {
@@ -173,7 +103,16 @@ func (c *Client) IDTokenLifetime() time.Duration {
 
 // IDTokenUserinfoClaimsAssertion implements op.Client.
 func (c *Client) IDTokenUserinfoClaimsAssertion() bool {
-	return c.config.IDTokenUserinfoClaimsAssertion
+
+	// we need to invert the value, so the default (false) will work
+	// as expected and NOT omit user info claims
+	//
+	//  If set to true, the zitadel framework will omit these scopes from the ID token:
+	//          oidc.ScopeProfile,
+	// 			oidc.ScopeEmail,
+	// 			oidc.ScopeAddress,
+	// 			oidc.ScopePhone:
+	return !c.config.IDTokenOmitUserInfoClaims
 }
 
 // IsScopeAllowed implements op.Client.
