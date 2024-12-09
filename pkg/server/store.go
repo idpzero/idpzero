@@ -260,7 +260,7 @@ func (s *Storage) GetKeyByIDAndClientID(ctx context.Context, keyID string, clien
 
 // GetPrivateClaimsFromScopes implements op.Storage.
 func (s *Storage) GetPrivateClaimsFromScopes(ctx context.Context, userID string, clientID string, scopes []string) (map[string]any, error) {
-	panic("unimplemented GetPrivateClaimsFromScopes")
+	return nil, nil
 }
 
 // GetRefreshTokenInfo implements op.Storage.

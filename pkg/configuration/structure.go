@@ -17,20 +17,20 @@ type HostConfig struct {
 }
 
 type ClientConfig struct {
-	Name                           string              `yaml:"name"`
-	ClientID                       string              `yaml:"client_id"`
-	AccessTokenType                string              `yaml:"access_token_type"`           // bearer or jwt.
-	ApplicationType                string              `yaml:"application_type"`            // web, native, or service.
-	AuthMethod                     string              `yaml:"auth_method"`                 // client_secret_basic,client_secret_post,none,private_key_jwt
-	ClockSkew                      time.Duration       `yaml:"clock_skew,omitempty"`        // time in duration format
-	IDTokenLifetime                time.Duration       `yaml:"id_token_lifetime,omitempty"` // time in duration format
-	IDTokenUserinfoClaimsAssertion bool                `yaml:"id_token_userinfo_claims_assertion,omitempty"`
-	GrantTypes                     []string            `yaml:"grant_types"` // authorization_code,implicit,password,client_credentials,refresh_token etc
-	RedirectURIs                   []string            `yaml:"redirect_uris"`
-	PostLogoutRedirectURIs         []string            `yaml:"post_logout_redirect_uris,omitempty"`
-	ResponseTypes                  []string            `yaml:"response_types"`
-	ClientSecret                   string              `yaml:"-"` // ignore when marshalling
-	CustomScopes                   map[string][]string `yaml:"custom_scopes,omitempty"`
+	Name                      string              `yaml:"name"`
+	ClientID                  string              `yaml:"client_id"`
+	AccessTokenType           string              `yaml:"access_token_type"`                       // bearer or jwt.
+	ApplicationType           string              `yaml:"application_type"`                        // web, native, or service.
+	AuthMethod                string              `yaml:"auth_method"`                             // client_secret_basic,client_secret_post,none,private_key_jwt
+	ClockSkew                 time.Duration       `yaml:"clock_skew,omitempty"`                    // time in duration format
+	IDTokenLifetime           time.Duration       `yaml:"id_token_lifetime,omitempty"`             // time in duration format
+	IDTokenOmitUserInfoClaims bool                `yaml:"id_token_omit_userinfo_claims,omitempty"` // true to omit profile, email, phone, address scopes from ID tokens
+	GrantTypes                []string            `yaml:"grant_types"`                             // authorization_code,implicit,password,client_credentials,refresh_token etc
+	RedirectURIs              []string            `yaml:"redirect_uris"`
+	PostLogoutRedirectURIs    []string            `yaml:"post_logout_redirect_uris,omitempty"`
+	ResponseTypes             []string            `yaml:"response_types"`
+	ClientSecret              string              `yaml:"-"` // ignore when marshalling
+	CustomScopes              map[string][]string `yaml:"custom_scopes,omitempty"`
 }
 
 type User struct {
