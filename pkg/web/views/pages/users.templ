@@ -3,6 +3,7 @@ package pages
 import (
 "github.com/idpzero/idpzero/pkg/web/models"
 "github.com/idpzero/idpzero/pkg/web/views/layouts"
+	"fmt"
 )
 
 
@@ -15,4 +16,65 @@ templ users(model models.UsersModel) {
     <div>
     <h1 class="text-3xl font-bold"><span class="gradient">Registered Users</span></h1>
     </div>
+
+    <p class="py-4">
+    The following users are registered with the system and available for login.
+    </p>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Display</th>
+                <th>Subject</th>
+                <th>Claims</th>
+            </tr>
+        </thead>
+     for _, usr := range model.Users {
+        <tr>
+            <td>{usr.LoginDisplay}</td>
+            <td>{usr.Subject}</td>
+            <td>
+            <table>
+                @claimstring("email", usr.Claims.Email)
+                @claimbool("email_verified", usr.Claims.EmailVerified)
+                @claimstring("given_name", usr.Claims.GivenName)
+                @claimstring("middle_name", usr.Claims.MiddleName)
+                @claimstring("family_name", usr.Claims.FamilyName)
+                @claimstring("name", usr.Claims.Name)
+                @claimstring("nickname", usr.Claims.Nickname)
+                @claimstring("phone", usr.Claims.Phone)
+                @claimbool("phone_verified", usr.Claims.PhoneVerified)
+            </table>
+            </td>
+        </tr>
+    }
+    </table>
+}
+
+
+templ claimbool(label string, value *bool) {
+    if value != nil {
+        <tr>
+            <td>
+                { label} 
+            </td>
+            <td>
+                { fmt.Sprintf("%v",*value)}
+            </td>
+        </tr>
+        
+    }
+}
+
+templ claimstring(label string, value *string) {
+    if value != nil {
+        <tr>
+            <td>
+                { label} 
+            </td>
+            <td>
+                { fmt.Sprintf("%v",*value)}
+            </td>
+        </tr>
+        
+    }
 }

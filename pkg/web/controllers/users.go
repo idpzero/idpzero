@@ -9,12 +9,14 @@ import (
 	"github.com/idpzero/idpzero/pkg/web/views/pages"
 )
 
-func users(_ func() *configuration.ServerConfig) http.HandlerFunc {
+func users(config func() *configuration.ServerConfig) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		//idpConfig := config()
+		idpConfig := config()
 
-		im := models.UsersModel{}
+		im := models.UsersModel{
+			Users: idpConfig.Users,
+		}
 
 		view := pages.UsersView(im)
 

@@ -102,7 +102,7 @@ func contentLayout() templ.Component {
 			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<header><nav class=\"navbar fixed top-0 z-10 px-8 h-12\"><div class=\"navbar-start\"><a href=\"/\" class=\"\"><span class=\"gradient text-2xl font-bold\">idp<span class=\"font-normal\">zero</span></span></a></div><div class=\"navbar-center flex\"><ul class=\"menu menu-horizontal px-1\"><li><a href=\"/\">Overview</a></li><li><a href=\"/users\">Users</a></li><li><a href=\"/docs\">Docs</a></li></ul></div><div class=\"navbar-end\"><div class=\"text-xs pr-5 text-gray-400\"><span class=\"font-bold\">commit: </span>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<header><nav class=\"navbar fixed top-0 z-10 px-8 h-12 bg-white\"><div class=\"navbar-start\"><a href=\"/\" class=\"\"><span class=\"gradient text-2xl font-bold\">idp<span class=\"font-normal\">zero</span></span></a></div><div class=\"navbar-center flex\"><ul class=\"menu menu-horizontal px-1\"><li><a href=\"/\">Overview</a></li><li><a href=\"/users\">Users</a></li><li><a href=\"/docs\">Docs</a></li></ul></div><div class=\"navbar-end\"><div class=\"text-xs pr-5 text-gray-400\"><span class=\"font-bold\">commit: </span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
