@@ -107,8 +107,16 @@ func (r *ConfigurationManager) LoadConfiguration() (*ServerConfig, error) {
 		return nil, err
 	}
 
-	// process the parts that shouldnt be marshalled or processed separately
+	// process the parts that shouldnt be marshalled or processed separately.
+	// Only confidential clients (client_secret_basic / client_secret_post) get a
+	// derived secret. Public clients (auth_method: none) authenticate via PKCE and
+	// intentionally have no secret so their config can be committed to source control.
 	for _, c := range doc.Clients {
+		if !c.RequiresClientSecret() {
+			c.ClientSecret = ""
+			continue
+		}
+
 		h := sha1.New()
 		h.Write([]byte(doc.Server.KeyPhrase))
 		h.Write([]byte(c.ClientID))

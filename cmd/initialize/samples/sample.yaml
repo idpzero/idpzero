@@ -1,4 +1,25 @@
 clients:
+  # Public client (SPA / native / CLI) authenticating via PKCE.
+  # auth_method: none means no client secret is required, so this configuration
+  # can be committed to source control without storing any secrets.
+  - name: Sample Public App (PKCE)
+    client_id: spa
+    access_token_type: jwt
+    application_type: native
+    auth_method: none
+    clock_skew: 60s
+    id_token_lifetime: 1h
+    grant_types:
+      - authorization_code
+      - refresh_token
+    redirect_uris:
+      - http://localhost:3000/callback
+      - http://localhost:8080/callback
+    response_types:
+      - code
+
+  # Confidential client authenticating with a client secret.
+  # The secret is derived from the server keyphrase and shown on the dashboard.
   - name: Sample Web App
     client_id: web
     access_token_type: bearer
@@ -14,7 +35,6 @@ clients:
       - http://localhost:9999/auth/callback
     response_types:
       - code
-    client_secret: secret
     custom_scopes:
       myscope:
         - "Custom:Sample"

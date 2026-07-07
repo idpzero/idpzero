@@ -91,6 +91,12 @@ func (s *Storage) AuthorizeClientIDSecret(ctx context.Context, clientID string, 
 	// validate the client with client secret. plain text is used
 	for _, client := range s.server.Clients {
 		if client.ClientID == clientID {
+			// Public clients authenticate via PKCE and have no secret; never allow
+			// them to be authenticated through the client_secret path (which would
+			// otherwise succeed on an empty secret match).
+			if !client.RequiresClientSecret() {
+				return fmt.Errorf("client '%s' is a public client and does not use a client secret", clientID)
+			}
 			if client.ClientSecret == clientSecret {
 				return nil
 			} else {

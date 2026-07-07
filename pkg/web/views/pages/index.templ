@@ -74,7 +74,11 @@ templ client(config configuration.ClientConfig) {
                 @field("Authentication Method", config.AuthMethod)
             </div>
             <div>
-                @field("Client Secret", config.ClientSecret)
+                if config.IsPublic() {
+                    @field("Client Secret", "None (public client, PKCE)")
+                } else {
+                    @field("Client Secret", config.ClientSecret)
+                }
                 @field("Response Types", config.ResponseTypes...)
                 @field("Grant Types", config.GrantTypes...)
             </div>

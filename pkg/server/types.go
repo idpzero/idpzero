@@ -37,7 +37,11 @@ func NewClient(config configuration.ClientConfig) *Client {
 		c.responseTypes = append(c.responseTypes, oidc.ResponseType(gt))
 	}
 
-	c.authMehtod = (*oidc.AuthMethod)(&config.AuthMethod)
+	// Resolve the auth method so an empty value defaults to a public (PKCE) client
+	// rather than silently falling through to client-secret validation at the token
+	// endpoint. This keeps secretless, source-control-friendly clients working.
+	authMethod := oidc.AuthMethod(config.ResolvedAuthMethod())
+	c.authMehtod = &authMethod
 
 	att, err := op.AccessTokenTypeString(config.AccessTokenType)
 

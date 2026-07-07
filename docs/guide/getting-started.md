@@ -94,3 +94,71 @@ Once running, open the dashboard (default is http://localhost:4379/) where confi
 If client secrets are applicable for the application, these will be available here to copy.
 
 ![Dashboard](/screenshots/dashboard.png)
+
+## Client Authentication (PKCE vs Client Secret)
+
+`idpzero` supports both public and confidential OAuth2 / OpenID Connect clients. The
+`auth_method` field on each client controls how the client authenticates when it
+exchanges an authorization code for tokens.
+
+### Public clients (PKCE — no secret required)
+
+For single page apps (SPAs), native/mobile apps, CLIs and anything else that cannot
+keep a secret, use a **public client** authenticating with
+[PKCE](https://datatracker.ietf.org/doc/html/rfc7636). Set `auth_method: none`:
+
+```yaml
+clients:
+  - name: My SPA
+    client_id: spa
+    application_type: native
+    auth_method: none          # public client, authenticates via PKCE
+    grant_types:
+      - authorization_code
+      - refresh_token
+    redirect_uris:
+      - http://localhost:3000/callback
+    response_types:
+      - code
+```
+
+::: tip NO SECRETS TO STORE
+Public clients have **no client secret**. Because there is nothing sensitive to
+store, this configuration can be committed to source control as-is. The
+authorization code exchange is protected by the PKCE `code_verifier` /
+`code_challenge` (`S256`) instead of a shared secret.
+:::
+
+If `auth_method` is omitted it defaults to `none`, so the safest, secretless
+public-client behaviour is the default.
+
+### Confidential clients (client secret)
+
+For server-side web apps that can safely store a secret, use
+`auth_method: client_secret_basic` (or `client_secret_post`). `idpzero` derives a
+stable client secret from the server `keyphrase` and the `client_id`, and displays
+it on the dashboard so you can copy it into your application configuration:
+
+```yaml
+clients:
+  - name: My Web App
+    client_id: web
+    application_type: web
+    auth_method: client_secret_basic
+    grant_types:
+      - authorization_code
+      - refresh_token
+    redirect_uris:
+      - http://localhost:3000/callback
+    response_types:
+      - code
+```
+
+::: warning
+The derived secret depends on the `keyphrase` in `server.yaml`. Keep the `keyphrase`
+out of source control if you rely on confidential clients; public (PKCE) clients
+avoid this concern entirely.
+:::
+
+The `--with-sample-config` initializer includes one of each client type to get you
+started.
