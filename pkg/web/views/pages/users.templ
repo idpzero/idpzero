@@ -7,12 +7,55 @@ import (
 
 
 templ UsersView(model models.UsersModel) {
-    @layouts.ContentLayout(users(model)) 
+    @layouts.ContentLayout(users(model))
 }
 
 templ users(model models.UsersModel) {
-    
-    <div>
-    <h1 class="text-3xl font-bold"><span class="gradient">Registered Users</span></h1>
+
+    <div class="pb-5">
+        <h1 class="text-3xl font-bold"><span class="gradient">Registered Users</span></h1>
+        <p class="text-md py-3">
+        These are the users configured for <b>idpzero</b>. Select any of them at the login screen when authenticating from your application. Their claims are shown below and are issued in tokens and the userinfo endpoint according to the requested scopes.
+        </p>
+    </div>
+
+    if len(model.Users) == 0 {
+        <div class="bg-gray-100 p-4 rounded-lg text-sm text-gray-700">
+            No users are configured. Add users to the <span class="font-mono">.idpzero/server.yaml</span> configuration file (or run <span class="font-mono">init --with-sample-config</span>) to get started.
+        </div>
+    } else {
+        for _, u := range model.Users {
+            @user(u)
+        }
+    }
+}
+
+templ user(model models.UserView) {
+    <div class="bg-gray-100 py-2 px-5 mb-5 rounded-lg">
+        <h2 class="text-xl py-2 mb-2">{ model.LoginDisplay }</h2>
+        <div class="text-xs font-bold">Subject</div>
+        <div class="py-1 w-full text-gray-800 text-xs mb-3">{ model.Subject }</div>
+
+        <div class="text-xs font-bold mb-1">Claims</div>
+        if len(model.Claims) == 0 {
+            <div class="py-1 w-full text-gray-500 text-xs">No claims configured.</div>
+        } else {
+            <table class="table table-auto text-xs">
+                <thead>
+                    <tr>
+                        <th class="text-left pr-8">Claim</th>
+                        <th class="text-left">Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    for _, claim := range model.Claims {
+                        <tr>
+                            <td class="pr-8 font-mono align-top">{ claim.Name }</td>
+                            <td class="align-top">{ claim.Value }</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
     </div>
 }
