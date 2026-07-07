@@ -102,14 +102,14 @@ func contentLayout() templ.Component {
 			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<header><nav class=\"navbar fixed top-0 z-10 px-8 h-12\"><div class=\"navbar-start\"><a href=\"/\" class=\"\"><span class=\"gradient text-2xl font-bold\">idp<span class=\"font-normal\">zero</span></span></a></div><div class=\"navbar-center flex\"><ul class=\"menu menu-horizontal px-1\"><li><a href=\"/\">Overview</a></li><li><a href=\"/users\">Users</a></li><li><a href=\"/docs\">Docs</a></li></ul></div><div class=\"navbar-end\"><div class=\"text-xs pr-5 text-gray-400\"><span class=\"font-bold\">commit: </span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<header><nav class=\"navbar fixed top-0 z-10 px-8 h-12\"><div class=\"navbar-start\"><a href=\"/\" class=\"\"><span class=\"gradient text-2xl font-bold\">idp<span class=\"font-normal\">zero</span></span></a></div><div class=\"navbar-center flex\"><ul class=\"menu menu-horizontal px-1\"><li><a href=\"/\">Overview</a></li><li><a href=\"/users\">Users</a></li></ul></div><div class=\"navbar-end\"><div class=\"text-xs pr-5 text-gray-400\"><span class=\"font-bold\">commit: </span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(dbg.Version.Commit)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pkg/web/views/layouts/content.templ`, Line: 36, Col: 116}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pkg/web/views/layouts/content.templ`, Line: 35, Col: 116}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -122,7 +122,7 @@ func contentLayout() templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(dbg.Version.Version)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pkg/web/views/layouts/content.templ`, Line: 36, Col: 182}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pkg/web/views/layouts/content.templ`, Line: 35, Col: 182}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
