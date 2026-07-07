@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/fsnotify/fsnotify"
@@ -59,8 +60,12 @@ func NewConfigurationManager(dir string) (*ConfigurationManager, error) {
 		return nil, err
 	}
 
-	// add the watcher.
-	wtch.Add(cm.configurationFilePath)
+	// Watch the configuration *directory* rather than the file directly. Many
+	// editors (and our own atomic writes) save by writing a temp file and renaming
+	// it over the target, which replaces the inode and silently orphans a
+	// file-level watch. Watching the directory keeps working across those
+	// replacements; the watcher filters events down to the config file.
+	wtch.Add(cm.configurationDirectory)
 
 	// start the watcher
 	go watcher(&cm)
@@ -174,28 +179,52 @@ func watcher(cm *ConfigurationManager) {
 		cm.done <- struct{}{}
 	}()
 
+	// A single save can emit several events (e.g. CREATE + WRITE, or the multiple
+	// WRITEs of a non-atomic save), so debounce before reloading to avoid firing
+	// change callbacks repeatedly for one logical change.
+	var debounce *time.Timer
+	defer func() {
+		if debounce != nil {
+			debounce.Stop()
+		}
+	}()
+
+	reload := func() {
+		color.Yellow("Server configuration changed.")
+
+		t, err := cm.LoadConfiguration()
+		if err != nil {
+			color.Red("Error loading config file from watch: %v", err)
+			return
+		}
+		for _, changed := range cm.serverChanged {
+			go changed(t)
+		}
+	}
+
 	for {
 		select {
 		case event, ok := <-cm.w.Events:
 			if !ok {
 				return
 			}
-			if event.Has(fsnotify.Write) {
-				if event.Name == cm.configurationFilePath {
 
-					color.Yellow("Server configuration changed.")
-
-					t, err := cm.LoadConfiguration()
-					if err != nil {
-						color.Red("Error loading config file from watch")
-					}
-					if t != nil {
-						for _, changed := range cm.serverChanged {
-							go changed(t)
-						}
-					}
-				}
+			// We watch the directory, so filter down to the configuration file.
+			if filepath.Clean(event.Name) != filepath.Clean(cm.configurationFilePath) {
+				continue
 			}
+
+			// React to writes and to atomic replacements (create/rename over the
+			// target); ignore pure removals.
+			if !event.Has(fsnotify.Write) && !event.Has(fsnotify.Create) && !event.Has(fsnotify.Rename) {
+				continue
+			}
+
+			if debounce != nil {
+				debounce.Stop()
+			}
+			debounce = time.AfterFunc(100*time.Millisecond, reload)
+
 		case err, ok := <-cm.w.Errors:
 			if !ok {
 				return
