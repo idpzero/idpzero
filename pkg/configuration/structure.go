@@ -1,7 +1,16 @@
 package configuration
 
 import (
+	"strings"
 	"time"
+)
+
+// Supported client authentication methods (mirrors the oidc.AuthMethod* values).
+const (
+	AuthMethodBasic         = "client_secret_basic"
+	AuthMethodPost          = "client_secret_post"
+	AuthMethodNone          = "none"
+	AuthMethodPrivateKeyJWT = "private_key_jwt"
 )
 
 // ServerConfig is a struct that holds the server configuration and is generally stored in source control for shared use.
@@ -31,6 +40,36 @@ type ClientConfig struct {
 	ResponseTypes             []string            `yaml:"response_types"`
 	ClientSecret              string              `yaml:"-"` // ignore when marshalling
 	CustomScopes              map[string][]string `yaml:"custom_scopes,omitempty"`
+}
+
+// ResolvedAuthMethod returns the effective authentication method for the client.
+// An empty value defaults to "none", which enables a public client using PKCE
+// and therefore requires no client secret. This makes it safe to commit client
+// configuration to source control without storing any secrets.
+func (c *ClientConfig) ResolvedAuthMethod() string {
+	if strings.TrimSpace(c.AuthMethod) == "" {
+		return AuthMethodNone
+	}
+	return c.AuthMethod
+}
+
+// IsPublic reports whether the client is a public client (auth_method: none),
+// which authenticates the authorization code exchange using PKCE rather than a
+// client secret.
+func (c *ClientConfig) IsPublic() bool {
+	return c.ResolvedAuthMethod() == AuthMethodNone
+}
+
+// RequiresClientSecret reports whether the configured authentication method
+// relies on a shared client secret. Only client_secret_basic and
+// client_secret_post use a secret; none (PKCE) and private_key_jwt do not.
+func (c *ClientConfig) RequiresClientSecret() bool {
+	switch c.ResolvedAuthMethod() {
+	case AuthMethodBasic, AuthMethodPost:
+		return true
+	default:
+		return false
+	}
 }
 
 type User struct {
