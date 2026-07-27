@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/idpzero/idpzero/pkg/configuration"
+	"github.com/idpzero/idpzero/pkg/scim"
 	"github.com/idpzero/idpzero/pkg/store/query"
 	"github.com/idpzero/idpzero/pkg/web/assets"
 	"github.com/zitadel/oidc/v3/pkg/op"
@@ -18,7 +19,7 @@ func mustFs(fs fs.FS, err error) fs.FS {
 	return fs
 }
 
-func Routes(router *chi.Mux, config func() *configuration.ServerConfig, query *query.Queries, provider op.OpenIDProvider) {
+func Routes(router *chi.Mux, config func() *configuration.ServerConfig, query *query.Queries, provider op.OpenIDProvider, scimStatusGet func() *scim.Report, scimStatusSet func(*scim.Report)) {
 
 	router.Handle("/static/*", http.FileServer(http.FS(assets.Static)))
 
@@ -34,6 +35,9 @@ func Routes(router *chi.Mux, config func() *configuration.ServerConfig, query *q
 
 	router.Get("/", index(config))
 	router.Get("/users", users(config))
+	router.Get("/scim", scimStatusView(config, scimStatusGet))
+	router.Post("/scim/sync", scimSync(config, scimStatusSet))
+	router.Post("/scim/reset", scimReset(scimStatusSet))
 	router.Get("/login", login(config, query))
 	router.Post("/login", loginSubmit(config, query, op.AuthCallbackURL(provider)))
 

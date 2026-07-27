@@ -17,7 +17,8 @@ export default defineConfig({
         text: 'Introduction',
         items: [
           { text: 'What is idpzero?', link: '/guide/what-is-it' },
-          { text: 'Getting Started', link: '/guide/getting-started' }
+          { text: 'Getting Started', link: '/guide/getting-started' },
+          { text: 'SCIM Provisioning', link: '/guide/scim-provisioning' }
         ]
       }
     ],

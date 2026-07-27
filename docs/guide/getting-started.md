@@ -162,3 +162,9 @@ avoid this concern entirely.
 
 The `--with-sample-config` initializer includes one of each client type to get you
 started.
+
+## Provisioning users to another system (SCIM)
+
+`idpzero` can push its configured users to an external SCIM 2.0 service from the
+**Provisioning** page in the dashboard. See [SCIM Provisioning](/guide/scim-provisioning)
+for configuration and usage.
