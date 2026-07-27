@@ -28,6 +28,7 @@ type Server struct {
 	config  *configuration.ServerConfig
 	users   *users
 	clients *clients
+	scim    *scimStatus
 	queries *query.Queries
 	db      *sql.DB
 }
@@ -50,6 +51,7 @@ func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, 
 		server:  &http.Server{Addr: fmt.Sprintf("0.0.0.0:%d", c.Server.Port), Handler: router},
 		users:   newUsers(),
 		clients: newClients(),
+		scim:    newSCIMStatus(),
 		queries: query.New(db),
 		db:      db,
 	}
@@ -85,7 +87,7 @@ func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, 
 	rtr := provider.Handler.(*chi.Mux)
 	controllers.Routes(rtr, func() *configuration.ServerConfig {
 		return server.config
-	}, server.queries, provider)
+	}, server.queries, provider, server.scim.Get, server.scim.Set)
 
 	//rtr.Get("/", )
 

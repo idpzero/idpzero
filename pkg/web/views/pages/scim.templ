@@ -1,0 +1,107 @@
+package pages
+
+import (
+"github.com/idpzero/idpzero/pkg/web/models"
+"github.com/idpzero/idpzero/pkg/web/views/layouts"
+)
+
+
+templ SCIMView(model models.SCIMModel) {
+    @layouts.ContentLayout(scim(model))
+}
+
+templ scim(model models.SCIMModel) {
+
+    <div class="pb-5">
+        <h1 class="text-3xl font-bold"><span class="gradient">Provisioning (SCIM)</span></h1>
+        <p class="text-md py-3">
+        <b>idpzero</b> can push its configured users to an external SCIM 2.0 service. Each user is matched on <span class="font-mono">externalId</span> (the user's subject) and either created or replaced, so syncing is safe to repeat.
+        </p>
+    </div>
+
+    if !model.Configured {
+        <div class="bg-yellow-100 p-4 rounded-lg text-sm text-yellow-800">
+            No SCIM target is configured. Add a <span class="font-mono">scim:</span> block with an <span class="font-mono">endpoint</span> to <span class="font-mono">.idpzero/server.yaml</span> to enable provisioning.
+        </div>
+    } else {
+        <div class="bg-gray-100 py-3 px-5 mb-5 rounded-lg">
+            <div class="text-xs font-bold">Endpoint</div>
+            <div class="py-1 w-full text-gray-800 text-xs mb-3 font-mono">{ model.Endpoint }</div>
+
+            <div class="flex gap-8">
+                <div>
+                    <div class="text-xs font-bold">Bearer token</div>
+                    <div class="py-1 text-gray-800 text-xs">
+                        if model.TokenConfigured {
+                            Configured
+                        } else {
+                            Not set (requests sent without authentication)
+                        }
+                    </div>
+                </div>
+                <div>
+                    <div class="text-xs font-bold">Configured users</div>
+                    <div class="py-1 text-gray-800 text-xs">{ formatInt(model.UserCount) }</div>
+                </div>
+            </div>
+
+            <form method="post" action="/scim/sync" class="pt-3">
+                <button type="submit" class="btn btn-primary btn-sm">Sync now</button>
+            </form>
+        </div>
+
+        if model.HasRun {
+            <div class="pb-2 flex items-center gap-4">
+                <h2 class="text-xl font-bold">Last sync</h2>
+                <span class="text-xs text-gray-500">{ model.RanAt }</span>
+                if model.Failed == 0 {
+                    <span class="text-xs text-green-700">{ formatInt(model.Total) } users, no failures</span>
+                } else {
+                    <span class="text-xs text-red-700">{ formatInt(model.Failed) } of { formatInt(model.Total) } failed</span>
+                }
+                <form method="post" action="/scim/reset" class="ml-auto">
+                    <button type="submit" class="btn btn-ghost btn-sm text-red-700" title="Clear the local sync history (does not remove users on the target)">Reset history</button>
+                </form>
+            </div>
+
+            if len(model.Results) == 0 {
+                <div class="py-1 w-full text-gray-500 text-xs">No users were provisioned.</div>
+            } else {
+                <table class="table table-auto text-xs">
+                    <thead>
+                        <tr>
+                            <th class="text-left pr-8">Subject</th>
+                            <th class="text-left pr-8">Username</th>
+                            <th class="text-left pr-8">Action</th>
+                            <th class="text-left">Detail</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        for _, res := range model.Results {
+                            <tr>
+                                <td class="pr-8 font-mono align-top">{ res.Subject }</td>
+                                <td class="pr-8 font-mono align-top">{ res.UserName }</td>
+                                <td class="pr-8 align-top">
+                                    @actionBadge(res.Action)
+                                </td>
+                                <td class="align-top text-red-700">{ res.Error }</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        } else {
+            <div class="bg-gray-100 p-4 rounded-lg text-sm text-gray-700">
+                No sync has run yet. Click <b>Sync now</b> to provision the configured users to the target.
+            </div>
+        }
+    }
+}
+
+templ actionBadge(action string) {
+    if action == "failed" {
+        <span class="text-red-700 font-bold">failed</span>
+    } else {
+        <span class="text-green-700">{ action }</span>
+    }
+}

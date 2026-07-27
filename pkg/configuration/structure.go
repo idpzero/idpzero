@@ -16,6 +16,7 @@ const (
 // ServerConfig is a struct that holds the server configuration and is generally stored in source control for shared use.
 type ServerConfig struct {
 	Server  HostConfig      `yaml:"server"`
+	SCIM    *SCIMConfig     `yaml:"scim,omitempty"`
 	Clients []*ClientConfig `yaml:"clients"`
 	Users   []*User         `yaml:"users"`
 }
@@ -23,6 +24,13 @@ type ServerConfig struct {
 type HostConfig struct {
 	Port      int    `yaml:"port"`
 	KeyPhrase string `yaml:"keyphrase"`
+}
+
+// SCIMConfig configures outbound SCIM 2.0 provisioning, where idpzero acts as a
+// SCIM client and pushes its configured users to an external SCIM service.
+type SCIMConfig struct {
+	Endpoint    string `yaml:"endpoint"`               // base URL of the target SCIM service, e.g. https://host/scim/v2
+	BearerToken string `yaml:"bearer_token,omitempty"` // optional; the IDPZERO_SCIM_TOKEN env var takes precedence
 }
 
 type ClientConfig struct {

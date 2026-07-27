@@ -1,3 +1,10 @@
+# Optional: push the users below to an external SCIM 2.0 service from the
+# Provisioning page in the dashboard. Uncomment and set the endpoint to enable.
+# The bearer token is optional; prefer the IDPZERO_SCIM_TOKEN environment
+# variable over committing a secret here.
+# scim:
+#   endpoint: https://your-scim-target.example.com/scim/v2
+#   bearer_token: ""
 clients:
   # Public client (SPA / native / CLI) authenticating via PKCE.
   # auth_method: none means no client secret is required, so this configuration
