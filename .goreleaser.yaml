@@ -16,7 +16,7 @@ before:
     - go generate ./...
 
 builds:
-  
+
   - env:
       - CGO_ENABLED=0
     binary: idpzero
@@ -24,6 +24,15 @@ builds:
       - linux
       - windows
       - darwin
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X main.version={{ .Version }}
+      - -X main.commit={{ .Commit }}
 
 archives:
   - format: tar.gz
@@ -56,4 +65,55 @@ brews:
     owner: idpzero
     name: homebrew-idpzero
     token: "{{ .Env.PUBLISHER_TOKEN }}"
-  
+
+# Hardened container images published to GitHub Container Registry (ghcr.io).
+# One image is built per architecture from Dockerfile.goreleaser (which copies
+# the matching pre-built binary), then stitched into a multi-arch manifest
+# below. The `latest` tags are only applied to stable (non-prerelease) tags.
+dockers:
+  - id: idpzero-amd64
+    goos: linux
+    goarch: amd64
+    dockerfile: Dockerfile.goreleaser
+    use: buildx
+    image_templates:
+      - "ghcr.io/idpzero/idpzero:{{ .Version }}-amd64"
+      - "{{ if not .Prerelease }}ghcr.io/idpzero/idpzero:latest-amd64{{ end }}"
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--pull"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.description=Single binary Identity Provider (IDP) for local dev/test"
+      - "--label=org.opencontainers.image.url=https://idpzero.dev"
+      - "--label=org.opencontainers.image.source=https://github.com/idpzero/idpzero"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.licenses=MIT"
+  - id: idpzero-arm64
+    goos: linux
+    goarch: arm64
+    dockerfile: Dockerfile.goreleaser
+    use: buildx
+    image_templates:
+      - "ghcr.io/idpzero/idpzero:{{ .Version }}-arm64"
+      - "{{ if not .Prerelease }}ghcr.io/idpzero/idpzero:latest-arm64{{ end }}"
+    build_flag_templates:
+      - "--platform=linux/arm64"
+      - "--pull"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.description=Single binary Identity Provider (IDP) for local dev/test"
+      - "--label=org.opencontainers.image.url=https://idpzero.dev"
+      - "--label=org.opencontainers.image.source=https://github.com/idpzero/idpzero"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.licenses=MIT"
+
+docker_manifests:
+  - name_template: "ghcr.io/idpzero/idpzero:{{ .Version }}"
+    image_templates:
+      - "ghcr.io/idpzero/idpzero:{{ .Version }}-amd64"
+      - "ghcr.io/idpzero/idpzero:{{ .Version }}-arm64"
+  - name_template: "{{ if not .Prerelease }}ghcr.io/idpzero/idpzero:latest{{ end }}"
+    image_templates:
+      - "{{ if not .Prerelease }}ghcr.io/idpzero/idpzero:latest-amd64{{ end }}"
+      - "{{ if not .Prerelease }}ghcr.io/idpzero/idpzero:latest-arm64{{ end }}"

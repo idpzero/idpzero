@@ -1,0 +1,32 @@
+# syntax=docker/dockerfile:1
+#
+# Runtime image used by GoReleaser during a release. GoReleaser compiles the
+# per-architecture binaries itself and places the `idpzero` binary in the build
+# context, so there is no Go toolchain here -- we only assemble the hardened
+# runtime image. For a build-from-source image see the top-level Dockerfile.
+
+# Tiny stage whose only job is to create a /config directory that the
+# distroless base (which has no shell) can COPY in with non-root ownership.
+FROM busybox:1.37 AS prep
+RUN mkdir -p /config
+
+# distroless "static" ships CA certificates + tzdata and runs as an
+# unprivileged user (uid/gid 65532). No shell or package manager => minimal
+# attack surface. Our binary is fully static (CGO disabled), so this is enough.
+FROM gcr.io/distroless/static:nonroot
+
+COPY idpzero /usr/bin/idpzero
+COPY --from=prep --chown=65532:65532 /config /config
+
+# Configuration + state directory. Bind-mount your host `.idpzero` directory
+# here (or use a named volume). idpzero reads server.yaml and writes
+# cache/state.sqlite under this path.
+VOLUME ["/config"]
+
+# Default IDP listen port (server.port in server.yaml).
+EXPOSE 4379
+
+USER 65532:65532
+
+ENTRYPOINT ["/usr/bin/idpzero"]
+CMD ["serve", "--config", "/config"]
