@@ -1,0 +1,35 @@
+# syntax=docker/dockerfile:1
+#
+# Runtime image used by GoReleaser during a release. GoReleaser compiles the
+# per-architecture binaries itself and places the `idpzero` binary (and the
+# entrypoint script, via `extra_files`) in the build context, so there is no Go
+# toolchain here -- we only assemble the hardened runtime image. For a
+# build-from-source image see the top-level Dockerfile.
+
+FROM alpine:3.21
+
+# ca-certificates: needed for outbound TLS (e.g. SCIM provisioning).
+# su-exec: drop privileges from the entrypoint after fixing volume ownership.
+# Create the unprivileged runtime user and pre-create the config dir so named
+# volumes inherit its ownership.
+RUN apk add --no-cache ca-certificates su-exec \
+    && addgroup -g 65532 -S idpzero \
+    && adduser -u 65532 -S -H -D -G idpzero idpzero \
+    && mkdir -p /config \
+    && chown idpzero:idpzero /config
+
+COPY idpzero /usr/bin/idpzero
+COPY --chmod=0755 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+
+# Configuration + state directory. Bind-mount your host `.idpzero` directory
+# here (or use a named volume). idpzero reads server.yaml and writes
+# cache/state.sqlite under this path.
+VOLUME ["/config"]
+
+# Default IDP listen port (server.port in server.yaml).
+EXPOSE 4379
+
+# The entrypoint starts as root, chowns /config, then drops to the idpzero user
+# (uid/gid 65532). Pass `--user` to skip that and run as an arbitrary uid.
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["serve", "--config", "/config"]

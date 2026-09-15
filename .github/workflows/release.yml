@@ -9,7 +9,7 @@ on:
 
 permissions:
   contents: write
-  # packages: write
+  packages: write # push container images to ghcr.io
   # issues: write
   # id-token: write
 
@@ -25,8 +25,18 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: stable
-      # More assembly might be required: Docker logins, GPG, etc.
-      # It all depends on your needs.
+      # QEMU + Buildx enable building the linux/arm64 image on the amd64 runner.
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      # Authenticate to GitHub Container Registry so GoReleaser can push images.
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:

@@ -12,6 +12,10 @@ lint:
 db:
 	sqlc generate --file ./pkg/store/sqlc.yaml
 
+# Build the hardened container image locally from source.
+docker:
+	docker build -t idpzero:local .
+
 vhs:
 	rm -rf .idpzero
 	vhs ./scripts/vhs/init.tape
@@ -55,4 +59,4 @@ watch/dbquery:
 watch:
 	make -j5 watch/templ watch/server watch/tailwind watch/assets watch/dbquery
 
-.PHONY: test fmt lint db
+.PHONY: test fmt lint db docker

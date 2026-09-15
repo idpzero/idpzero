@@ -1,0 +1,18 @@
+# Keep the build context small and reproducible. Only the Go sources and the
+# committed generated assets (templ + tailwind output) are needed to build.
+.git
+.github
+.idpzero
+dist/
+tmp/
+node_modules/
+docs/
+scripts/
+*.md
+.DS_Store
+
+# Docker / CI files are not needed inside the build context.
+Dockerfile
+Dockerfile.goreleaser
+.dockerignore
+.goreleaser.yaml
