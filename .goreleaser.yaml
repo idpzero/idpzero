@@ -76,6 +76,8 @@ dockers:
     goarch: amd64
     dockerfile: Dockerfile.goreleaser
     use: buildx
+    extra_files:
+      - docker-entrypoint.sh
     image_templates:
       - "ghcr.io/idpzero/idpzero:{{ .Version }}-amd64"
       - "{{ if not .Prerelease }}ghcr.io/idpzero/idpzero:latest-amd64{{ end }}"
@@ -94,6 +96,8 @@ dockers:
     goarch: arm64
     dockerfile: Dockerfile.goreleaser
     use: buildx
+    extra_files:
+      - docker-entrypoint.sh
     image_templates:
       - "ghcr.io/idpzero/idpzero:{{ .Version }}-arm64"
       - "{{ if not .Prerelease }}ghcr.io/idpzero/idpzero:latest-arm64{{ end }}"
