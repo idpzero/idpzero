@@ -39,6 +39,7 @@ func Routes(router *chi.Mux, config func() *configuration.ServerConfig, query *q
 	router.Post("/scim/sync", scimSync(config, scimStatusSet))
 	router.Post("/scim/reset", scimReset(scimStatusSet))
 	router.Get("/login", login(config, query))
+	router.Method(http.MethodGet, "/logged-out", loggedOut())
 	router.Post("/login", loginSubmit(config, query, op.AuthCallbackURL(provider)))
 
 }

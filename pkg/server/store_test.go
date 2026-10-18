@@ -8,14 +8,14 @@ import (
 )
 
 func newSecretTestStorage() *Storage {
-	return &Storage{
-		server: &configuration.ServerConfig{
-			Clients: []*configuration.ClientConfig{
-				{ClientID: "web", AuthMethod: "client_secret_basic", ClientSecret: "topsecret"},
-				{ClientID: "spa", AuthMethod: "none"},
-			},
+	s := &Storage{}
+	s.server.Store(&configuration.ServerConfig{
+		Clients: []*configuration.ClientConfig{
+			{ClientID: "web", AuthMethod: "client_secret_basic", ClientSecret: "topsecret"},
+			{ClientID: "spa", AuthMethod: "none"},
 		},
-	}
+	})
+	return s
 }
 
 func TestAuthorizeClientIDSecret(t *testing.T) {

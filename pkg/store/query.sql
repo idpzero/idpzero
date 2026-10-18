@@ -138,3 +138,11 @@ WHERE
 --         scopes text NOT NULL, -- comma separated
 --         created_at INTEGER NOT NULL -- since epoch
 --     );
+-- name: DeleteTokenByID :execrows
+DELETE FROM tokens WHERE id = ?;
+
+-- name: DeleteTokensByRefreshTokenID :exec
+DELETE FROM tokens WHERE refresh_token_id = ?;
+
+-- name: DeleteRefreshTokenByID :execrows
+DELETE FROM refresh_tokens WHERE id = ?;
