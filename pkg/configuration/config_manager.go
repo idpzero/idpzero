@@ -69,7 +69,10 @@ func NewConfigurationManager(dir string) (*ConfigurationManager, error) {
 	// it over the target, which replaces the inode and silently orphans a
 	// file-level watch. Watching the directory keeps working across those
 	// replacements; the watcher filters events down to the config file.
-	wtch.Add(cm.configurationDirectory)
+	if err := wtch.Add(cm.configurationDirectory); err != nil {
+		_ = wtch.Close()
+		return nil, err
+	}
 
 	// start the watcher
 	go watcher(cm)
@@ -108,7 +111,7 @@ func (r *ConfigurationManager) LoadConfiguration() (*ServerConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	doc := &ServerConfig{}
 	buf := new(bytes.Buffer)
@@ -143,8 +146,8 @@ func (r *ConfigurationManager) LoadConfiguration() (*ServerConfig, error) {
 }
 
 func (w *ConfigurationManager) Close() {
-	w.w.Close()
-	<-w.done // wait for the go routine to finish
+	_ = w.w.Close() // ends the watcher goroutine
+	<-w.done        // wait for the go routine to finish
 }
 
 func marshal[T ServerConfig](path string, config T) error {

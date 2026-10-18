@@ -120,7 +120,7 @@ func (s *Storage) CreateAccessAndRefreshTokens(ctx context.Context, request op.T
 			return "", "", time.Time{}, err
 		}
 
-		defer tx.Rollback()
+		defer func() { _ = tx.Rollback() }() // no-op after Commit
 
 		accessToken, refreshToken, err := s.tokenManager.ExchangeRefreshToken(ctx, tx, ExchangeRefreshTokenArgs{
 			TokenRequest: teReq,
@@ -130,7 +130,9 @@ func (s *Storage) CreateAccessAndRefreshTokens(ctx context.Context, request op.T
 			return "", "", time.Time{}, err
 		}
 
-		tx.Commit()
+		if err := tx.Commit(); err != nil {
+			return "", "", time.Time{}, err
+		}
 		return accessToken.ID, refreshToken.ID, time.Unix(accessToken.Expiration, 0), nil
 	}
 
@@ -143,7 +145,7 @@ func (s *Storage) CreateAccessAndRefreshTokens(ctx context.Context, request op.T
 			return "", "", time.Time{}, err
 		}
 
-		defer tx.Rollback()
+		defer func() { _ = tx.Rollback() }() // no-op after Commit
 
 		accessToken, refreshToken, err := s.tokenManager.IssueTokens(ctx, tx, IssueTokensArgs{
 			TokenRequest:      request,
@@ -154,7 +156,9 @@ func (s *Storage) CreateAccessAndRefreshTokens(ctx context.Context, request op.T
 			return "", "", time.Time{}, err
 		}
 
-		tx.Commit()
+		if err := tx.Commit(); err != nil {
+			return "", "", time.Time{}, err
+		}
 		return accessToken.ID, refreshToken.ID, time.Unix(accessToken.Expiration, 0), nil
 	}
 
@@ -188,7 +192,7 @@ func (s *Storage) CreateAccessToken(ctx context.Context, request op.TokenRequest
 		return "", time.Time{}, err
 	}
 
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }() // no-op after Commit
 
 	token, _, err := s.tokenManager.IssueTokens(ctx, tx, IssueTokensArgs{
 		TokenRequest:      request,
@@ -199,7 +203,9 @@ func (s *Storage) CreateAccessToken(ctx context.Context, request op.TokenRequest
 		return "", time.Time{}, err
 	}
 
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return "", time.Time{}, err
+	}
 
 	return token.ID, time.Unix(token.Expiration, 0), nil
 }

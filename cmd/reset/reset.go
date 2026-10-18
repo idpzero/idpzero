@@ -68,7 +68,7 @@ var initializeCmd = &cobra.Command{
 				if err != nil {
 					return err
 				}
-				defer db.Close()
+				defer func() { _ = db.Close() }()
 
 				queries := query.New(db)
 				if err := queries.DeleteAllAuthRequests(cmd.Context()); err != nil {

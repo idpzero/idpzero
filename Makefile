@@ -16,6 +16,10 @@ db:
 docker:
 	docker build -t idpzero:local .
 
+# Serve a minimal config from the image built by `make docker`.
+docker/smoke: docker
+	scripts/smoke-image.sh idpzero:local
+
 vhs:
 	rm -rf .idpzero
 	vhs ./scripts/vhs/init.tape
