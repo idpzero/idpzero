@@ -77,7 +77,7 @@ func (a *AuthRequest) Done() bool {
 	return a.Complete
 }
 
-//var _ op.RefreshToken = (*RefreshToken)(nil)
+var _ op.RefreshTokenRequest = (*RefreshToken)(nil)
 
 func (r *RefreshToken) GetAMR() []string {
 	if !r.Amr.Valid {
@@ -88,7 +88,7 @@ func (r *RefreshToken) GetAMR() []string {
 }
 
 func (r *RefreshToken) GetAudience() []string {
-	return []string{r.Audience}
+	return strings.Fields(r.Audience) // stored space separated
 }
 
 func (r *RefreshToken) GetAuthTime() time.Time {

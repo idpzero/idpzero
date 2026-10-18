@@ -3,8 +3,10 @@ package server
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -164,9 +166,15 @@ func (s *Storage) CreateAccessAndRefreshTokens(ctx context.Context, request op.T
 		return "", "", time.Time{}, err
 	}
 
+	defer func() { _ = tx.Rollback() }()
+
 	accessToken, refreshToken, err := s.tokenManager.IssueFromRequestToken(ctx, tx, request, currentRefreshToken)
 
 	if err != nil {
+		return "", "", time.Time{}, err
+	}
+
+	if err := tx.Commit(); err != nil {
 		return "", "", time.Time{}, err
 	}
 
@@ -260,8 +268,11 @@ func (s *Storage) GetClientByClientID(ctx context.Context, clientID string) (op.
 }
 
 // GetKeyByIDAndClientID implements op.Storage.
+//
+// Clients have no registered public keys in the configuration, so a JWT
+// assertion (private_key_jwt client authentication) cannot be verified.
 func (s *Storage) GetKeyByIDAndClientID(ctx context.Context, keyID string, clientID string) (*jose.JSONWebKey, error) {
-	panic("unimplemented GetKeyByIDAndClientID")
+	return nil, fmt.Errorf("client '%s' has no registered keys: private_key_jwt is not supported", clientID)
 }
 
 // GetPrivateClaimsFromScopes implements op.Storage.
@@ -270,8 +281,20 @@ func (s *Storage) GetPrivateClaimsFromScopes(ctx context.Context, userID string,
 }
 
 // GetRefreshTokenInfo implements op.Storage.
+//
+// Refresh tokens are handed out as their ID.
 func (s *Storage) GetRefreshTokenInfo(ctx context.Context, clientID string, token string) (userID string, tokenID string, err error) {
-	panic("unimplemented GetRefreshTokenInfo")
+	rt, err := s.query.GetRefreshTokenByID(ctx, token)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", "", op.ErrInvalidRefreshToken
+		}
+		return "", "", err
+	}
+	if rt.ApplicationID != clientID {
+		return "", "", op.ErrInvalidRefreshToken
+	}
+	return rt.Subject, rt.ID, nil
 }
 
 // Health implements op.Storage.
@@ -301,8 +324,46 @@ func (s *Storage) KeySet(ctx context.Context) ([]op.Key, error) {
 }
 
 // RevokeToken implements op.Storage.
+//
+// tokenOrTokenID is an access token ID or a refresh token ID. Revoking a
+// refresh token also revokes the access tokens issued with it. A token
+// that does not exist is already revoked (RFC 7009 section 2.2).
 func (s *Storage) RevokeToken(ctx context.Context, tokenOrTokenID string, userID string, clientID string) *oidc.Error {
-	panic("unimplemented RevokeToken")
+	if token, err := s.query.GetTokenByID(ctx, tokenOrTokenID); err == nil {
+		if token.ApplicationID != clientID {
+			return oidc.ErrInvalidClient().WithDescription("token was not issued for this client")
+		}
+		if _, err := s.query.DeleteTokenByID(ctx, token.ID); err != nil {
+			return oidc.ErrServerError().WithParent(err)
+		}
+		return nil
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return oidc.ErrServerError().WithParent(err)
+	}
+
+	rt, err := s.query.GetRefreshTokenByID(ctx, tokenOrTokenID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil
+	}
+	if err != nil {
+		return oidc.ErrServerError().WithParent(err)
+	}
+	if rt.ApplicationID != clientID {
+		return oidc.ErrInvalidClient().WithDescription("token was not issued for this client")
+	}
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return oidc.ErrServerError().WithParent(err)
+	}
+	defer func() { _ = tx.Rollback() }()
+	if err := s.tokenManager.DeleteRefreshToken(ctx, tx, rt.ID); err != nil {
+		return oidc.ErrServerError().WithParent(err)
+	}
+	if err := tx.Commit(); err != nil {
+		return oidc.ErrServerError().WithParent(err)
+	}
+	return nil
 }
 
 // SaveAuthCode implements op.Storage.
@@ -327,8 +388,45 @@ func (s *Storage) SaveAuthCode(ctx context.Context, id string, code string) erro
 }
 
 // SetIntrospectionFromToken implements op.Storage.
-func (s *Storage) SetIntrospectionFromToken(ctx context.Context, userinfo *oidc.IntrospectionResponse, tokenID string, subject string, clientID string) error {
-	panic("unimplemented SetIntrospectionFromToken")
+//
+// An error makes the token inactive. clientID is the resource server that
+// asks: it must be in the token's audience.
+func (s *Storage) SetIntrospectionFromToken(ctx context.Context, introspection *oidc.IntrospectionResponse, tokenID string, subject string, clientID string) error {
+	token, err := s.activeToken(ctx, tokenID)
+	if err != nil {
+		return err
+	}
+	if !slices.Contains(strings.Fields(token.Audience), clientID) {
+		return fmt.Errorf("token is not valid for this client")
+	}
+
+	userInfo := new(oidc.UserInfo)
+	if err := s.populateUserInfo(ctx, userInfo, subject, token.ApplicationID, strings.Fields(token.Scopes)); err != nil {
+		return err
+	}
+	introspection.SetUserInfo(userInfo)
+	introspection.Scope = strings.Fields(token.Scopes)
+	introspection.ClientID = token.ApplicationID
+	introspection.Audience = strings.Fields(token.Audience)
+	introspection.Expiration = oidc.FromTime(time.Unix(token.Expiration, 0))
+	introspection.IssuedAt = oidc.FromTime(time.Unix(token.CreatedAt, 0))
+	introspection.TokenType = oidc.BearerToken
+	return nil
+}
+
+// activeToken returns the access token tokenID unless it is missing or expired.
+func (s *Storage) activeToken(ctx context.Context, tokenID string) (*query.Token, error) {
+	token, err := s.query.GetTokenByID(ctx, tokenID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("token is invalid or has been revoked")
+		}
+		return nil, err
+	}
+	if time.Now().Unix() >= token.Expiration {
+		return nil, fmt.Errorf("token has expired")
+	}
+	return token, nil
 }
 
 func (s *Storage) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.UserInfo, userID string, clientID string, scopes []string) error {
@@ -342,13 +440,13 @@ func (s *Storage) SetUserinfoFromRequest(ctx context.Context, userinfo *oidc.Use
 // SetUserinfoFromToken implements op.Storage.
 func (s *Storage) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.UserInfo, tokenID string, subject string, origin string) error {
 
-	token, err := s.query.GetTokenByID(ctx, tokenID)
+	token, err := s.activeToken(ctx, tokenID)
 
 	if err != nil {
 		return err
 	}
 
-	return s.populateUserInfo(ctx, userinfo, subject, token.ApplicationID, strings.Split(token.Scopes, " "))
+	return s.populateUserInfo(ctx, userinfo, subject, token.ApplicationID, strings.Fields(token.Scopes))
 }
 
 // SignatureAlgorithms implements op.Storage.
@@ -392,12 +490,25 @@ func (s *Storage) TerminateSession(ctx context.Context, userID string, clientID 
 
 // TokenRequestByRefreshToken implements op.Storage.
 func (s *Storage) TokenRequestByRefreshToken(ctx context.Context, refreshTokenID string) (op.RefreshTokenRequest, error) {
-	panic("unimplemented TokenRequestByRefreshToken")
+	rt, err := s.query.GetRefreshTokenByID(ctx, refreshTokenID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, op.ErrInvalidRefreshToken
+		}
+		return nil, err
+	}
+	if time.Now().Unix() >= rt.Expiration {
+		return nil, fmt.Errorf("refresh token has expired")
+	}
+	return rt, nil
 }
 
 // ValidateJWTProfileScopes implements op.Storage.
+//
+// It is only used by the JWT authorization grant (RFC 7523), which the
+// provider does not enable.
 func (s *Storage) ValidateJWTProfileScopes(ctx context.Context, userID string, scopes []string) ([]string, error) {
-	panic("unimplemented ValidateJWTProfileScopes")
+	return nil, fmt.Errorf("the JWT authorization grant is not supported")
 }
 
 func (s *Storage) populateUserInfo(_ context.Context, userInfo *oidc.UserInfo, userID string, clientID string, scopes []string) (err error) {

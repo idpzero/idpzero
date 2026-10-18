@@ -191,18 +191,26 @@ func (t *tokenManager) IssueFromRequestToken(ctx context.Context, tx *sql.Tx, re
 		return nil, nil, err
 	}
 
-	// TODO - delete the old refresh token and all access tokens based on it
-	// deletes the refresh token and all access tokens which were issued based on this refresh token
-	// delete(s.refreshTokens, currentRefreshToken)
-	// for _, token := range s.tokens {
-	// 	if token.RefreshTokenID == currentRefreshToken {
-	// 		delete(s.tokens, token.ID)
-	// 		break
-	// 	}
-	// }
+	// rotate: the old refresh token and the access tokens issued with it
+	// stop working.
+	if err := t.DeleteRefreshToken(ctx, tx, crt.ID); err != nil {
+		return nil, nil, err
+	}
 
 	return accessToken, refreshToken, err
 
+}
+
+// DeleteRefreshToken deletes a refresh token and the access tokens issued with it.
+func (t *tokenManager) DeleteRefreshToken(ctx context.Context, tx *sql.Tx, refreshTokenID string) error {
+	qtx := t.queries.WithTx(tx)
+
+	if err := qtx.DeleteTokensByRefreshTokenID(ctx, sql.NullString{String: refreshTokenID, Valid: true}); err != nil {
+		return err
+	}
+
+	_, err := qtx.DeleteRefreshTokenByID(ctx, refreshTokenID)
+	return err
 }
 
 type IssueTokensArgs struct {
