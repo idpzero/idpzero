@@ -230,7 +230,7 @@ func (t *tokenManager) IssueTokens(ctx context.Context, tx *sql.Tx, args IssueTo
 	var requestID *string = nil
 	var applicationID string
 	var authTime time.Time
-	var amr []string = []string{}
+	var amr = []string{}
 
 	switch req := args.TokenRequest.(type) {
 	case *query.AuthRequest:

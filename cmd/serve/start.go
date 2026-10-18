@@ -50,7 +50,7 @@ var startCmd = &cobra.Command{
 			return err
 		}
 
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 
 		s, err := server.NewServer(dbg.Logger, conf, db)
 
