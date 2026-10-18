@@ -42,6 +42,9 @@ clients:
       - http://localhost:9999/auth/callback
     response_types:
       - code
+    # custom claims (users[].claims.custom) are released with openid, except
+    # those a custom scope lists here: they are released only when that
+    # scope is requested.
     custom_scopes:
       myscope:
         - "Custom:Sample"

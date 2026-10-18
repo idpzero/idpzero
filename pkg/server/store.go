@@ -382,8 +382,12 @@ func (s *Storage) SigningKey(ctx context.Context) (op.SigningKey, error) {
 }
 
 // TerminateSession implements op.Storage.
+//
+// idpzero keeps no browser session: every authorization request shows the
+// login page. There is nothing to terminate, so RP-initiated logout only
+// redirects.
 func (s *Storage) TerminateSession(ctx context.Context, userID string, clientID string) error {
-	panic("unimplemented TerminateSession")
+	return nil
 }
 
 // TokenRequestByRefreshToken implements op.Storage.
@@ -405,12 +409,23 @@ func (s *Storage) populateUserInfo(_ context.Context, userInfo *oidc.UserInfo, u
 		return fmt.Errorf("user not found")
 	}
 
+	client, hasClient := s.clients.GetByID(clientID)
+
 	// loop through the scopes and assign the claims based on those supported
 	// within each of the well known scope types, and then custom scope configuration
 	for _, scope := range scopes {
 		switch scope {
 		case oidc.ScopeOpenID:
 			userInfo.Subject = user.Subject
+
+			// custom claims that no custom scope of the client maps are released
+			// with openid; mapped claims are only released with their scope.
+			scoped := scopedClaims(client.CustomScopes)
+			for claim, value := range user.Claims.Custom {
+				if !scoped[claim] {
+					userInfo.AppendClaims(claim, value)
+				}
+			}
 		case oidc.ScopeEmail:
 			if user.Claims.Email != nil {
 				userInfo.Email = *user.Claims.Email
@@ -457,19 +472,25 @@ func (s *Storage) populateUserInfo(_ context.Context, userInfo *oidc.UserInfo, u
 				userInfo.PhoneNumberVerified = *user.Claims.PhoneVerified
 			}
 		default:
-			{
-				client, ok := s.clients.GetByID(clientID)
-				if ok {
-					if claims, ok := client.CustomScopes[scope]; ok {
-						for _, claim := range claims {
-							if value, ok := user.Claims.Custom[claim]; ok {
-								userInfo.AppendClaims(claim, value)
-							}
-						}
+			if hasClient {
+				for _, claim := range client.CustomScopes[scope] {
+					if value, ok := user.Claims.Custom[claim]; ok {
+						userInfo.AppendClaims(claim, value)
 					}
 				}
 			}
 		}
 	}
 	return nil
+}
+
+// scopedClaims returns the custom claims that at least one custom scope maps.
+func scopedClaims(customScopes map[string][]string) map[string]bool {
+	scoped := make(map[string]bool)
+	for _, claims := range customScopes {
+		for _, claim := range claims {
+			scoped[claim] = true
+		}
+	}
+	return scoped
 }

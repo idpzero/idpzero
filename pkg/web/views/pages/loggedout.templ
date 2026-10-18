@@ -1,0 +1,14 @@
+package pages
+
+import "github.com/idpzero/idpzero/pkg/web/views/layouts"
+
+templ LoggedOutView() {
+    @layouts.CenteredLayout(loggedOutPage())
+}
+
+templ loggedOutPage() {
+    <div>
+        <h1 class="text-xl font-bold">Signed Out</h1>
+        <div class="py-3 text-sm">You have been signed out. You can close this window.</div>
+    </div>
+}
