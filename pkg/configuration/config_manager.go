@@ -8,6 +8,8 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
+	"sync"
 	"time"
 
 	"github.com/fatih/color"
@@ -32,6 +34,8 @@ type ConfigurationManager struct {
 	// watcher configuration for the configuration file
 	w             *fsnotify.Watcher
 	done          chan struct{}
+	mu            sync.Mutex // guards serverChanged
+	reloading     sync.Mutex // one reload at a time, so changes apply in order
 	serverChanged []func(x *ServerConfig)
 }
 
@@ -42,7 +46,7 @@ func NewConfigurationManager(dir string) (*ConfigurationManager, error) {
 		return nil, err
 	}
 
-	cm := ConfigurationManager{
+	cm := &ConfigurationManager{
 		configurationDirectory: dir,
 		// paths to use
 		configurationFilePath: path.Join(dir, configurationFilename),
@@ -68,9 +72,9 @@ func NewConfigurationManager(dir string) (*ConfigurationManager, error) {
 	wtch.Add(cm.configurationDirectory)
 
 	// start the watcher
-	go watcher(&cm)
+	go watcher(cm)
 
-	return &cm, nil
+	return cm, nil
 }
 
 func (r *ConfigurationManager) IsInitialized() (bool, error) {
@@ -81,7 +85,13 @@ func (r *ConfigurationManager) SaveConfiguration(config ServerConfig) error {
 	return marshal(r.configurationFilePath, config)
 }
 
+// OnServerChanged registers changed to be called with each reloaded
+// configuration. Callbacks run one at a time, in registration order and in
+// the order the changes were made, on the watcher's goroutine: they must not
+// block.
 func (r *ConfigurationManager) OnServerChanged(changed func(x *ServerConfig)) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.serverChanged = append(r.serverChanged, changed)
 }
 
@@ -189,7 +199,12 @@ func watcher(cm *ConfigurationManager) {
 		}
 	}()
 
+	// reload runs on a timer goroutine; reloading serializes overlapping
+	// reloads so a slow one cannot apply after a newer one.
 	reload := func() {
+		cm.reloading.Lock()
+		defer cm.reloading.Unlock()
+
 		color.Yellow("Server configuration changed.")
 
 		t, err := cm.LoadConfiguration()
@@ -197,8 +212,13 @@ func watcher(cm *ConfigurationManager) {
 			color.Red("Error loading config file from watch: %v", err)
 			return
 		}
-		for _, changed := range cm.serverChanged {
-			go changed(t)
+
+		cm.mu.Lock()
+		callbacks := slices.Clone(cm.serverChanged)
+		cm.mu.Unlock()
+
+		for _, changed := range callbacks {
+			changed(t)
 		}
 	}
 

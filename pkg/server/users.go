@@ -26,6 +26,13 @@ func (u *users) GetByID(id string) (configuration.User, bool) {
 	return user, ok
 }
 
+func (u *users) Count() int {
+	u.lock.Lock()
+	defer u.lock.Unlock()
+
+	return len(u.users)
+}
+
 func (u *users) Update(users []*configuration.User) {
 	u.lock.Lock()
 	defer u.lock.Unlock()

@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -17,6 +18,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -40,6 +43,15 @@ clients:
     post_logout_redirect_uris: [http://rp.example/signed-out]
     custom_scopes:
       myscope: ["Custom:Sample"]
+  - name: JWT Web
+    client_id: jwtweb
+    auth_method: client_secret_basic
+    access_token_type: jwt
+    grant_types: [authorization_code]
+    response_types: [code]
+    redirect_uris: [http://rp.example/callback]
+    custom_scopes:
+      myscope: ["Custom:Sample"]
   - name: Key Client
     client_id: pkjwt
     auth_method: private_key_jwt
@@ -61,6 +73,14 @@ const rpCallback = "http://rp.example/callback"
 // newFlowServer runs a full idpzero (provider, storage, web routes) over
 // httptest with flowConfigYAML.
 func newFlowServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	ts, _ := newFlowServerWithConfig(t)
+	return ts
+}
+
+// newFlowServerWithConfig is newFlowServer that also returns the path of
+// the configuration file it watches.
+func newFlowServerWithConfig(t *testing.T) (*httptest.Server, string) {
 	t.Helper()
 	// Written before the manager starts watching, so no reload races the
 	// server starting up.
@@ -88,7 +108,7 @@ func newFlowServer(t *testing.T) *httptest.Server {
 	}
 	ts := httptest.NewServer(s.server.Handler)
 	t.Cleanup(ts.Close)
-	return ts
+	return ts, cm.GetConfigurationFilePath()
 }
 
 // noRedirects is a client that returns each redirect instead of following it.
@@ -114,9 +134,9 @@ type tokens struct {
 	IDToken      string `json:"id_token"`
 }
 
-// webSecret is client web's derived secret, sha1(keyphrase + client_id).
-func webSecret() string {
-	sum := sha1.Sum([]byte("flow-keyphrase" + "web"))
+// clientSecret is a confidential client's derived secret, sha1(keyphrase + client_id).
+func clientSecret(clientID string) string {
+	sum := sha1.Sum([]byte("flow-keyphrase" + clientID))
 	return hex.EncodeToString(sum[:])
 }
 
@@ -124,9 +144,14 @@ func webSecret() string {
 // status and body.
 func postForm(t *testing.T, ts *httptest.Server, path string, form url.Values) (int, []byte) {
 	t.Helper()
+	return postFormAs(t, ts, "web", path, form)
+}
+
+func postFormAs(t *testing.T, ts *httptest.Server, clientID, path string, form url.Values) (int, []byte) {
+	t.Helper()
 	req, _ := http.NewRequest(http.MethodPost, ts.URL+path, strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.SetBasicAuth("web", webSecret())
+	req.SetBasicAuth(clientID, clientSecret(clientID))
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatal(err)
@@ -151,8 +176,14 @@ func decodeTokens(t *testing.T, status int, body []byte) tokens {
 // login signs alice in to client web with scope and returns the tokens.
 func login(t *testing.T, ts *httptest.Server, scope string) tokens {
 	t.Helper()
-	code := authorize(t, ts, "web", scope)
-	status, body := postForm(t, ts, "/oauth/token", url.Values{
+	return loginAs(t, ts, "web", scope)
+}
+
+// loginAs signs alice in to confidential client clientID with scope.
+func loginAs(t *testing.T, ts *httptest.Server, clientID, scope string) tokens {
+	t.Helper()
+	code := authorize(t, ts, clientID, scope)
+	status, body := postFormAs(t, ts, clientID, "/oauth/token", url.Values{
 		"grant_type": {"authorization_code"}, "code": {code}, "redirect_uri": {rpCallback},
 	})
 	return decodeTokens(t, status, body)
@@ -455,5 +486,113 @@ func TestPrivateKeyJWTRejected(t *testing.T) {
 	// zitadel reports a key lookup failure as a 400 server_error.
 	if res.StatusCode != http.StatusBadRequest || !strings.Contains(string(body), "private_key_jwt is not supported") {
 		t.Errorf("private_key_jwt: status %d, want 400 naming the cause: %s", res.StatusCode, body)
+	}
+}
+
+func TestCustomClaimsInJWTAccessToken(t *testing.T) {
+	ts := newFlowServer(t)
+
+	tests := []struct {
+		scope      string
+		wantSample bool
+	}{
+		{scope: "openid email", wantSample: false},
+		{scope: "openid email myscope", wantSample: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.scope, func(t *testing.T) {
+			tok := loginAs(t, ts, "jwtweb", tt.scope)
+			claims := jwtClaims(t, tok.AccessToken)
+			groups, _ := json.Marshal(claims["groups"])
+			if string(groups) != `["admin","editor"]` {
+				t.Errorf("access token groups = %s, want [\"admin\",\"editor\"]", groups)
+			}
+			if _, ok := claims["Custom:Sample"]; ok != tt.wantSample {
+				t.Errorf("access token has Custom:Sample = %v, want %v", ok, tt.wantSample)
+			}
+			// userinfo claims stay out of access tokens; the registered ones stay put.
+			if _, ok := claims["email"]; ok {
+				t.Error("access token carries email")
+			}
+			if claims["sub"] != "alice" || claims["client_id"] != "jwtweb" {
+				t.Errorf("access token sub=%v client_id=%v", claims["sub"], claims["client_id"])
+			}
+			if got := userinfo(t, ts, tok.AccessToken)["sub"]; got != "alice" {
+				t.Errorf("userinfo with the JWT access token: sub = %v", got)
+			}
+		})
+	}
+}
+
+// TestConfigHotReload rewrites the configuration while requests read it
+// (run with -race), then checks the last write is the one in effect.
+func TestConfigHotReload(t *testing.T) {
+	ts, configPath := newFlowServerWithConfig(t)
+
+	stop := make(chan struct{})
+	var wg sync.WaitGroup
+	var serverErrors atomic.Int32
+	hit := func(req func() (*http.Response, error)) {
+		if res, err := req(); err == nil {
+			if res.StatusCode >= http.StatusInternalServerError {
+				serverErrors.Add(1)
+			}
+			_ = res.Body.Close()
+		}
+	}
+	for range 4 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			authz := ts.URL + "/authorize?" + url.Values{
+				"client_id": {"web"}, "redirect_uri": {rpCallback}, "response_type": {"code"}, "scope": {"openid"},
+			}.Encode()
+			for {
+				select {
+				case <-stop:
+					return
+				default:
+				}
+				hit(func() (*http.Response, error) { return noRedirects.Get(authz) }) // client lookup
+				hit(func() (*http.Response, error) { return http.Get(ts.URL + "/") }) // web controllers' config
+				hit(func() (*http.Response, error) {                                  // client secret check
+					req, _ := http.NewRequest(http.MethodPost, ts.URL+"/oauth/token", strings.NewReader("grant_type=authorization_code&code=x&redirect_uri="+url.QueryEscape(rpCallback)))
+					req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+					req.SetBasicAuth("web", clientSecret("web"))
+					return http.DefaultClient.Do(req)
+				})
+			}
+		}()
+	}
+
+	const writes = 5
+	for i := 1; i <= writes; i++ {
+		cfg := strings.Replace(flowConfigYAML, "groups: [admin, editor]", fmt.Sprintf("groups: [v%d]", i), 1)
+		tmp := configPath + ".tmp"
+		if err := os.WriteFile(tmp, []byte(cfg), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Rename(tmp, configPath); err != nil {
+			t.Fatal(err)
+		}
+		time.Sleep(150 * time.Millisecond) // past the watcher's debounce
+	}
+	close(stop)
+	wg.Wait()
+
+	if n := serverErrors.Load(); n > 0 {
+		t.Errorf("%d requests failed with 5xx during reloads", n)
+	}
+	want := fmt.Sprintf(`["v%d"]`, writes)
+	deadline := time.Now().Add(3 * time.Second)
+	for {
+		groups, _ := json.Marshal(jwtClaims(t, login(t, ts, "openid").IDToken)["groups"])
+		if string(groups) == want {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("groups = %s after reloads, want %s", groups, want)
+		}
+		time.Sleep(50 * time.Millisecond)
 	}
 }

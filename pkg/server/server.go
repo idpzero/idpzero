@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"sync"
+	"sync/atomic"
 
 	"github.com/fatih/color"
 	"github.com/go-chi/chi/v5"
@@ -25,7 +26,7 @@ type Server struct {
 	waiter  sync.WaitGroup
 	lock    sync.RWMutex
 	logger  *slog.Logger
-	config  *configuration.ServerConfig
+	config  atomic.Pointer[configuration.ServerConfig] // replaced whole on reload, never modified
 	users   *users
 	clients *clients
 	scim    *scimStatus
@@ -86,7 +87,7 @@ func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, 
 	// the provider on the root, we cant double map the '/'
 	rtr := provider.Handler.(*chi.Mux)
 	controllers.Routes(rtr, func() *configuration.ServerConfig {
-		return server.config
+		return server.config.Load()
 	}, server.queries, provider, server.scim.Get, server.scim.Set)
 
 	//rtr.Get("/", )
@@ -97,10 +98,11 @@ func NewServer(logger *slog.Logger, config *configuration.ConfigurationManager, 
 }
 
 func (s *Server) setConfig(config *configuration.ServerConfig) {
+	// lock so the config, users and clients of one reload are applied together
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	s.config = config
+	s.config.Store(config)
 	s.users.Update(config.Users)
 	s.clients.Update(config.Clients)
 }
@@ -155,7 +157,7 @@ func (s *Server) onStart(ctx context.Context) error {
 	}
 
 	c = console.NewCheck("Checking configuration for clients")
-	clientsCount := len(s.config.Clients)
+	clientsCount := len(s.config.Load().Clients)
 	if clientsCount == 0 {
 		c.Print(console.IconQuestion, "Missing")
 	} else {
@@ -163,7 +165,7 @@ func (s *Server) onStart(ctx context.Context) error {
 	}
 
 	c = console.NewCheck("Checking configuration for users")
-	userCount := len(s.users.users)
+	userCount := s.users.Count()
 	if userCount == 0 {
 		c.Print(console.IconQuestion, "Missing")
 	} else {
@@ -193,7 +195,7 @@ func (s *Server) Run(ctx context.Context) error {
 		serverStopCtx()
 	}()
 
-	hosted := fmt.Sprintf("http://localhost:%d", s.config.Server.Port)
+	hosted := fmt.Sprintf("http://localhost:%d", s.config.Load().Server.Port)
 
 	fmt.Println()
 	fmt.Println(

@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	jose "github.com/go-jose/go-jose/v4"
@@ -26,7 +27,7 @@ type Storage struct {
 	logger       *slog.Logger
 	lock         sync.Mutex
 	configMgr    *configuration.ConfigurationManager
-	server       *configuration.ServerConfig
+	server       atomic.Pointer[configuration.ServerConfig] // replaced whole on reload, never modified
 	db           *sql.DB
 	query        *query.Queries
 	users        *users
@@ -64,10 +65,7 @@ func NewStorage(logger *slog.Logger, configMgr *configuration.ConfigurationManag
 
 // allow updating externally / on demand
 func (s *Storage) setConfig(config *configuration.ServerConfig) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	s.server = config
+	s.server.Store(config)
 }
 
 func (s *Storage) AuthRequestByCode(ctx context.Context, code string) (op.AuthRequest, error) {
@@ -91,7 +89,7 @@ func (s *Storage) AuthRequestByID(ctx context.Context, id string) (op.AuthReques
 func (s *Storage) AuthorizeClientIDSecret(ctx context.Context, clientID string, clientSecret string) error {
 
 	// validate the client with client secret. plain text is used
-	for _, client := range s.server.Clients {
+	for _, client := range s.server.Load().Clients {
 		if client.ClientID == clientID {
 			// Public clients authenticate via PKCE and have no secret; never allow
 			// them to be authenticated through the client_secret path (which would
@@ -258,7 +256,7 @@ func (s *Storage) DeleteAuthRequest(ctx context.Context, id string) error {
 // GetClientByClientID implements op.Storage.
 func (s *Storage) GetClientByClientID(ctx context.Context, clientID string) (op.Client, error) {
 
-	for _, c := range s.server.Clients {
+	for _, c := range s.server.Load().Clients {
 		if c.ClientID == clientID {
 			return NewClient(*c), nil
 		}
@@ -276,8 +274,17 @@ func (s *Storage) GetKeyByIDAndClientID(ctx context.Context, keyID string, clien
 }
 
 // GetPrivateClaimsFromScopes implements op.Storage.
+//
+// These are the claims of JWT access tokens beyond the registered ones; the
+// library has already removed the profile, email, phone and address scopes,
+// so only custom claims are added.
 func (s *Storage) GetPrivateClaimsFromScopes(ctx context.Context, userID string, clientID string, scopes []string) (map[string]any, error) {
-	return nil, nil
+	user, ok := s.users.GetByID(userID)
+	if !ok {
+		return nil, fmt.Errorf("user not found")
+	}
+	client, _ := s.clients.GetByID(clientID)
+	return customClaims(user, client, scopes), nil
 }
 
 // GetRefreshTokenInfo implements op.Storage.
@@ -299,7 +306,7 @@ func (s *Storage) GetRefreshTokenInfo(ctx context.Context, clientID string, toke
 
 // Health implements op.Storage.
 func (s *Storage) Health(context.Context) error {
-	if s.server == nil {
+	if s.server.Load() == nil {
 		return fmt.Errorf("no config loaded")
 	}
 
@@ -520,7 +527,7 @@ func (s *Storage) populateUserInfo(_ context.Context, userInfo *oidc.UserInfo, u
 		return fmt.Errorf("user not found")
 	}
 
-	client, hasClient := s.clients.GetByID(clientID)
+	client, _ := s.clients.GetByID(clientID)
 
 	// loop through the scopes and assign the claims based on those supported
 	// within each of the well known scope types, and then custom scope configuration
@@ -528,15 +535,6 @@ func (s *Storage) populateUserInfo(_ context.Context, userInfo *oidc.UserInfo, u
 		switch scope {
 		case oidc.ScopeOpenID:
 			userInfo.Subject = user.Subject
-
-			// custom claims that no custom scope of the client maps are released
-			// with openid; mapped claims are only released with their scope.
-			scoped := scopedClaims(client.CustomScopes)
-			for claim, value := range user.Claims.Custom {
-				if !scoped[claim] {
-					userInfo.AppendClaims(claim, value)
-				}
-			}
 		case oidc.ScopeEmail:
 			if user.Claims.Email != nil {
 				userInfo.Email = *user.Claims.Email
@@ -582,26 +580,48 @@ func (s *Storage) populateUserInfo(_ context.Context, userInfo *oidc.UserInfo, u
 			if user.Claims.PhoneVerified != nil {
 				userInfo.PhoneNumberVerified = *user.Claims.PhoneVerified
 			}
-		default:
-			if hasClient {
-				for _, claim := range client.CustomScopes[scope] {
-					if value, ok := user.Claims.Custom[claim]; ok {
-						userInfo.AppendClaims(claim, value)
-					}
-				}
-			}
 		}
+	}
+
+	for claim, value := range customClaims(user, client, scopes) {
+		userInfo.AppendClaims(claim, value)
 	}
 	return nil
 }
 
-// scopedClaims returns the custom claims that at least one custom scope maps.
-func scopedClaims(customScopes map[string][]string) map[string]bool {
+// customClaims returns the user's custom claims released for scopes: those
+// that no custom scope of the client lists come with openid, and those a
+// custom scope lists only with that scope. It is nil when there are none.
+func customClaims(user configuration.User, client configuration.ClientConfig, scopes []string) map[string]any {
+	var claims map[string]any
+	release := func(claim string) {
+		if value, ok := user.Claims.Custom[claim]; ok {
+			if claims == nil {
+				claims = make(map[string]any)
+			}
+			claims[claim] = value
+		}
+	}
+
 	scoped := make(map[string]bool)
-	for _, claims := range customScopes {
-		for _, claim := range claims {
+	for _, listed := range client.CustomScopes {
+		for _, claim := range listed {
 			scoped[claim] = true
 		}
 	}
-	return scoped
+
+	for _, scope := range scopes {
+		if scope == oidc.ScopeOpenID {
+			for claim := range user.Claims.Custom {
+				if !scoped[claim] {
+					release(claim)
+				}
+			}
+			continue
+		}
+		for _, claim := range client.CustomScopes[scope] {
+			release(claim)
+		}
+	}
+	return claims
 }
