@@ -184,9 +184,9 @@ users:
 A user without `auth` gets no `acr` and `amr: ["pwd"]`. The ID token's
 `auth_time` is the moment the user was picked on the login page. Every
 authorization request shows the login page (there is no single sign-on
-session), so `prompt=login` and any `max_age` are always met. The amr is kept
-on refresh tokens, so refreshed ID tokens carry it too; acr is not. Userinfo
-returns neither: they are ID token claims.
+session), so `prompt=login` and any `max_age` are always met. Refresh tokens
+keep the acr, amr and auth_time of the login, so refreshed ID tokens carry the
+same values. Userinfo returns none of them: they are ID token claims.
 
 ## Provisioning users to another system (SCIM)
 

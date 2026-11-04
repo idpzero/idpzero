@@ -50,6 +50,7 @@ type RefreshToken struct {
 	Expiration    int64
 	Scopes        string
 	CreatedAt     int64
+	Acr           string
 }
 
 type Token struct {

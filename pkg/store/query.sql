@@ -108,6 +108,7 @@ DELETE FROM keys;
 INSERT INTO refresh_tokens (
     id,
     auth_time,
+    acr,
     amr,
     audience,
     subject,
@@ -117,7 +118,7 @@ INSERT INTO refresh_tokens (
     created_at
   )
 VALUES
-  (?, ?, ?, ?, ?, ?, ?,?, ?) RETURNING *;
+  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *;
 
 
 -- name: GetRefreshTokenByID :one

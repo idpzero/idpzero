@@ -446,8 +446,19 @@ func (s *Storage) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.User
 	return nil // not required
 }
 
+// SetUserinfoFromRequest implements op.CanSetUserinfoFromRequest: the claims
+// of an ID token beyond the registered ones.
+//
+// The library takes an ID token's acr only from an auth request, so an ID
+// token refreshed from a refresh token gets the acr of its login here.
 func (s *Storage) SetUserinfoFromRequest(ctx context.Context, userinfo *oidc.UserInfo, token op.IDTokenRequest, scopes []string) error {
-	return s.populateUserInfo(ctx, userinfo, token.GetSubject(), token.GetClientID(), scopes)
+	if err := s.populateUserInfo(ctx, userinfo, token.GetSubject(), token.GetClientID(), scopes); err != nil {
+		return err
+	}
+	if rt, ok := token.(*query.RefreshToken); ok && rt.Acr != "" {
+		userinfo.AppendClaims("acr", rt.Acr)
+	}
+	return nil
 }
 
 // SetUserinfoFromToken implements op.Storage.

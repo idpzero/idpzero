@@ -84,6 +84,11 @@ func (a *AuthRequest) Done() bool {
 
 var _ op.RefreshTokenRequest = (*RefreshToken)(nil)
 
+// GetACR is the acr of the login the refresh token continues.
+func (r *RefreshToken) GetACR() string {
+	return r.Acr
+}
+
 func (r *RefreshToken) GetAMR() []string {
 	if !r.Amr.Valid {
 		return nil

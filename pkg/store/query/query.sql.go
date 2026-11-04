@@ -147,6 +147,7 @@ const createRefreshToken = `-- name: CreateRefreshToken :one
 INSERT INTO refresh_tokens (
     id,
     auth_time,
+    acr,
     amr,
     audience,
     subject,
@@ -156,12 +157,13 @@ INSERT INTO refresh_tokens (
     created_at
   )
 VALUES
-  (?, ?, ?, ?, ?, ?, ?,?, ?) RETURNING id, auth_time, amr, audience, subject, application_id, expiration, scopes, created_at
+  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id, auth_time, amr, audience, subject, application_id, expiration, scopes, created_at, acr
 `
 
 type CreateRefreshTokenParams struct {
 	ID            string
 	AuthTime      int64
+	Acr           string
 	Amr           sql.NullString
 	Audience      string
 	Subject       string
@@ -175,6 +177,7 @@ func (q *Queries) CreateRefreshToken(ctx context.Context, arg CreateRefreshToken
 	row := q.db.QueryRowContext(ctx, createRefreshToken,
 		arg.ID,
 		arg.AuthTime,
+		arg.Acr,
 		arg.Amr,
 		arg.Audience,
 		arg.Subject,
@@ -194,6 +197,7 @@ func (q *Queries) CreateRefreshToken(ctx context.Context, arg CreateRefreshToken
 		&i.Expiration,
 		&i.Scopes,
 		&i.CreatedAt,
+		&i.Acr,
 	)
 	return &i, err
 }
@@ -489,7 +493,7 @@ func (q *Queries) GetKeysByUse(ctx context.Context, usage string) ([]*Key, error
 }
 
 const getRefreshTokenByID = `-- name: GetRefreshTokenByID :one
-SELECT id, auth_time, amr, audience, subject, application_id, expiration, scopes, created_at FROM
+SELECT id, auth_time, amr, audience, subject, application_id, expiration, scopes, created_at, acr FROM
   refresh_tokens
 WHERE
   id = ? LIMIT 1
@@ -508,6 +512,7 @@ func (q *Queries) GetRefreshTokenByID(ctx context.Context, id string) (*RefreshT
 		&i.Expiration,
 		&i.Scopes,
 		&i.CreatedAt,
+		&i.Acr,
 	)
 	return &i, err
 }

@@ -62,19 +62,25 @@ func TestUserAuthClaims(t *testing.T) {
 			tok := exchange(t, ts, authorizeUser(t, ts, "web", "openid offline_access", tc.user, nil))
 			checkAuthClaims(t, tok.IDToken, tc.acr, tc.amr, before, time.Now())
 
-			// A refreshed ID token keeps the amr and auth_time of the login.
-			status, body := postForm(t, ts, "/oauth/token", url.Values{
-				"grant_type": {"refresh_token"}, "refresh_token": {tok.RefreshToken},
-			})
-			refreshed := decodeTokens(t, status, body)
-			if refreshed.IDToken == "" {
-				t.Fatal("refresh: no id_token")
-			}
-			if got, want := jwtClaims(t, refreshed.IDToken)["amr"], jwtClaims(t, tok.IDToken)["amr"]; !reflect.DeepEqual(got, want) {
-				t.Errorf("refreshed amr = %v, want %v", got, want)
-			}
-			if got, want := jwtClaims(t, refreshed.IDToken)["auth_time"], jwtClaims(t, tok.IDToken)["auth_time"]; got != want {
-				t.Errorf("refreshed auth_time = %v, want %v", got, want)
+			// Refreshed ID tokens, across rotations, keep the acr, amr and
+			// auth_time of the login.
+			login := jwtClaims(t, tok.IDToken)
+			refreshToken := tok.RefreshToken
+			for i := 1; i <= 2; i++ {
+				status, body := postForm(t, ts, "/oauth/token", url.Values{
+					"grant_type": {"refresh_token"}, "refresh_token": {refreshToken},
+				})
+				refreshed := decodeTokens(t, status, body)
+				if refreshed.IDToken == "" {
+					t.Fatalf("refresh %d: no id_token", i)
+				}
+				claims := jwtClaims(t, refreshed.IDToken)
+				for _, c := range []string{"acr", "amr", "auth_time"} {
+					if got, want := claims[c], login[c]; !reflect.DeepEqual(got, want) {
+						t.Errorf("refresh %d: %s = %v, want %v", i, c, got, want)
+					}
+				}
+				refreshToken = refreshed.RefreshToken
 			}
 		})
 	}
