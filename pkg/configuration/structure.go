@@ -84,6 +84,14 @@ type User struct {
 	Subject      string     `yaml:"subject"`
 	LoginDisplay string     `yaml:"login_display"`
 	Claims       UserClaims `yaml:"claims"`
+	Auth         UserAuth   `yaml:"auth,omitempty"`
+}
+
+// UserAuth is how the user is said to have authenticated: the acr and amr
+// claims of their ID tokens. Unset, tokens carry no acr and amr ["pwd"].
+type UserAuth struct {
+	ACR string   `yaml:"acr,omitempty"` // authentication context class reference
+	AMR []string `yaml:"amr,omitempty"` // authentication methods (RFC 8176), e.g. hwk, pwd
 }
 
 type UserClaims struct {

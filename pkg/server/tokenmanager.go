@@ -75,6 +75,7 @@ type CreateRefreshTokenArgs struct {
 	RequestID      *string
 	Scopes         []string
 	Audience       []string
+	ACR            string
 	AMR            []string
 	Subject        string
 	AuthTime       time.Time
@@ -99,6 +100,7 @@ func (t *tokenManager) CreateRefreshToken(ctx context.Context, tx *sql.Tx, args 
 	return qtx.CreateRefreshToken(ctx, query.CreateRefreshTokenParams{
 		ID:            args.RefreshTokenID,
 		AuthTime:      args.AuthTime.Unix(),
+		Acr:           args.ACR,
 		Amr:           amr,
 		Audience:      strings.Join(args.Audience, " "),
 		Scopes:        strings.Join(args.Scopes, " "),
@@ -165,6 +167,7 @@ func (t *tokenManager) IssueFromRequestToken(ctx context.Context, tx *sql.Tx, re
 	refreshToken, err := qtx.CreateRefreshToken(ctx, query.CreateRefreshTokenParams{
 		ID:            uuid.NewString(),
 		AuthTime:      crt.AuthTime,
+		Acr:           crt.Acr,
 		Amr:           crt.Amr,
 		Audience:      crt.Audience,
 		Scopes:        crt.Scopes,
@@ -230,6 +233,7 @@ func (t *tokenManager) IssueTokens(ctx context.Context, tx *sql.Tx, args IssueTo
 	var requestID *string = nil
 	var applicationID string
 	var authTime time.Time
+	var acr string
 	var amr = []string{}
 
 	switch req := args.TokenRequest.(type) {
@@ -237,6 +241,7 @@ func (t *tokenManager) IssueTokens(ctx context.Context, tx *sql.Tx, args IssueTo
 		applicationID = req.ApplicationID
 		authTime = req.GetAuthTime()
 		requestID = &req.ID
+		acr = req.GetACR()
 		amr = req.GetAMR()
 	case op.TokenExchangeRequest:
 		applicationID = req.GetClientID()
@@ -244,6 +249,7 @@ func (t *tokenManager) IssueTokens(ctx context.Context, tx *sql.Tx, args IssueTo
 	case *query.RefreshToken:
 		applicationID = req.ApplicationID
 		authTime = req.GetAuthTime()
+		acr = req.GetACR()
 		amr = req.GetAMR()
 	}
 
@@ -270,6 +276,7 @@ func (t *tokenManager) IssueTokens(ctx context.Context, tx *sql.Tx, args IssueTo
 			RequestID:      requestID,
 			Scopes:         args.TokenRequest.GetScopes(),
 			Audience:       args.TokenRequest.GetAudience(),
+			ACR:            acr,
 			AMR:            amr,
 			Subject:        args.TokenRequest.GetSubject(),
 			AuthTime:       authTime,

@@ -12,7 +12,7 @@ WHERE
 
 -- name: UpdateAuthRequestUser :execrows
 UPDATE auth_requests 
-SET user_id = ?, complete = 1, authenticated_at = ? 
+SET user_id = ?, complete = 1, authenticated_at = ?, acr = ?, amr = ?
 WHERE id = ?;
 
 -- name: UpdateAuthCode :execrows
@@ -108,6 +108,7 @@ DELETE FROM keys;
 INSERT INTO refresh_tokens (
     id,
     auth_time,
+    acr,
     amr,
     audience,
     subject,
@@ -117,7 +118,7 @@ INSERT INTO refresh_tokens (
     created_at
   )
 VALUES
-  (?, ?, ?, ?, ?, ?, ?,?, ?) RETURNING *;
+  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *;
 
 
 -- name: GetRefreshTokenByID :one

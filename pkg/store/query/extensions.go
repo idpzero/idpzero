@@ -14,16 +14,21 @@ func (a *AuthRequest) GetID() string {
 	return a.ID
 }
 
+// GetACR is the signed-in user's configured acr, or "".
 func (a *AuthRequest) GetACR() string {
-	return "" // we won't handle acr in this example
+	return a.Acr
 }
 
+// GetAMR is the signed-in user's configured amr, or ["pwd"] when they set
+// none.
 func (a *AuthRequest) GetAMR() []string {
-	// this example only uses password for authentication
-	if a.Complete {
-		return []string{"pwd"}
+	if !a.Complete {
+		return nil
 	}
-	return nil
+	if amr := strings.Fields(a.Amr); len(amr) > 0 {
+		return amr
+	}
+	return []string{"pwd"}
 }
 
 func (a *AuthRequest) GetAudience() []string {
@@ -78,6 +83,11 @@ func (a *AuthRequest) Done() bool {
 }
 
 var _ op.RefreshTokenRequest = (*RefreshToken)(nil)
+
+// GetACR is the acr of the login the refresh token continues.
+func (r *RefreshToken) GetACR() string {
+	return r.Acr
+}
 
 func (r *RefreshToken) GetAMR() []string {
 	if !r.Amr.Valid {

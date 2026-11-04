@@ -66,6 +66,9 @@ users:
       custom:
         groups: [admin, editor]
         "Custom:Sample": Sample
+  - subject: bob
+    login_display: Bob (security key)
+    auth: {acr: "phr", amr: [hwk, pwd]}
 `
 
 const rpCallback = "http://rp.example/callback"
@@ -192,9 +195,19 @@ func loginAs(t *testing.T, ts *httptest.Server, clientID, scope string) tokens {
 // authorize signs alice in to clientID with scope and returns the code.
 func authorize(t *testing.T, ts *httptest.Server, clientID, scope string) string {
 	t.Helper()
+	return authorizeUser(t, ts, clientID, scope, "alice", nil)
+}
+
+// authorizeUser signs user in to clientID with scope, adding extra to the
+// authorization request, and returns the code.
+func authorizeUser(t *testing.T, ts *httptest.Server, clientID, scope, user string, extra url.Values) string {
+	t.Helper()
 	q := url.Values{
 		"client_id": {clientID}, "redirect_uri": {rpCallback}, "response_type": {"code"},
 		"scope": {scope}, "state": {"st"}, "nonce": {"nc"},
+	}
+	for k, v := range extra {
+		q[k] = v
 	}
 	res, err := noRedirects.Get(ts.URL + "/authorize?" + q.Encode())
 	if err != nil {
@@ -206,7 +219,7 @@ func authorize(t *testing.T, ts *httptest.Server, clientID, scope string) string
 		t.Fatalf("authorize redirected to %s, want /login?req=", loginURL)
 	}
 
-	res, err = noRedirects.PostForm(ts.URL+"/login", url.Values{"username": {"alice"}, "req": {req}})
+	res, err = noRedirects.PostForm(ts.URL+"/login", url.Values{"username": {user}, "req": {req}})
 	if err != nil {
 		t.Fatal(err)
 	}

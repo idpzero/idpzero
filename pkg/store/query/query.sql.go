@@ -31,7 +31,7 @@ INSERT INTO auth_requests (
     authenticated_at
   )
 VALUES
-  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?, ?) RETURNING id, application_id, redirect_uri, state, prompt, login_hint, max_auth_age_seconds, user_id, scopes, response_type, response_mode, nonce, code_challenge, code_challenge_method, complete, created_at, authenticated_at, auth_code
+  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?, ?) RETURNING id, application_id, redirect_uri, state, prompt, login_hint, max_auth_age_seconds, user_id, scopes, response_type, response_mode, nonce, code_challenge, code_challenge_method, complete, created_at, authenticated_at, auth_code, acr, amr
 `
 
 type CreateAuthRequestParams struct {
@@ -94,6 +94,8 @@ func (q *Queries) CreateAuthRequest(ctx context.Context, arg CreateAuthRequestPa
 		&i.CreatedAt,
 		&i.AuthenticatedAt,
 		&i.AuthCode,
+		&i.Acr,
+		&i.Amr,
 	)
 	return &i, err
 }
@@ -145,6 +147,7 @@ const createRefreshToken = `-- name: CreateRefreshToken :one
 INSERT INTO refresh_tokens (
     id,
     auth_time,
+    acr,
     amr,
     audience,
     subject,
@@ -154,12 +157,13 @@ INSERT INTO refresh_tokens (
     created_at
   )
 VALUES
-  (?, ?, ?, ?, ?, ?, ?,?, ?) RETURNING id, auth_time, amr, audience, subject, application_id, expiration, scopes, created_at
+  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id, auth_time, amr, audience, subject, application_id, expiration, scopes, created_at, acr
 `
 
 type CreateRefreshTokenParams struct {
 	ID            string
 	AuthTime      int64
+	Acr           string
 	Amr           sql.NullString
 	Audience      string
 	Subject       string
@@ -173,6 +177,7 @@ func (q *Queries) CreateRefreshToken(ctx context.Context, arg CreateRefreshToken
 	row := q.db.QueryRowContext(ctx, createRefreshToken,
 		arg.ID,
 		arg.AuthTime,
+		arg.Acr,
 		arg.Amr,
 		arg.Audience,
 		arg.Subject,
@@ -192,6 +197,7 @@ func (q *Queries) CreateRefreshToken(ctx context.Context, arg CreateRefreshToken
 		&i.Expiration,
 		&i.Scopes,
 		&i.CreatedAt,
+		&i.Acr,
 	)
 	return &i, err
 }
@@ -359,7 +365,7 @@ func (q *Queries) GetAllKeys(ctx context.Context) ([]*Key, error) {
 }
 
 const getAuthRequestByAuthCode = `-- name: GetAuthRequestByAuthCode :one
-SELECT id, application_id, redirect_uri, state, prompt, login_hint, max_auth_age_seconds, user_id, scopes, response_type, response_mode, nonce, code_challenge, code_challenge_method, complete, created_at, authenticated_at, auth_code FROM
+SELECT id, application_id, redirect_uri, state, prompt, login_hint, max_auth_age_seconds, user_id, scopes, response_type, response_mode, nonce, code_challenge, code_challenge_method, complete, created_at, authenticated_at, auth_code, acr, amr FROM
   auth_requests
 WHERE
   auth_code = ? LIMIT 1
@@ -387,12 +393,14 @@ func (q *Queries) GetAuthRequestByAuthCode(ctx context.Context, authCode sql.Nul
 		&i.CreatedAt,
 		&i.AuthenticatedAt,
 		&i.AuthCode,
+		&i.Acr,
+		&i.Amr,
 	)
 	return &i, err
 }
 
 const getAuthRequestByID = `-- name: GetAuthRequestByID :one
-SELECT id, application_id, redirect_uri, state, prompt, login_hint, max_auth_age_seconds, user_id, scopes, response_type, response_mode, nonce, code_challenge, code_challenge_method, complete, created_at, authenticated_at, auth_code FROM
+SELECT id, application_id, redirect_uri, state, prompt, login_hint, max_auth_age_seconds, user_id, scopes, response_type, response_mode, nonce, code_challenge, code_challenge_method, complete, created_at, authenticated_at, auth_code, acr, amr FROM
   auth_requests
 WHERE
   id = ? LIMIT 1
@@ -420,6 +428,8 @@ func (q *Queries) GetAuthRequestByID(ctx context.Context, id string) (*AuthReque
 		&i.CreatedAt,
 		&i.AuthenticatedAt,
 		&i.AuthCode,
+		&i.Acr,
+		&i.Amr,
 	)
 	return &i, err
 }
@@ -483,7 +493,7 @@ func (q *Queries) GetKeysByUse(ctx context.Context, usage string) ([]*Key, error
 }
 
 const getRefreshTokenByID = `-- name: GetRefreshTokenByID :one
-SELECT id, auth_time, amr, audience, subject, application_id, expiration, scopes, created_at FROM
+SELECT id, auth_time, amr, audience, subject, application_id, expiration, scopes, created_at, acr FROM
   refresh_tokens
 WHERE
   id = ? LIMIT 1
@@ -502,6 +512,7 @@ func (q *Queries) GetRefreshTokenByID(ctx context.Context, id string) (*RefreshT
 		&i.Expiration,
 		&i.Scopes,
 		&i.CreatedAt,
+		&i.Acr,
 	)
 	return &i, err
 }
@@ -551,18 +562,26 @@ func (q *Queries) UpdateAuthCode(ctx context.Context, arg UpdateAuthCodeParams) 
 
 const updateAuthRequestUser = `-- name: UpdateAuthRequestUser :execrows
 UPDATE auth_requests 
-SET user_id = ?, complete = 1, authenticated_at = ? 
+SET user_id = ?, complete = 1, authenticated_at = ?, acr = ?, amr = ?
 WHERE id = ?
 `
 
 type UpdateAuthRequestUserParams struct {
 	UserID          string
 	AuthenticatedAt int64
+	Acr             string
+	Amr             string
 	ID              string
 }
 
 func (q *Queries) UpdateAuthRequestUser(ctx context.Context, arg UpdateAuthRequestUserParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, updateAuthRequestUser, arg.UserID, arg.AuthenticatedAt, arg.ID)
+	result, err := q.db.ExecContext(ctx, updateAuthRequestUser,
+		arg.UserID,
+		arg.AuthenticatedAt,
+		arg.Acr,
+		arg.Amr,
+		arg.ID,
+	)
 	if err != nil {
 		return 0, err
 	}
