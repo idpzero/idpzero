@@ -27,6 +27,8 @@ type AuthRequest struct {
 	CreatedAt           int64
 	AuthenticatedAt     int64
 	AuthCode            sql.NullString
+	Acr                 string
+	Amr                 string
 }
 
 type Key struct {

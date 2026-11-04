@@ -163,6 +163,31 @@ avoid this concern entirely.
 The `--with-sample-config` initializer includes one of each client type to get you
 started.
 
+## How a user authenticated (acr, amr)
+
+Each user can say how they "authenticated", for relying parties that check
+the `acr` and `amr` claims of the ID token (for example, a policy requiring a
+phishing-resistant factor). Set `auth` on the user:
+
+```yaml
+users:
+  - subject: alice
+    login_display: Alice (security key)
+    auth: {acr: "phr", amr: [hwk, pwd]}
+```
+
+| Field | ID token claim | Default |
+| --- | --- | --- |
+| `auth.acr` | `acr` (a string) | omitted |
+| `auth.amr` | `amr` (a list of [RFC 8176](https://www.rfc-editor.org/rfc/rfc8176) values, such as `pwd`, `otp`, `hwk`, `sc`) | `["pwd"]` |
+
+A user without `auth` gets no `acr` and `amr: ["pwd"]`. The ID token's
+`auth_time` is the moment the user was picked on the login page. Every
+authorization request shows the login page (there is no single sign-on
+session), so `prompt=login` and any `max_age` are always met. The amr is kept
+on refresh tokens, so refreshed ID tokens carry it too; acr is not. Userinfo
+returns neither: they are ID token claims.
+
 ## Provisioning users to another system (SCIM)
 
 `idpzero` can push its configured users to an external SCIM 2.0 service from the

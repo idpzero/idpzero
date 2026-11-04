@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/a-h/templ"
@@ -78,9 +79,12 @@ func loginSubmit(config func() *configuration.ServerConfig, queries *query.Queri
 			templ.Handler(view).ServeHTTP(w, r)
 		} else {
 
+			auth := userAuth(config(), username)
 			count, err := queries.UpdateAuthRequestUser(r.Context(), query.UpdateAuthRequestUserParams{
 				UserID:          username,
 				AuthenticatedAt: time.Now().Unix(),
+				Acr:             auth.ACR,
+				Amr:             strings.Join(auth.AMR, " "),
 				ID:              req,
 			})
 
@@ -110,4 +114,14 @@ func populateScenarios(model *models.UserLoginModel, config *configuration.Serve
 		})
 	}
 
+}
+
+// userAuth is the configured auth of the user with subject, or none.
+func userAuth(config *configuration.ServerConfig, subject string) configuration.UserAuth {
+	for _, u := range config.Users {
+		if u.Subject == subject {
+			return u.Auth
+		}
+	}
+	return configuration.UserAuth{}
 }

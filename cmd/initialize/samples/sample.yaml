@@ -59,6 +59,17 @@ users:
       email_verified: true
       custom:
         "Custom:Sample": "Sample"
+  - subject: mary_security_key
+    login_display: Mary Smith (Security Key)
+    auth:
+      acr: phr
+      amr: [hwk, pwd]
+    claims:
+      name: Mary Smith
+      given_name: Mary
+      family_name: Smith
+      email: mary@example.com
+      email_verified: true
   - subject: mary_verified_email
     login_display: Mary Smith (Verified Email)
     claims:

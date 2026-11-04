@@ -12,7 +12,7 @@ WHERE
 
 -- name: UpdateAuthRequestUser :execrows
 UPDATE auth_requests 
-SET user_id = ?, complete = 1, authenticated_at = ? 
+SET user_id = ?, complete = 1, authenticated_at = ?, acr = ?, amr = ?
 WHERE id = ?;
 
 -- name: UpdateAuthCode :execrows
